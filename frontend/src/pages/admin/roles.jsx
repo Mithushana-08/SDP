@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import AdminSidebar from "../../components/Admin/adminsidebar";
 import AdminNavbar from "../../components/Admin/adminnavbar";
-import { FaEdit, FaTrash, FaSearch } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaSearch,FaCheck, FaTimes } from 'react-icons/fa';
 import axios from 'axios';
 import "./roles.css"; 
 
@@ -172,13 +172,17 @@ const Roles = () => {
                                 autoComplete="role"
                             />
                             <div className="modal-buttons">
-                                <button type="submit">{isEditMode ? "Change" : "Add"}</button>
-                                <button type="button" onClick={() => {
-                                    setShowModal(false);
-                                    setIsEditMode(false);
-                                    setNewUser({ username: "", password: "", role: "" });
-                                }}>Cancel</button>
-                            </div>
+    <button type="submit">
+        <FaCheck />
+    </button>
+    <button type="button" onClick={() => {
+        setShowModal(false);
+        setIsEditMode(false);
+        setNewUser({ username: "", password: "", role: "" });
+    }}>
+        <FaTimes />
+    </button>
+</div>
                         </form>
                     </div>
                 </div>

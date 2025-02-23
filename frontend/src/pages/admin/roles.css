@@ -16,6 +16,7 @@ body {
     display: flex;
     align-items: center;
     border-radius: 10px;
+    font-family: 'Roboto', sans-serif;
 }
 
 .plus-icon {
@@ -52,10 +53,14 @@ body {
     background-color: transparent;
     border: none;
     cursor: pointer;
-    color: #3d1802; /* Edit button color */
+    color:  #9c634f;/* Edit button color */
     margin-right: 5px;
     font-size: 1.2rem; 
     align-items: center;
+}
+
+.edit-button:hover, .delete-button:hover {
+    color: #3d1802;;
 }
 
 .top-bar {
@@ -121,18 +126,19 @@ body {
 
 .modal-buttons {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
+    gap: 10px;
+
 }
 
 .modal-buttons button {
     padding: 8px 12px;
     border: none;
-    background-color: #007bff;
-    color: white;
+    color: green;
     border-radius: 5px;
     cursor: pointer;
 }
 
 .modal-buttons button:nth-child(2) {
-    background-color: red;
+    color: red;
 }
