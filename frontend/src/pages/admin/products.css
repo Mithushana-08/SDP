@@ -1,0 +1,15 @@
+
+.products-page{
+    display: flex;
+}
+
+.main-content{
+    margin-left: 250px; /* Adjust based on sidebar width */
+    width: calc(100% - 250px);
+    display: flex;
+    flex-direction: column;
+}
+
+.content{
+    padding: 20px;
+}

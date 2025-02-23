@@ -1,0 +1,75 @@
+/* Navbar Container */
+.admin-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color:  #f5f7f7cd;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+
+/* Right Section */
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Icon Buttons */
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    color: var(--text-color);
+}
+
+.icon-btn:hover {
+    opacity: 0.7;
+}
+
+/* Auth Buttons */
+.auth-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--primary-color);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.auth-btn:hover {
+    background: var(--primary-hover);
+}
+
+.logout-btn {
+    background: var(--danger-color);
+}
+
+.logout-btn:hover {
+    background: var(--danger-hover);
+}
+
+/* Dark Mode */
+.dark-mode {
+    --bg-color: #222;
+    --text-color: #fff;
+    --primary-color: #444;
+    --primary-hover: #666;
+    --danger-color: #d9534f;
+    --danger-hover: #c9302c;
+}
+
+/* Light Mode */
+:root {
+    --bg-color: #fff;
+    --text-color: #333;
+   
+    --danger-color: #dc3545;
+    --danger-hover: #c82333;
+}
