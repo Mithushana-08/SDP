@@ -10,6 +10,8 @@ const Roles = () => {
     const [users, setUsers] = useState([]);
     const [showModal, setShowModal] = useState(false); // State for popup
     const [newUser, setNewUser] = useState({ username: "", password: "", role: "" });
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [editingUser, setEditingUser] = useState(null);
 
     useEffect(() => {
         fetchUsers();
@@ -41,12 +43,39 @@ const Roles = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post("http://localhost:5000/api/user/users", newUser);
-            setUsers([...users, response.data]); // Update user list with new user
+            if (isEditMode) {
+                // Update user
+                const response = await axios.put(`http://localhost:5000/api/user/users/${editingUser.id}`, newUser);
+                setUsers(users.map(user => user.id === editingUser.id ? response.data : user));
+            } else {
+                // Add new user
+                const response = await axios.post("http://localhost:5000/api/user/users", newUser);
+                setUsers([...users, response.data]); // Update user list with new user
+            }
             setShowModal(false); // Close modal
             setNewUser({ username: "", password: "", role: "" }); // Reset form
+            setIsEditMode(false);
+            setEditingUser(null);
         } catch (error) {
-            console.error("Error adding user:", error);
+            console.error("Error adding/updating user:", error);
+        }
+    };
+
+    // Handle edit button click
+    const handleEditClick = (user) => {
+        setNewUser({ username: user.username, password: user.password, role: user.role });
+        setEditingUser(user);
+        setIsEditMode(true);
+        setShowModal(true);
+    };
+
+    // Handle delete button click
+    const handleDeleteClick = async (id) => {
+        try {
+            await axios.delete(`http://localhost:5000/api/user/users/${id}`);
+            setUsers(users.filter(user => user.id !== id)); // Remove user from state
+        } catch (error) {
+            console.error("Error deleting user:", error);
         }
     };
 
@@ -57,7 +86,11 @@ const Roles = () => {
                 <AdminNavbar />
                 <div className="content">
                     <div className="top-bar">
-                        <button className="add-role-button" onClick={() => setShowModal(true)}>
+                        <button className="add-role-button" onClick={() => {
+                            setShowModal(true);
+                            setIsEditMode(false);
+                            setNewUser({ username: "", password: "", role: "" });
+                        }}>
                             <span className="plus-icon">+</span> Add User
                         </button>
                         
@@ -91,10 +124,10 @@ const Roles = () => {
                                     <td>{user.password}</td> 
                                     <td>{user.role}</td>
                                     <td>
-                                        <button className="edit-button">
+                                        <button className="edit-button" onClick={() => handleEditClick(user)}>
                                             <FaEdit />
                                         </button>
-                                        <button className="delete-button">
+                                        <button className="delete-button" onClick={() => handleDeleteClick(user.id)}>
                                             <FaTrash />
                                         </button>
                                     </td>
@@ -109,7 +142,7 @@ const Roles = () => {
             {showModal && (
                 <div className="modal-overlay">
                     <div className="modal">
-                        <h3>Add New User</h3>
+                        <h3>{isEditMode ? "Edit User" : "Add New User"}</h3>
                         <form onSubmit={handleSubmit}>
                             <input
                                 type="text"
@@ -139,8 +172,12 @@ const Roles = () => {
                                 autoComplete="role"
                             />
                             <div className="modal-buttons">
-                                <button type="submit">Add</button>
-                                <button type="button" onClick={() => setShowModal(false)}>Cancel</button>
+                                <button type="submit">{isEditMode ? "Change" : "Add"}</button>
+                                <button type="button" onClick={() => {
+                                    setShowModal(false);
+                                    setIsEditMode(false);
+                                    setNewUser({ username: "", password: "", role: "" });
+                                }}>Cancel</button>
                             </div>
                         </form>
                     </div>

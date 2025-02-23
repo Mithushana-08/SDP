@@ -35,20 +35,18 @@ body {
 .roles-table th {
     background-color: #894e3f;
     text-align: center;
-    color:azure;
+    color: azure;
     font-family: 'Roboto', sans-serif;
 }
 
-.roles-table td{
-    background-color: 	#dbac9862;
+.roles-table td {
+    background-color: #dbac9862;
     text-align: center;
-    
 }
 
 .roles-table tr:hover {
     background-color: #dbac98bf; /* Change this to your desired hover color */
 }
-
 
 .edit-button, .delete-button {
     background-color: transparent;
@@ -58,7 +56,6 @@ body {
     margin-right: 5px;
     font-size: 1.2rem; 
     align-items: center;
-
 }
 
 .top-bar {
@@ -88,6 +85,7 @@ body {
     color: #555;
     font-size: 1rem;
 }
+
 /* Modal Styles */
 .modal-overlay {
     position: fixed;
