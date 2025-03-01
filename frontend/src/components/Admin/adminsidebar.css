@@ -1,3 +1,4 @@
+/* adminsidebar.css */
 @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
 
 .sidebar {
@@ -29,9 +30,11 @@
 
 .sidebar nav ul li {
     margin: 10px 0;
+    position: relative; /* Add this for dropdown positioning */
 }
 
-.sidebar nav ul li a {
+.sidebar nav ul li a,
+.sidebar nav ul li .dropdown-link {
     color: rgb(255, 255, 255);
     text-decoration: none;
     display: flex;
@@ -44,7 +47,9 @@
 }
 
 .sidebar nav ul li a:hover,
-.sidebar nav ul li a.active {
+.sidebar nav ul li a.active,
+.sidebar nav ul li .dropdown-link:hover,
+.sidebar nav ul li .dropdown-link.active {
     background-color: #4E3B31;
 }
 
@@ -61,4 +66,51 @@
     height: 100px;
     margin-top: 15px; 
     margin-left: -25px;
+}
+
+.dropdown {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dropdown-menu {
+    list-style: none;
+    padding: 10px;
+    background-color: #b28d75;
+    position: absolute;
+    top: 40px; /* Adjust this value to position the dropdown correctly */
+    left: 0;
+    width: 200px;
+    display: none; /* Hide by default */
+    z-index: 1; /* Ensure it appears above other elements */
+    border: 1px solid #4E3B31;
+    border-radius: 5px;
+}
+
+.dropdown-container:hover .dropdown-menu,
+.dropdown-container .dropdown-link.active + .dropdown-menu {
+    display: block; /* Show on hover or when active */
+}
+
+.dropdown-menu li {
+    margin-top: 10px;
+}
+
+.dropdown-menu li a {
+    color: white;
+    text-decoration: none;
+    padding: 10px;
+    display: block;
+}
+
+.dropdown-menu li a:hover,
+.dropdown-menu li a.active {
+    background-color: #4E3B31;
+}
+
+.active {
+    font-weight: bold;
+    background-color: #4E3B31;
 }

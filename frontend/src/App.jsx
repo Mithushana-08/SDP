@@ -8,6 +8,7 @@ import Orders from "./pages/admin/orders";
 import Customers from "./pages/admin/customers";
 import Reports from "./pages/admin/reports";
 import CrafterDashboard from "./pages/cdashboard";
+import Inventory from "./pages/admin/inventory";
 
 const App = () => {
   return (
@@ -21,6 +22,8 @@ const App = () => {
         <Route path="/admin/customers" element={<Customers />} />
         <Route path="/admin/reports" element={<Reports />} />
         <Route path="/crafter-dashboard" element={<CrafterDashboard />} />
+        <Route path="/admin/inventory" element={<Inventory
+        />} />
       </Routes>
     </Router>
   );
