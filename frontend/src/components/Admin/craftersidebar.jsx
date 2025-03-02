@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { FiClipboard } from "react-icons/fi"; // Icons
+import { FiHome, FiClipboard, FiPackage, FiSettings } from "react-icons/fi"; // Icons
 import "./adminsidebar.css"; // Import styles
 import logo from "../../assets/logo.png"; // Adjust path based on your folder structure
 
@@ -13,8 +13,24 @@ const CrafterSidebar = () => {
             <nav>
                 <ul>
                     <li>
-                        <NavLink to="/crafter/orders" activeClassName="active">
-                            <FiClipboard /> Orders
+                        <NavLink to="/crafter/cdashboard" activeClassName="active">
+                            <FiHome /> Dashboard
+                        </NavLink>
+                    </li>
+                    
+                    <li>
+                        <NavLink to="/crafter/order_assignments" activeClassName="active">
+                            <FiClipboard /> Order Assignments
+                        </NavLink>
+                    </li>
+                    <li>
+                        <NavLink to="/crafter/work_uploads" activeClassName="active">
+                            <FiPackage /> Work Uploads
+                        </NavLink>
+                    </li>
+                    <li>
+                        <NavLink to="/crafter/settings" activeClassName="active">
+                            <FiSettings /> Settings
                         </NavLink>
                     </li>
                 </ul>

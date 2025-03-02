@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { FiHome, FiUsers, FiPackage, FiClipboard, FiFileText, FiUserCheck, FiTruck, FiBox, FiChevronDown } from "react-icons/fi"; // Icons
+import { FiHome, FiUsers, FiPackage, FiClipboard, FiFileText, FiUserCheck, FiSettings, FiBox, FiChevronDown } from "react-icons/fi"; // Icons
 import "./adminsidebar.css"; // Import styles
 import logo from "../../assets/logo.png"; // Adjust path based on your folder structure
 import { useState, useEffect } from "react";
@@ -81,13 +81,13 @@ const Sidebar = () => {
                         </NavLink>
                     </li>
                     <li>
-                        <NavLink to="/admin/crafter-assignments" activeClassName="active">
+                        <NavLink to="/admin/crafter_assign" activeClassName="active">
                             <FiUserCheck /> Crafter Assignments
                         </NavLink>
                     </li>
                     <li>
-                        <NavLink to="/admin/delivery-assignments" activeClassName="active">
-                            <FiTruck /> Delivery Assignments
+                        <NavLink to="/admin/settings" activeClassName="active">
+                            <FiSettings /> Settings
                         </NavLink>
                     </li>
                 </ul>

@@ -1,6 +1,6 @@
 import React from "react";
-import CrafterSidebar from "../components/Admin/craftersidebar";
-import AdminNavbar from "../components/Admin/adminnavbar";
+import CrafterSidebar from "../../components/Admin/craftersidebar";
+import AdminNavbar from "../../components/Admin/adminnavbar";
 
 
 const CrafterDashboard = () => {

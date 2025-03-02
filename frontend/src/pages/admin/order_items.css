@@ -1,0 +1,62 @@
+import React from "react";
+import AdminSidebar from "../../components/Admin/adminsidebar";
+import AdminNavbar from "../../components/Admin/adminnavbar";
+import "./items.css";
+
+const Items = () => {
+    return (
+        <div className="items-page">
+            <AdminSidebar />
+            <div className="main-content">
+                <AdminNavbar />
+                <div className="content">
+                    <h1>Items Page</h1>
+                    <table className="items-table">
+                        <thead>
+                            <tr>
+                                <th>Item No.</th>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Customizable</th>
+                                <th>Crafter</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>Keytag</td>
+                                <td>Keychains</td>
+                                <td>Yes</td>
+                                <td>Not Assigned</td>
+                                <td>Pending</td>
+                                <td>Assign Crafter</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>Wooden Spoon</td>
+                                <td>Kitchenware</td>
+                                <td>No</td>
+                                <td>-</td>
+                                <td>Pending</td>
+                                <td>(No Assignment Needed)</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>Photo Frame</td>
+                                <td>Frames</td>
+                                <td>Yes</td>
+                                <td>Suresh</td>
+                                <td>On Work</td>
+                                <td>Reassign Crafter</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default Items;

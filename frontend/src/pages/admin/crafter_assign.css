@@ -1,10 +1,10 @@
-.customers-page {
+.crafter-assign-page {
     display: flex;
 }
 
 .main-content {
     flex-grow: 1;
-  
+    padding: 20px;
 }
 
 .content {
@@ -14,35 +14,35 @@
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-.customers-table {
+.crafter-assign-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
 }
 
-.customers-table th, .customers-table td {
+.crafter-assign-table th, .crafter-assign-table td {
     border: 1px solid #ddd;
     padding: 8px;
     text-align: left;
 }
 
-.customers-table th {
+.crafter-assign-table th {
     background-color: #f4f4f4;
     font-weight: bold;
 }
 
-.customers-table tr:nth-child(even) {
+.crafter-assign-table tr:nth-child(even) {
     background-color: #f9f9f9;
 }
 
-.customers-table tr:hover {
+.crafter-assign-table tr:hover {
     background-color: #f1f1f1;
 }
 
-.customers-table td {
+.crafter-assign-table td {
     vertical-align: middle;
 }
 
-.customers-table .actions {
+.crafter-assign-table .actions {
     text-align: center;
 }
