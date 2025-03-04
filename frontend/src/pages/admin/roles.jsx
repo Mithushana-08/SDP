@@ -1,83 +1,74 @@
 import React, { useState, useEffect } from "react";
+import axios from 'axios';
+import { FaEdit, FaTrash, FaSearch, FaCheck, FaTimes } from 'react-icons/fa';
 import AdminSidebar from "../../components/Admin/adminsidebar";
 import AdminNavbar from "../../components/Admin/adminnavbar";
-import { FaEdit, FaTrash, FaSearch,FaCheck, FaTimes } from 'react-icons/fa';
-import axios from 'axios';
-import "./roles.css"; 
+import "./roles.css";
+import "../../components/styles/table.css";
 
 const Roles = () => {
-    const [searchTerm, setSearchTerm] = useState("");
     const [users, setUsers] = useState([]);
-    const [showModal, setShowModal] = useState(false); // State for popup
-    const [newUser, setNewUser] = useState({ username: "", password: "", role: "" });
+    const [searchTerm, setSearchTerm] = useState("");
+    const [showModal, setShowModal] = useState(false);
+    const [newUser, setNewUser] = useState({ id: "", username: "", password: "", role: "", phone: "", address: "" });
     const [isEditMode, setIsEditMode] = useState(false);
-    const [editingUser, setEditingUser] = useState(null);
 
     useEffect(() => {
         fetchUsers();
     }, []);
 
-    // Fetch users from the backend
     const fetchUsers = () => {
-        axios.get("http://localhost:5000/api/user/users") // Ensure correct endpoint
-            .then((response) => {
-                setUsers(response.data);
-            })
-            .catch((error) => {
-                console.error("There was an error fetching the users!", error);
-            });
+        axios.get("http://localhost:5000/api/user/users")
+            .then(response => setUsers(response.data))
+            .catch(err => console.error("Error fetching users:", err));
     };
 
-    // Filter users based on search term
-    const filteredUsers = users.filter(user =>
-        user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.role.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const handleSearch = e => setSearchTerm(e.target.value);
 
-    // Handle input changes in the form
-    const handleChange = (e) => {
+    const handleChange = e => {
         setNewUser({ ...newUser, [e.target.name]: e.target.value });
     };
 
-    // Handle form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             if (isEditMode) {
-                // Update user
-                const response = await axios.put(`http://localhost:5000/api/user/users/${editingUser.id}`, newUser);
-                setUsers(users.map(user => user.id === editingUser.id ? response.data : user));
+                await axios.put(`http://localhost:5000/api/user/users/${newUser.id}`, newUser);
             } else {
-                // Add new user
-                const response = await axios.post("http://localhost:5000/api/user/users", newUser);
-                setUsers([...users, response.data]); // Update user list with new user
+                await axios.post("http://localhost:5000/api/user/users", newUser);
             }
-            setShowModal(false); // Close modal
-            setNewUser({ username: "", password: "", role: "" }); // Reset form
-            setIsEditMode(false);
-            setEditingUser(null);
-        } catch (error) {
-            console.error("Error adding/updating user:", error);
+            closeModal();
+            fetchUsers();
+        } catch (err) {
+            console.error("Error saving user:", err);
         }
     };
 
-    // Handle edit button click
-    const handleEditClick = (user) => {
-        setNewUser({ username: user.username, password: user.password, role: user.role });
-        setEditingUser(user);
+    const handleEdit = (user) => {
+        setNewUser(user);
         setIsEditMode(true);
         setShowModal(true);
     };
 
-    // Handle delete button click
-    const handleDeleteClick = async (id) => {
-        try {
+    const handleDelete = async (id) => {
+        if (window.confirm("Are you sure?")) {
             await axios.delete(`http://localhost:5000/api/user/users/${id}`);
-            setUsers(users.filter(user => user.id !== id)); // Remove user from state
-        } catch (error) {
-            console.error("Error deleting user:", error);
+            fetchUsers();
         }
     };
+
+    const openAddModal = () => {
+        setNewUser({ id: "", username: "", password: "", role: "", phone: "", address: "" });
+        setIsEditMode(false);
+        setShowModal(true);
+    };
+
+    const closeModal = () => setShowModal(false);
+
+    const filteredUsers = users.filter(user => 
+        user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.role.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
         <div className="roles-page">
@@ -86,34 +77,31 @@ const Roles = () => {
                 <AdminNavbar />
                 <div className="content">
                     <div className="top-bar">
-                        <button className="add-role-button" onClick={() => {
-                            setShowModal(true);
-                            setIsEditMode(false);
-                            setNewUser({ username: "", password: "", role: "" });
-                        }}>
-                            <span className="plus-icon">+</span> Add User
-                        </button>
-                        
-                        <div className="search-container">
-                            <FaSearch className="search-icon" />
-                            <input 
-                                type="text" 
-                                placeholder="Search here..." 
-                                className="search-bar" 
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
+                        <div className="top-bar-content">
+                            <button className="add-role-button" onClick={openAddModal}>
+                                <span className="plus-icon">+</span> Add User
+                            </button>
+                            <div className="search-container">
+                                <FaSearch className="search-icon" />
+                                <input
+                                    type="text"
+                                    placeholder="Search here..."
+                                    className="search-bar"
+                                    value={searchTerm}
+                                    onChange={handleSearch}
+                                />
+                            </div>
                         </div>
                     </div>
-
-                    <table className="roles-table">
+                    <table className="table roles-table">
                         <thead>
                             <tr>
                                 <th>User ID</th>
-                                <th>User Name</th>
-                                <th>Password</th>
+                                <th>Username</th>
+                                <th>Address</th>
+                                <th>Phone</th>
                                 <th>Role</th>
-                                <th>Actions</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -121,74 +109,44 @@ const Roles = () => {
                                 <tr key={user.id}>
                                     <td>{user.id}</td>
                                     <td>{user.username}</td>
-                                    <td>{user.password}</td> 
+                                    <td>{user.address}</td>
+                                    <td>{user.phone}</td>
                                     <td>{user.role}</td>
                                     <td>
-                                        <button className="edit-button" onClick={() => handleEditClick(user)}>
-                                            <FaEdit />
-                                        </button>
-                                        <button className="delete-button" onClick={() => handleDeleteClick(user.id)}>
-                                            <FaTrash />
-                                        </button>
+                                        <button className="edit-button" onClick={() => handleEdit(user)}><FaEdit /></button>
+                                        <button className="delete-button" onClick={() => handleDelete(user.id)}><FaTrash /></button>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
+                    {showModal && (
+                        <div className="modal-overlay">
+                            <div className="modal">
+                                <form onSubmit={handleSubmit}>
+                                    <input name="id" placeholder="User ID" value={newUser.id} onChange={handleChange} required />
+                                    <input name="username" placeholder="Username" value={newUser.username} onChange={handleChange} required />
+                                    <input name="password" type="password" placeholder="Password" value={newUser.password} onChange={handleChange} required />
+                                    <input name="address" placeholder="Address" value={newUser.address} onChange={handleChange} required />
+                                    <input name="phone" placeholder="Phone" value={newUser.phone} onChange={handleChange} required />
+                                    <select name="role" value={newUser.role} onChange={handleChange} required>
+                                        <option value="">Select Role</option>
+                                        <option value="admin">Admin</option>
+                                        <option value="crafter">Crafter</option>
+                                        <option value="delivery">Delivery</option>
+                                    </select>
+                                    <div className="modal-buttons">
+                                        <button type="submit"><FaCheck /> {isEditMode ? "Update" : "Add"}</button>
+                                        <button type="button" onClick={closeModal}><FaTimes /> Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
-
-            {/* Popup Modal */}
-            {showModal && (
-                <div className="modal-overlay">
-                    <div className="modal">
-                        <h3>{isEditMode ? "Edit User" : "Add New User"}</h3>
-                        <form onSubmit={handleSubmit}>
-                            <input
-                                type="text"
-                                name="username"
-                                placeholder="Username"
-                                value={newUser.username}
-                                onChange={handleChange}
-                                required
-                                autoComplete="username"
-                            />
-                            <input
-                                type="password"
-                                name="password"
-                                placeholder="Password"
-                                value={newUser.password}
-                                onChange={handleChange}
-                                required
-                                autoComplete="new-password"
-                            />
-                            <input
-                                type="text"
-                                name="role"
-                                placeholder="Role"
-                                value={newUser.role}
-                                onChange={handleChange}
-                                required
-                                autoComplete="role"
-                            />
-                            <div className="modal-buttons">
-    <button type="submit">
-        <FaCheck />
-    </button>
-    <button type="button" onClick={() => {
-        setShowModal(false);
-        setIsEditMode(false);
-        setNewUser({ username: "", password: "", role: "" });
-    }}>
-        <FaTimes />
-    </button>
-</div>
-                        </form>
-                    </div>
-                </div>
-            )}
         </div>
     );
-};
 
+}
 export default Roles;

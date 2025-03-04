@@ -6,29 +6,3 @@ body {
     margin-top: 20px;
 }
 
-.work-upload-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 20px 0;
-    font-size: 18px;
-    text-align: left;
-  }
-  
-  .work-upload-table th, .work-upload-table td {
-    padding: 12px 15px;
-    border: 1px solid #ddd;
-  }
-  
-  .work-upload-table th {
-    background-color: #f4f4f4;
-  }
-  
-  .work-upload-table tr:nth-child(even) {
-    background-color: #f9f9f9;
-  }
-  
-  .work-upload-table button {
-    padding: 5px 10px;
-    margin: 0 5px;
-    cursor: pointer;
-  }

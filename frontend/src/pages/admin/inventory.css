@@ -22,33 +22,7 @@
     background-color: #421505;
 }
 
-.category-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
 
-.category-table th, .category-table td {
-    border: 1px solid #0a0a0a;
-    padding: 8px;
-}
-
-.category-table th {
-    background-color: #894e3f;
-    text-align: center;
-    color: azure;
-    font-family: 'Roboto', sans-serif;
-}
-
-.category-table td {
-    background-color: #dbac9862;
-    text-align: center;
-    color: #0a0a0a;
-}
-
-.category-table tr:hover {
-    background-color: #dbac98bf; /* Change this to your desired hover color */
-}
 
 .view-icon {
     background-color: transparent;

@@ -23,31 +23,6 @@ body {
     margin-right: 5px;
 }
 
-.roles-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.roles-table th, .roles-table td {
-    border: 1px solid #0a0a0a;
-    padding: 8px;
-}
-
-.roles-table th {
-    background-color: #894e3f;
-    text-align: center;
-    color: azure;
-    font-family: 'Roboto', sans-serif;
-}
-
-.roles-table td {
-    background-color: #dbac9862;
-    text-align: center;
-}
-
-.roles-table tr:hover {
-    background-color: #dbac98bf; /* Change this to your desired hover color */
-}
 
 .edit-button, .delete-button {
     background-color: transparent;
@@ -65,20 +40,41 @@ body {
 
 .top-bar {
     display: flex;
-    justify-content: space-between; /* Push items to opposite sides */
+    justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    width: 100%;
 }
 
-.search-container {
-    position: relative;
+.top-bar-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.add-role-button {
+    background-color: #9c634f;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    border-radius: 10px;
+    font-family: 'Roboto', sans-serif;
     display: flex;
     align-items: center;
 }
 
+.search-container {
+    display: flex;
+    align-items: center;
+    position: relative;
+   
+}
+
 .search-bar {
-    width: 250px; /* Adjust width as needed */
-    padding: 8px 30px 8px 10px; /* Extra padding for icon */
+    width: 250px;
+    padding: 8px 30px 8px 10px;
     border: 1px solid #ccc;
     border-radius: 5px;
     font-size: 1rem;
@@ -88,7 +84,6 @@ body {
     position: absolute;
     right: 10px;
     color: #555;
-    font-size: 1rem;
 }
 
 /* Modal Styles */

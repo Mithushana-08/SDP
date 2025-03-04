@@ -6,30 +6,9 @@
     margin-top: 20px;
 }
 
-.products-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 20px 0;
-    font-size: 18px;
-    text-align: left;
-}
 
-.products-table th, .products-table td {
-    padding: 12px 15px;
-    border: 1px solid #ddd;
-}
 
-.products-table th {
-    background-color: #f4f4f4;
-}
 
-.products-table tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
-.products-table tr:hover {
-    background-color: #f1f1f1;
-}
 
 .products-table .actions button {
     background: none;

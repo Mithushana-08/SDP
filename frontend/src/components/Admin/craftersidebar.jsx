@@ -19,12 +19,12 @@ const CrafterSidebar = () => {
                     </li>
                     
                     <li>
-                        <NavLink to="/crafter/order_assignments" activeClassName="active">
+                        <NavLink to="/crafter/Assignments" activeClassName="active">
                             <FiClipboard /> Order Assignments
                         </NavLink>
                     </li>
                     <li>
-                        <NavLink to="/crafter/work_uploads" activeClassName="active">
+                        <NavLink to="/crafter/Uploads" activeClassName="active">
                             <FiPackage /> Work Uploads
                         </NavLink>
                     </li>

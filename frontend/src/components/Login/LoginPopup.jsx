@@ -48,8 +48,8 @@ const LoginPopup = () => {
         console.log("Redirecting to /admin-dashboard");
         navigate("/admin-dashboard");
       } else if (data.user.role === "crafter") {
-        console.log("Redirecting to /crafter-dashboard");
-        navigate("/crafter-dashboard");
+        console.log("Redirectig to /crafter/cdashboard");
+        navigate("/crafter/cdashboard");
       } else if (data.user.role === "delivery") {
         console.log("Redirecting to /delivery-dashboard");
         navigate("/delivery-dashboard");

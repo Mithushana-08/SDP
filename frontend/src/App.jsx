@@ -7,12 +7,13 @@ import Products from "./pages/admin/products";
 import Orders from "./pages/admin/orders";
 import Customers from "./pages/admin/customers";
 import Reports from "./pages/admin/reports";
-import CrafterDashboard from "./pages/crafter/cdashboard";
 import Inventory from "./pages/admin/inventory";
 import WorkUpload from "./pages/admin/work_upload";
 import Items from "./pages/admin/order_items";
 import CrafterAssign from "./pages/admin/crafter_assign";
-
+import CrafterDashboard from "./pages/crafter/cdashboard";
+import Assignments from "./pages/crafter/Assignments";
+import Uploads from "./pages/crafter/Uploads";
 const App = () => {
   return (
     <Router>
@@ -24,11 +25,13 @@ const App = () => {
         <Route path="/admin/orders" element={<Orders />} />
         <Route path="/admin/customers" element={<Customers />} />
         <Route path="/admin/reports" element={<Reports />} />
-        <Route path="/crafter/cdashboard" element={<CrafterDashboard />} />
         <Route path="/admin/inventory" element={<Inventory />} />
         <Route path="/admin/work_upload" element={<WorkUpload />} />
         <Route path="/admin/order_items" element={<Items />} />
         <Route path="/admin/crafter_assign" element={<CrafterAssign />} />
+        <Route path="/crafter/cdashboard" element={<CrafterDashboard />} />
+        <Route path="/crafter/Assignments" element={<Assignments />} /> 
+        <Route path="/crafter/Uploads" element={<Uploads />} />
       </Routes>
     </Router>
   );

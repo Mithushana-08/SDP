@@ -1,4 +1,4 @@
-.crafter-assign-page {
+.uploads-page {
     display: flex;
 }
 
@@ -14,3 +14,12 @@
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
+.icon {
+    cursor: pointer;
+    margin-right: 10px;
+    color: #007bff;
+}
+
+.icon:hover {
+    color: #0056b3;
+}

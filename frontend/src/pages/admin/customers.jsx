@@ -2,6 +2,7 @@ import React from "react";
 import AdminSidebar from "../../components/Admin/adminsidebar";
 import AdminNavbar from "../../components/Admin/adminnavbar";
 import "./customers.css";
+import "../../components/styles/table.css";
 
 const Customers = () => {
     return (
@@ -11,7 +12,7 @@ const Customers = () => {
                 <AdminNavbar />
                 <div className="content">
                     <h1>Customers Page</h1>
-                    <table className="customers-table">
+                    <table className="table customers-table">
                         <thead>
                             <tr>
                                 <th>Customer ID</th>

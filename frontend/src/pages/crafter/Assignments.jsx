@@ -1,24 +1,24 @@
 import React from "react";
-import AdminSidebar from "../../components/Admin/adminsidebar";
+import CrafterSidebar from "../../components/Admin/craftersidebar";
 import AdminNavbar from "../../components/Admin/adminnavbar";
-import "./crafter_assign.css";
-import "../../components/styles/table.css";
+import "./Assignments.css";
+import "../../components/styles/table.css"; // Import the common table styles
 
-const CrafterAssign = () => {
+const Assignments = () => {
     return (
-        <div className="crafter-assign-page">
-            <AdminSidebar />
+        <div className="assignments-page">
+            <CrafterSidebar />
             <div className="main-content">
                 <AdminNavbar />
                 <div className="content">
-                    <h1>Crafter Assignment Page</h1>
-                    <table className=" table crafter-assign-table">
+                    <h1>Order Assignments</h1>
+                    <table className="table assignments-table">
                         <thead>
                             <tr>
                                 <th>Order Item ID</th>
                                 <th>Order ID</th>
                                 <th>Product Name</th>
-                                <th>Crafter</th>
+                                <th>Customization Details</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -28,9 +28,9 @@ const CrafterAssign = () => {
                                 <td>501</td>
                                 <td>1001</td>
                                 <td>Flower Keytag</td>
-                                <td>Kumara</td>
-                                <td>On Work</td>
-                                <td>🔄 Reassign</td>
+                                <td>Text: Happy B'day</td>
+                                <td>Pending</td>
+                                <td>🔄 Update Status</td>
                             </tr>
                         </tbody>
                     </table>
@@ -40,4 +40,4 @@ const CrafterAssign = () => {
     );
 };
 
-export default CrafterAssign;
+export default Assignments;

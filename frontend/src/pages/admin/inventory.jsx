@@ -3,6 +3,7 @@ import AdminSidebar from "../../components/Admin/adminsidebar";
 import AdminNavbar from "../../components/Admin/adminnavbar";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./inventory.css";
+import "../../components/styles/table.css";
 
 const Inventory = () => {
     const [categories, setCategories] = useState([]);
@@ -144,7 +145,7 @@ const Inventory = () => {
                             </div>
                         </div>
                     )}
-                    <table className="category-table">
+                    <table className="table category-table">
                         <thead>
                             <tr>
                                 <th>Category ID</th>

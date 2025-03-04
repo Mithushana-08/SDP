@@ -14,38 +14,6 @@
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-.orders-table, .order-items-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-}
-
-.orders-table th, .orders-table td, .order-items-table th, .order-items-table td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: left;
-}
-
-.orders-table th, .order-items-table th {
-  background-color: #f4f4f4;
-  font-weight: bold;
-}
-
-.orders-table tr:nth-child(even), .order-items-table tr:nth-child(even) {
-  background-color: #f9f9f9;
-}
-
-.orders-table tr:hover, .order-items-table tr:hover {
-  background-color: #f1f1f1;
-}
-
-.orders-table td, .order-items-table td {
-  vertical-align: middle;
-}
-
-.orders-table .actions, .order-items-table .actions {
-  text-align: center;
-}
 
 .order-details {
   margin-top: 20px;

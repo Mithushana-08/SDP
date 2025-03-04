@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import AdminSidebar from "../../components/Admin/adminsidebar";
 import AdminNavbar from "../../components/Admin/adminnavbar";
 import "./order_items.css";
+import "../../components/styles/table.css";
 
 const Items = () => {
     const location = useLocation();
@@ -70,12 +71,15 @@ const Items = () => {
                     {orderItems.length === 0 ? (
                         <p>No items found for this order.</p>
                     ) : (
-                        <table className="order-items-table">
+                        <table className="table order-items-table">
                             <thead>
                                 <tr>
                                     <th>Item No.</th>
                                     <th>Product</th>
                                     <th>Category</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Total price</th>
                                     <th>Customizable</th>
                                     <th>Crafter</th>
                                     <th>Status</th>
@@ -88,6 +92,9 @@ const Items = () => {
                                         <td>{item.itemNo}</td>
                                         <td>{item.product}</td>
                                         <td>{item.category}</td>
+                                        <td>{item.quantity}</td>
+                                        <td>{item.price}</td>
+                                        <td>{item.totalPrice}</td>
                                         <td>{item.customizable}</td>
                                         <td>{item.crafter}</td>
                                         <td>{item.status}</td>

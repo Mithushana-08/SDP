@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import AdminSidebar from "../../components/Admin/adminsidebar";
 import AdminNavbar from "../../components/Admin/adminnavbar";
 import "./orders.css";
+import "../../components/styles/table.css";
 
 const Orders = () => {
     const orders = [
@@ -35,7 +36,7 @@ const Orders = () => {
                 <AdminNavbar />
                 <div className="content">
                     <h1>Orders Page</h1>
-                    <table className="orders-table">
+                    <table className="table orders-table">
                         <thead>
                             <tr>
                                 <th>Order ID</th>

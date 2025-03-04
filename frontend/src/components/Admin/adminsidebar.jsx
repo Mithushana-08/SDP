@@ -53,10 +53,16 @@ const Sidebar = () => {
                                     </NavLink>
                                 </li>
                                 <li>
-                                    <NavLink to="/admin/products" activeClassName="active" onClick={() => setIsInventoryOpen(false)}>
+                                    <NavLink to="/admin/product" activeClassName="active" onClick={() => setIsInventoryOpen(false)}>
                                         Products
                                     </NavLink>
                                 </li>
+                                <li>
+                                    <NavLink to="/admin/products" activeClassName="active" onClick={() => setIsInventoryOpen(false)}>
+                                        Stock
+                                    </NavLink>
+                                </li>
+
                             </ul>
                         )}
                     </li>
