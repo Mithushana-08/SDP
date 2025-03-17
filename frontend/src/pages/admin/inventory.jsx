@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
 import AdminSidebar from "../../components/Admin/adminsidebar";
 import AdminNavbar from "../../components/Admin/adminnavbar";
+import { FiEdit, FiTrash2, FiSearch, FiCheck, FiX, FiDelete } from 'react-icons/fi';
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./inventory.css";
 import "../../components/styles/table.css";
+import "../../components/styles/buttons.css"; // Import button styles
+import "../../components/styles/search-container.css"; 
 
 const Inventory = () => {
     const [categories, setCategories] = useState([]);
@@ -14,6 +17,7 @@ const Inventory = () => {
     });
     const [showForm, setShowForm] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         fetch("http://localhost:5000/api/categories")
@@ -25,6 +29,10 @@ const Inventory = () => {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setNewCategory({ ...newCategory, [name]: value });
+    };
+
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value);
     };
 
     const handleAddCategory = (e) => {
@@ -94,15 +102,32 @@ const Inventory = () => {
         setShowForm(true);
     };
 
+    const filteredCategories = categories.filter(category =>
+        category.CategoryName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
         <div className="products-page">
             <AdminSidebar />
             <div className="main-content">
                 <AdminNavbar />
                 <div className="content">
-                    <button className="btn-add" onClick={handleShowForm}>
-                        <span className="plus-icon">+</span> Add
-                    </button>
+                    <div className="top-bar">
+                        <button className="add-button" onClick={handleShowForm}>
+                            <span className="plus-icon">+</span> Add
+                        </button>
+                        <div className="search-container">
+                            <FiSearch className="search-icon" />
+                            <input
+                                type="text"
+                                placeholder="Search categories..."
+                                  className="search-bar"
+                                value={searchTerm}
+                                onChange={handleSearchChange}
+                            />
+                           
+                        </div>
+                    </div>
                     {showForm && (
                         <div className="overlay">
                             <div className="add-category-form">
@@ -155,15 +180,14 @@ const Inventory = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {categories.map(category => (
+                            {filteredCategories.map(category => (
                                 <tr key={category.CategoryID}>
                                     <td>{category.CategoryID}</td>
                                     <td>{category.CategoryName}</td>
                                     <td>{category.Description}</td>
                                     <td>
-                                        <i className="fas fa-eye view-icon"></i>
-                                        <i className="fas fa-edit view-icon" onClick={() => handleEditCategory(category)}></i>
-                                        <i className="fas fa-trash view-icon" onClick={() => handleDeleteCategory(category.CategoryID)}></i>
+                                        <i className="edit-button" onClick={() => handleEditCategory(category)}><FiEdit/></i>
+                                        <i className="delete-button" onClick={() => handleDeleteCategory(category.CategoryID)}><FiTrash2/></i>
                                     </td>
                                 </tr>
                             ))}

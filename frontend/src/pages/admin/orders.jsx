@@ -1,11 +1,16 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import AdminSidebar from "../../components/Admin/adminsidebar";
 import AdminNavbar from "../../components/Admin/adminnavbar";
 import "./orders.css";
 import "../../components/styles/table.css";
+import "../../components/styles/buttons.css"; // Import button styles
+import "../../components/styles/search-container.css";
+import { FiSearch } from 'react-icons/fi';
 
 const Orders = () => {
+    const [searchTerm, setSearchTerm] = useState("");
+
     const orders = [
         {
             id: 1001,
@@ -23,11 +28,23 @@ const Orders = () => {
             customer: "John Doe",
             phone: "0751234567",
             address: "Address",
-            productCount: 2,
-            customizable: "Yes",
+            productCount: 1,
+            customizable: "No",
             status: "Pending",
         },
     ];
+
+    const handleSearchChange = (event) => {
+        setSearchTerm(event.target.value);
+    };
+
+    const filteredOrders = orders.filter((order) => {
+        return (
+            order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            order.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            order.phone.includes(searchTerm)
+        );
+    });
 
     return (
         <div className="orders-page">
@@ -35,7 +52,24 @@ const Orders = () => {
             <div className="main-content">
                 <AdminNavbar />
                 <div className="content">
-                    <h1>Orders Page</h1>
+                    
+                    <div className="top-bar">
+                    <div className="top-bar-content">
+                            <button className="add-button" >
+                                <span className="plus-icon">+</span> Add Order
+                            </button>
+                        <div className="search-container">
+                            <FiSearch className="search-icon" />
+                            <input
+                                type="text"
+                                placeholder="Search orders..."
+                                className="search-bar"
+                                value={searchTerm}
+                                onChange={handleSearchChange}
+                            />
+                            </div>
+                        </div>
+                    </div>
                     <table className="table orders-table">
                         <thead>
                             <tr>
@@ -51,7 +85,7 @@ const Orders = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {orders.map((order) => (
+                            {filteredOrders.map((order) => (
                                 <tr key={order.id}>
                                     <td>{order.id}</td>
                                     <td>{order.date}</td>
@@ -62,10 +96,9 @@ const Orders = () => {
                                     <td>{order.customizable}</td>
                                     <td>{order.status}</td>
                                     <td>
-                                    <Link to="/admin/order_items" state={{ orderId: order.id }}>
-    📄 View Details
-</Link>
-
+                                        <Link to="/admin/order_items" state={{ orderId: order.id }}>
+                                            📄 View Details
+                                        </Link>
                                     </td>
                                 </tr>
                             ))}

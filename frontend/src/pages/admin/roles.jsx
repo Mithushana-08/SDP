@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import axios from 'axios';
-import { FaEdit, FaTrash, FaSearch, FaCheck, FaTimes } from 'react-icons/fa';
+import { FiEdit, FiTrash2, FiSearch, FiCheck, FiX } from 'react-icons/fi';
 import AdminSidebar from "../../components/Admin/adminsidebar";
 import AdminNavbar from "../../components/Admin/adminnavbar";
 import "./roles.css";
 import "../../components/styles/table.css";
+import "../../components/styles/buttons.css"; // Import button styles
+import "../../components/styles/search-container.css"; // Import search container styles
 
 const Roles = () => {
     const [users, setUsers] = useState([]);
@@ -12,6 +14,8 @@ const Roles = () => {
     const [showModal, setShowModal] = useState(false);
     const [newUser, setNewUser] = useState({ id: "", username: "", password: "", role: "", phone: "", address: "" });
     const [isEditMode, setIsEditMode] = useState(false);
+    const [phoneError, setPhoneError] = useState("");
+    const [passwordError, setPasswordError] = useState("");
 
     useEffect(() => {
         fetchUsers();
@@ -26,11 +30,44 @@ const Roles = () => {
     const handleSearch = e => setSearchTerm(e.target.value);
 
     const handleChange = e => {
-        setNewUser({ ...newUser, [e.target.name]: e.target.value });
-    };
+        const { name, value } = e.target;
+    
+           
 
+        if (name === "password") {
+            if (value.length < 6) {
+                setPasswordError("Password must be at least 6 characters long");
+            } else {
+                setPasswordError("");
+            }
+        }
+    
+        setNewUser({ ...newUser, [name]: value });
+    };
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
+    
+        let hasError = false;
+    
+        if (newUser.phone.length !== 10) {
+            setPhoneError("Phone number must be exactly 10 digits");
+            hasError = true;
+        } else {
+            setPhoneError("");
+        }
+    
+        if (newUser.password.length < 6) {
+            setPasswordError("Password must be at least 6 characters long");
+            hasError = true;
+        } else {
+            setPasswordError("");
+        }
+    
+        if (hasError) {
+            return;
+        }
+    
         try {
             if (isEditMode) {
                 await axios.put(`http://localhost:5000/api/user/users/${newUser.id}`, newUser);
@@ -78,11 +115,11 @@ const Roles = () => {
                 <div className="content">
                     <div className="top-bar">
                         <div className="top-bar-content">
-                            <button className="add-role-button" onClick={openAddModal}>
+                            <button className="add-button" onClick={openAddModal}>
                                 <span className="plus-icon">+</span> Add User
                             </button>
                             <div className="search-container">
-                                <FaSearch className="search-icon" />
+                                <FiSearch className="search-icon" />
                                 <input
                                     type="text"
                                     placeholder="Search here..."
@@ -98,6 +135,7 @@ const Roles = () => {
                             <tr>
                                 <th>User ID</th>
                                 <th>Username</th>
+                                <th>Password</th>
                                 <th>Address</th>
                                 <th>Phone</th>
                                 <th>Role</th>
@@ -109,12 +147,13 @@ const Roles = () => {
                                 <tr key={user.id}>
                                     <td>{user.id}</td>
                                     <td>{user.username}</td>
+                                    <td>{user.password}</td>
                                     <td>{user.address}</td>
                                     <td>{user.phone}</td>
                                     <td>{user.role}</td>
                                     <td>
-                                        <button className="edit-button" onClick={() => handleEdit(user)}><FaEdit /></button>
-                                        <button className="delete-button" onClick={() => handleDelete(user.id)}><FaTrash /></button>
+                                        <button className="edit-button" onClick={() => handleEdit(user)}><FiEdit /></button>
+                                        <button className="delete-button" onClick={() => handleDelete(user.id)}><FiTrash2 /></button>
                                     </td>
                                 </tr>
                             ))}
@@ -127,8 +166,10 @@ const Roles = () => {
                                     <input name="id" placeholder="User ID" value={newUser.id} onChange={handleChange} required />
                                     <input name="username" placeholder="Username" value={newUser.username} onChange={handleChange} required />
                                     <input name="password" type="password" placeholder="Password" value={newUser.password} onChange={handleChange} required />
+                                    {passwordError && <span className="error-message">{passwordError}</span>}
                                     <input name="address" placeholder="Address" value={newUser.address} onChange={handleChange} required />
                                     <input name="phone" placeholder="Phone" value={newUser.phone} onChange={handleChange} required />
+                                    {phoneError && <span className="error-message">{phoneError}</span>}
                                     <select name="role" value={newUser.role} onChange={handleChange} required>
                                         <option value="">Select Role</option>
                                         <option value="admin">Admin</option>
@@ -136,8 +177,8 @@ const Roles = () => {
                                         <option value="delivery">Delivery</option>
                                     </select>
                                     <div className="modal-buttons">
-                                        <button type="submit"><FaCheck /> {isEditMode ? "Update" : "Add"}</button>
-                                        <button type="button" onClick={closeModal}><FaTimes /> Cancel</button>
+                                        <button type="submit"><FiCheck /> {isEditMode ? "Update" : "Add"}</button>
+                                        <button type="button" onClick={closeModal}><FiX /> Cancel</button>
                                     </div>
                                 </form>
                             </div>

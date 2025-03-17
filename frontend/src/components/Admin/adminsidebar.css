@@ -4,7 +4,7 @@
 .sidebar {
     width: 250px;
     height: 100vh;
-    background-color: #7A5B4D;
+    background-color: #5c2c2b;
     color: white;
     padding: 20px;
     position: fixed;
@@ -42,16 +42,20 @@
     gap: 10px;
     padding: 12px;
     border-radius: 5px;
-    font-size: 1 rem;
+    font-size: 1rem;
     font-family: 'Open Sans', sans-serif; /* Apply Open Sans font */
+    width: 100%; /* Ensure full width */
+    box-sizing: border-box; /* Include padding and border in element's total width and height */
 }
 
 .sidebar nav ul li a:hover,
 .sidebar nav ul li a.active,
 .sidebar nav ul li .dropdown-link:hover,
 .sidebar nav ul li .dropdown-link.active {
-    background-color: #4E3B31;
+    background-color: #381b1a;
+    border-radius: 5px;
 }
+
 
 .sidebar-header {
     display: flex;
@@ -78,7 +82,7 @@
 .dropdown-menu {
     list-style: none;
     padding: 10px;
-    background-color: #b28d75;
+    background-color:  #79595e;
     position: absolute;
     top: 40px; /* Adjust this value to position the dropdown correctly */
     left: 0;
@@ -107,10 +111,10 @@
 
 .dropdown-menu li a:hover,
 .dropdown-menu li a.active {
-    background-color: #4E3B31;
+    background-color: #381b1a;
 }
 
 .active {
     font-weight: bold;
-    background-color: #4E3B31;
+    background-color: #381b1a;
 }

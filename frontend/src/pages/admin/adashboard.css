@@ -2,7 +2,6 @@
     display: flex;
 }
 
-
 .dashboard-content {
     display: grid;
     grid-template-columns: repeat(4, 1fr); /* Change to 4 columns */

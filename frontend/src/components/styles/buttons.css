@@ -1,0 +1,32 @@
+
+.edit-button, .delete-button {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    color:  #9c634f;/* Edit button color */
+    margin-right: 5px;
+    font-size: 1.2rem; 
+    align-items: center;
+}
+
+.edit-button:hover, .delete-button:hover {
+    color: #3d1802;
+}
+
+ 
+.add-button {
+   
+    background-color: #5c2c2b;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.933);
+    color: #fff;
+    padding: 10px 20px;
+    border: 3px solid #522726;
+    cursor: pointer;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    border-radius: 10px;
+    font-family: 'Roboto', sans-serif;
+
+    
+} 

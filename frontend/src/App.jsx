@@ -4,6 +4,7 @@ import LoginPop from "./components/Login/LoginPopup";
 import AdminDashboard from "./pages/admin/adashboard";
 import Roles from "./pages/admin/roles";
 import Products from "./pages/admin/products";
+import Product from "./pages/admin/product";
 import Orders from "./pages/admin/orders";
 import Customers from "./pages/admin/customers";
 import Reports from "./pages/admin/reports";
@@ -14,6 +15,7 @@ import CrafterAssign from "./pages/admin/crafter_assign";
 import CrafterDashboard from "./pages/crafter/cdashboard";
 import Assignments from "./pages/crafter/Assignments";
 import Uploads from "./pages/crafter/Uploads";
+
 const App = () => {
   return (
     <Router>
@@ -22,6 +24,7 @@ const App = () => {
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/admin/roles" element={<Roles />} />
         <Route path="/admin/products" element={<Products />} />
+        <Route path="/admin/product" element={<Product />} />
         <Route path="/admin/orders" element={<Orders />} />
         <Route path="/admin/customers" element={<Customers />} />
         <Route path="/admin/reports" element={<Reports />} />

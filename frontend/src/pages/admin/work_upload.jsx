@@ -3,10 +3,14 @@ import './work_upload.css';
 import AdminSidebar from '../../components/Admin/adminsidebar';
 import AdminNavbar from '../../components/Admin/adminnavbar';
 import "../../components/styles/table.css";
+import "../../components/styles/buttons.css"; // Import button styles
+import "../../components/styles/search-container.css";
+import { FiSearch } from 'react-icons/fi';
 
 const WorkUpload = () => {
   const [uploads, setUploads] = useState([]);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Fetch work uploads for admin view
   const fetchUploads = async () => {
@@ -36,13 +40,43 @@ const WorkUpload = () => {
     // Handle status change logic here
   };
 
+  const handleSearch = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const openAddModal = () => {
+    // Define the logic for opening the add modal here
+  };
+
+  const filteredUploads = uploads.filter((upload) => {
+    return (
+      upload.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      upload.CategoryName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      upload.status.toLowerCase().includes(searchTerm.toLowerCase())||
+      upload.crafter.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
   return (
     <div className="customers-page">
       <AdminSidebar />
       <div className="main-content">
         <AdminNavbar />
         <div className="content">
-          <h1>Work Upload Management</h1>
+          <div className="top-bar">
+            <div className="top-bar-content">
+              <div className="search-container">
+                <FiSearch className="search-icon" />
+                <input
+                  type="text"
+                  placeholder="Search here..."
+                  className="search-bar"
+                  value={searchTerm}
+                  onChange={handleSearch}
+                />
+              </div>
+            </div>
+          </div>
           {error && <p className="error-message">{error}</p>}
           <table className="table work-upload-table">
             <thead>
@@ -58,7 +92,7 @@ const WorkUpload = () => {
               </tr>
             </thead>
             <tbody>
-              {Array.isArray(uploads) && uploads.map((upload) => (
+              {Array.isArray(filteredUploads) && filteredUploads.map((upload) => (
                 <tr key={upload.work_id}>
                   <td>{upload.work_id}</td>
                   <td>{upload.product_name}</td>

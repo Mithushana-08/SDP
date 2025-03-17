@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const { getAllUploads, getAllUploadsForAdmin, updateUploadStatus, updateUploadPrice } = require("../controllers/uploadcontroller"); // Controller functions
+const { getAllUploads, getAllUploadsForAdmin, getAllProducts, addUpload } = require("../controllers/uploadcontroller");
 
-// Define GET /api/upload (this is what your frontend is calling)
 router.get("/", getAllUploads);
-router.get("/admin", getAllUploadsForAdmin);  // <- For your admin page
+router.get("/admin", getAllUploadsForAdmin);
+router.get("/products", getAllProducts); // Fetch product list for dropdown
+router.post("/", addUpload); // Ensure this line is present
 
 module.exports = router;

@@ -14,12 +14,53 @@
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
 .icon {
     cursor: pointer;
     margin-right: 10px;
-    color: #007bff;
+    color: #9c634f;
 }
 
 .icon:hover {
-    color: #0056b3;
+    color:  #3d1802;;
+}
+
+
+
+.modal {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex; justify-content: center; align-items: center;
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    width: 400px;
+    border-radius: 10px;
+}
+
+.search-container {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.search-icon {
+    position: absolute;
+    left: 10px;
+    color: #888;
+}
+
+.search-bar {
+    padding-left: 30px; /* Add padding to make space for the search icon */
+    flex-grow: 1;
+    max-width: 300px;
 }

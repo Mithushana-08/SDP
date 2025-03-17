@@ -2,7 +2,7 @@ const db = require('../config/db');
 
 // Function to get all users
 const getUsers = (req, res) => {
-    const sql = "SELECT id, username, role, phone, address FROM users";
+    const sql = "SELECT id, username, password,role, phone, address FROM users";
     db.query(sql, (err, results) => {
         if (err) {
             console.error('Error querying the database:', err);

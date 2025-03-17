@@ -2,24 +2,12 @@
     display: flex;
 }
 
-
-
-.btn-add {
-    background-color: #9c634f;
-    color: white;
-    width: 85px;
-    padding: 10px 20px;
-    border: none;
-    cursor: pointer;
-    margin-bottom: 20px;
+.top-bar {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    border-radius: 10px;
-    font-family: 'Roboto', sans-serif;
-}
-
-.btn-add:hover {
-    background-color: #421505;
+    margin-bottom: 20px;
+    width: 100%;
 }
 
 

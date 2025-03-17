@@ -21,41 +21,72 @@ const LoginPopup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(""); // Reset error
-  
+
     console.log("Form submitted", formData); // Log form data
-  
+
     try {
       const response = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-  
+
       const data = await response.json();
-  
+
       console.log("Response received", data); // Log response data
-  
+
       if (!response.ok) {
         setError(data.message || "Login failed");
         return;
       }
-  
+
       // Store Token in LocalStorage
       localStorage.setItem("token", data.token);
-  
+
+      // Fetch protected data
+      fetchProtectedData(data.token);
+
       // Redirect based on role
       if (data.user.role === "admin") {
         console.log("Redirecting to /admin-dashboard");
         navigate("/admin-dashboard");
       } else if (data.user.role === "crafter") {
-        console.log("Redirectig to /crafter/cdashboard");
+        console.log("Redirecting to /crafter/cdashboard");
         navigate("/crafter/cdashboard");
       } else if (data.user.role === "delivery") {
         console.log("Redirecting to /delivery-dashboard");
         navigate("/delivery-dashboard");
+      } else {
+        setError("Invalid user role.");
       }
     } catch (error) {
       console.error("Error during login", error); // Log any errors
+      setError("Server error. Please try again later.");
+    }
+  };
+
+  const fetchProtectedData = async (token) => {
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/protected", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      console.log("Protected route data:", data); // Log protected route data
+
+      if (!response.ok) {
+        setError(data.message || "Failed to fetch protected data");
+        return;
+      }
+
+      // Handle the protected data as needed
+    } catch (error) {
+      console.error("Error accessing protected route:", error); // Log any errors
       setError("Server error. Please try again later.");
     }
   };
