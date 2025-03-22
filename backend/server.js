@@ -7,7 +7,7 @@ const userRoutes = require("./routes/userRoutes");
 const categoryRoutes = require('./routes/categoryRoutes');
 const uploadRoutes = require("./routes/uploadRoutes");
 const productRoutes = require('./routes/productRoutes'); 
-const productmaster = require('./routes/productmasterRoutes') // Double-check this is correct
+const productmaster = require('./routes/productmasterRoutes'); 
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -21,8 +21,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/upload", uploadRoutes);
-app.use("/api/products", productRoutes);  // Product routes (correct path)
-app.use("/api/productmaster", productmaster); // Double-check this is correct
+app.use("/api/products", productRoutes);
+app.use("/api/productmaster", productmaster); 
 
 // Error handling middleware
 app.use((err, req, res, next) => {

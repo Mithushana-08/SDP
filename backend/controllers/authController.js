@@ -1,9 +1,24 @@
-// filepath: /D:/crafttary/SDP/backend/controllers/authController.js
 const db = require("../config/db");
-const jwt = require("jsonwebtoken"); // Import the JWT library
-require('dotenv').config(); // Load environment variables
+const jwt = require("jsonwebtoken");
+const crypto = require("crypto"); // For generating unique session IDs
+require("dotenv").config(); // To load environment variables
+
 const secretKey = process.env.JWT_SECRET_KEY;
 
+// Function to generate a unique JWT token for the user
+const generateToken = (user) => {
+    return jwt.sign(
+        {
+            id: user.id,            // User ID
+            role: user.role,        // User role
+            sessionId: crypto.randomUUID(),  // Unique session ID
+        },
+        secretKey,                    // Secret key for signing the token
+        { expiresIn: "1h" }           // Token expiry time
+    );
+};
+
+// Login function to authenticate user and return the token
 const loginUser = (req, res) => {
     const { username, password } = req.body;
 
@@ -22,7 +37,7 @@ const loginUser = (req, res) => {
         if (results.length > 0) {
             // User found, generate JWT token
             const user = results[0];
-            const token = jwt.sign({ id: user.id, role: user.role }, secretKey, { expiresIn: '1h' });
+            const token = generateToken(user);
 
             // Respond with token and user info
             res.json({ message: "Login successful", token, user });

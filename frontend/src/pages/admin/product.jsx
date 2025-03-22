@@ -12,18 +12,26 @@ const Product = () => {
 
     useEffect(() => {
         fetch('http://localhost:5000/api/productmaster')  // Point to backend
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Network response was not ok: ${response.statusText}`);
+                }
+                return response.json();
+            })
             .then(data => setProducts(data))
-            .catch(error => console.error('Error fetching product data:', error));
+            .catch(error => {
+                console.error('Error fetching product data:', error);
+                setProducts([]);  // Set products to an empty array on error
+            });
     }, []);
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
     };
 
-    const filteredProducts = products.filter(product =>
+    const filteredProducts = Array.isArray(products) ? products.filter(product =>
         product.product_name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    ) : [];
 
     return (
         <div className="reports-page">

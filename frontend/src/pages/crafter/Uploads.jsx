@@ -10,6 +10,7 @@ const Uploads = () => {
     const [products, setProducts] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+    const [isLoading, setIsLoading] = useState(true); // Loading state for products
 
     const [formData, setFormData] = useState({
         product_id: "",
@@ -17,9 +18,12 @@ const Uploads = () => {
         category_id: "",
         CategoryName: "",    // This will be populated from backend response
         customizable: "",
+        base_price: 0,
         quantity: 1,
-        crafter_id: "CRAFT123"  // Replace with actual logged-in crafter ID if available
+        crafter_id: "U2"  // Replace with actual logged-in crafter ID if available
     });
+
+    
 
     useEffect(() => {
         fetchUploads();
@@ -39,12 +43,14 @@ const Uploads = () => {
 
     const fetchProducts = async () => {
         try {
-            const response = await fetch("http://localhost:5000/api/products");  // Adjust if your route differs
-            if (!response.ok) throw new Error("Failed to fetch products");
+            const response = await fetch("http://localhost:5000/api/productmaster");  // Adjust if your route differs
+            if (!response.ok) throw new Error(`Failed to fetch products: ${response.statusText}`);
             const data = await response.json();
             setProducts(data);
+            setIsLoading(false);  // Set loading to false when done
         } catch (error) {
             console.error("Error fetching products:", error);
+            setIsLoading(false);  // Ensure loading is set to false even if there's an error
         }
     };
 
@@ -53,14 +59,14 @@ const Uploads = () => {
         const selectedProduct = products.find(p => p.product_id === productId);
 
         if (selectedProduct) {
-            console.log("Selected Product:", selectedProduct); // Log selected product details
             setFormData({
                 ...formData,
                 product_id: selectedProduct.product_id,
                 product_name: selectedProduct.product_name,
                 category_id: selectedProduct.category_id,  // Ensure this matches the data structure
-                CategoryName: selectedProduct.category,  // Ensure this matches the data structure
+                CategoryName: selectedProduct.category_name,  // Ensure this matches the data structure
                 customizable: selectedProduct.customizable || "No",  // Default to "No" if 'customizable' is missing
+                base_price: selectedProduct.base_price
             });
         } else {
             console.log("Product not found");
@@ -115,7 +121,6 @@ const Uploads = () => {
                     <table className="table uploads-table">
                         <thead>
                             <tr>
-                               
                                 <th>Product Name</th>
                                 <th>Category</th>
                                 <th>Quantity</th>
@@ -127,7 +132,6 @@ const Uploads = () => {
                             {filteredUploads.length > 0 ? (
                                 filteredUploads.map((upload) => (
                                     <tr key={upload.work_id}>
-                                       
                                         <td>{upload.product_name}</td>
                                         <td>{upload.CategoryName}</td> {/* Category name coming from backend */}
                                         <td>{upload.quantity}</td>
@@ -153,11 +157,19 @@ const Uploads = () => {
                                     <label>Product</label>
                                     <select onChange={handleProductSelect} required>
                                         <option value="">Select Product</option>
-                                        {products.map((product) => (
-                                            <option key={product.product_id} value={product.product_id}>
-                                                {product.product_name}
-                                            </option>
-                                        ))}
+                                        {isLoading ? (
+                                            <option disabled>Loading products...</option>
+                                        ) : (
+                                            products.length > 0 ? (
+                                                products.map((product) => (
+                                                    <option key={product.product_id} value={product.product_id}>
+                                                        {product.product_name}
+                                                    </option>
+                                                ))
+                                            ) : (
+                                                <option disabled>No products available</option>
+                                            )
+                                        )}
                                     </select>
 
                                     <label>Quantity</label>
@@ -168,14 +180,17 @@ const Uploads = () => {
                                         onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                                         required
                                     />
-
-                                   
+                                    <label>CategoryID</label>
+                                    <input type="text" value={formData.category_id} disabled />
 
                                     <label>Category</label>
                                     <input type="text" value={formData.CategoryName} disabled />  {/* Display category name */}
 
                                     <label>Customizable</label>
-                                    <input type="text" value={formData.customizable} disabled />
+                                    <input type="text" value={formData.customizable} disabled />  {/* Display customizable status */}
+
+                                    <label>Base Price</label>
+                                    <input type="number" value={formData.base_price} disabled />  {/* Display base price */}
 
                                     <button type="submit">Submit</button>
                                     <button type="button" onClick={() => setShowModal(false)}>Cancel</button>

@@ -1,0 +1,87 @@
+/* src/App.css */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background-color: #f4f4f4;
+  }
+  
+  html {
+    scroll-behavior: smooth; /* Enables smooth scrolling */
+  }
+  
+  .section {
+    padding: 100px 20px;
+    margin-top: 60px; /* To avoid navbar overlap */
+    text-align: center;
+  }
+  
+  #home {
+    background-color: #e2e2e2;
+  }
+  
+  #shop {
+    background-color: #f8f8f8;
+  }
+  
+  #cart {
+    background-color: #dcdcdc;
+  }
+  
+  #about {
+    background-color: #fafafa;
+  }
+  
+  #contact {
+    background-color: #e7e7e7;
+  }
+  
+  /* Grid layout for categories */
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 columns for larger screens */
+    gap: 20px;
+    justify-items: center;
+    margin-top: 30px;
+  }
+  
+  .category-card {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  .category-card:hover {
+    transform: translateY(-10px);
+  }
+  
+  .category-card img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+  
+  .category-card h3 {
+    margin-top: 10px;
+    font-size: 18px;
+    color: #333;
+  }
+  
+  /* Responsive for mobile */
+  @media (max-width: 768px) {
+    .category-grid {
+      grid-template-columns: 1fr 1fr; /* 2 columns on smaller screens */
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .category-grid {
+      grid-template-columns: 1fr; /* 1 column on extra small screens */
+    }
+  }
+  

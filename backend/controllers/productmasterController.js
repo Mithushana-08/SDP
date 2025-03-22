@@ -6,10 +6,12 @@ const getProducts = (req, res) => {
             pm.product_id,
             pm.product_name,
             c.CategoryName AS category_name,
+            c.CategoryID AS category_id,
             pm.base_price,
             pm.customizable,
             pm.description,
-            pm.image
+            pm.image,
+            pm.status
         FROM 
             product_master pm
         JOIN 

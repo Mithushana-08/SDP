@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import AdminSidebar from "../../components/Admin/adminsidebar";
 import AdminNavbar from "../../components/Admin/adminnavbar";
-import { FiEdit, FiTrash2, FiSearch, FiCheck, FiX, FiDelete } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiSearch } from 'react-icons/fi';
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./inventory.css";
 import "../../components/styles/table.css";
-import "../../components/styles/buttons.css"; // Import button styles
-import "../../components/styles/search-container.css"; 
+import "../../components/styles/buttons.css";
+import "../../components/styles/search-container.css";
 
 const Inventory = () => {
     const [categories, setCategories] = useState([]);
@@ -19,89 +19,112 @@ const Inventory = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
 
+    // Fetch categories from API
+    const fetchCategories = async () => {
+        try {
+            const response = await fetch("http://localhost:5000/api/categories");
+            if (!response.ok) throw new Error("Failed to fetch categories");
+            const data = await response.json();
+            setCategories(data);
+        } catch (error) {
+            console.error("Error fetching categories:", error);
+        }
+    };
+
+    // Fetch categories on page load
     useEffect(() => {
-        fetch("http://localhost:5000/api/categories")
-            .then(response => response.json())
-            .then(data => setCategories(data))
-            .catch(error => console.error("Error fetching data:", error));
+        fetchCategories();
     }, []);
 
+    // Handle input changes
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setNewCategory({ ...newCategory, [name]: value });
     };
 
+    // Handle search input
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
     };
 
-    const handleAddCategory = (e) => {
+    // Add new category
+    const handleAddCategory = async (e) => {
         e.preventDefault();
-        fetch("http://localhost:5000/api/categories", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(newCategory)
-        })
-        .then(response => response.json())
-        .then(data => {
-            setCategories([...categories, data]);
-            setNewCategory({ CategoryID: '', CategoryName: '', Description: '' });
+        const { CategoryID, ...categoryData } = newCategory; // Exclude CategoryID
+
+        try {
+            const response = await fetch("http://localhost:5000/api/categories", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(categoryData),
+            });
+
+            if (!response.ok) throw new Error("Failed to add category");
+
+            await fetchCategories(); // Refresh data after adding
+            setNewCategory({ CategoryID: "", CategoryName: "", Description: "" });
             setShowForm(false);
-        })
-        .catch(error => console.error("Error adding category:", error));
+        } catch (error) {
+            console.error("Error adding category:", error);
+        }
     };
 
-    const handleUpdateCategory = (e) => {
+    // Update category
+    const handleUpdateCategory = async (e) => {
         e.preventDefault();
-        fetch(`http://localhost:5000/api/categories/${newCategory.CategoryID}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(newCategory)
-        })
-        .then(response => response.json())
-        .then(data => {
-            const updatedCategories = categories.map(category =>
-                category.CategoryID === data.CategoryID ? data : category
-            );
-            setCategories(updatedCategories);
-            setNewCategory({ CategoryID: '', CategoryName: '', Description: '' });
+        const { CategoryID, ...categoryData } = newCategory; // Exclude CategoryID
+
+        try {
+            const response = await fetch(`http://localhost:5000/api/categories/${newCategory.CategoryID}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(categoryData),
+            });
+
+            if (!response.ok) throw new Error("Failed to update category");
+
+            await fetchCategories(); // Refresh data after updating
+            setNewCategory({ CategoryID: "", CategoryName: "", Description: "" });
             setShowForm(false);
             setIsEditing(false);
-        })
-        .catch(error => console.error("Error updating category:", error));
+        } catch (error) {
+            console.error("Error updating category:", error);
+        }
     };
 
-    const handleDeleteCategory = (CategoryID) => {
-        fetch(`http://localhost:5000/api/categories/${CategoryID}`, {
-            method: 'DELETE'
-        })
-        .then(() => {
-            const updatedCategories = categories.filter(category => category.CategoryID !== CategoryID);
-            setCategories(updatedCategories);
-        })
-        .catch(error => console.error("Error deleting category:", error));
+    // Delete category
+    const handleDeleteCategory = async (CategoryID) => {
+        try {
+            await fetch(`http://localhost:5000/api/categories/${CategoryID}`, {
+                method: "DELETE",
+            });
+
+            await fetchCategories(); // Refresh data after deletion
+        } catch (error) {
+            console.error("Error deleting category:", error);
+        }
     };
 
+    // Show form for adding/editing
     const handleShowForm = () => {
         setShowForm(true);
     };
 
+    // Close form
     const handleCloseForm = () => {
         setShowForm(false);
         setIsEditing(false);
-        setNewCategory({ CategoryID: '', CategoryName: '', Description: '' });
+        setNewCategory({ CategoryID: "", CategoryName: "", Description: "" });
     };
 
+    // Edit category
     const handleEditCategory = (category) => {
         setNewCategory(category);
         setIsEditing(true);
         setShowForm(true);
     };
 
+    // Filter categories based on search
     const filteredCategories = categories.filter(category =>
         category.CategoryName.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -121,27 +144,18 @@ const Inventory = () => {
                             <input
                                 type="text"
                                 placeholder="Search categories..."
-                                  className="search-bar"
+                                className="search-bar"
                                 value={searchTerm}
                                 onChange={handleSearchChange}
                             />
-                           
                         </div>
                     </div>
+
                     {showForm && (
                         <div className="overlay">
                             <div className="add-category-form">
                                 <h2>{isEditing ? "Edit Category" : "Add New Category"}</h2>
                                 <form onSubmit={isEditing ? handleUpdateCategory : handleAddCategory}>
-                                    <input
-                                        type="text"
-                                        name="CategoryID"
-                                        placeholder="Category ID"
-                                        value={newCategory.CategoryID}
-                                        onChange={handleInputChange}
-                                        disabled={isEditing}
-                                        required
-                                    />
                                     <input
                                         type="text"
                                         name="CategoryName"
@@ -170,6 +184,7 @@ const Inventory = () => {
                             </div>
                         </div>
                     )}
+
                     <table className="table category-table">
                         <thead>
                             <tr>
@@ -186,14 +201,13 @@ const Inventory = () => {
                                     <td>{category.CategoryName}</td>
                                     <td>{category.Description}</td>
                                     <td>
-                                        <i className="edit-button" onClick={() => handleEditCategory(category)}><FiEdit/></i>
-                                        <i className="delete-button" onClick={() => handleDeleteCategory(category.CategoryID)}><FiTrash2/></i>
+                                        <i className="edit-button" onClick={() => handleEditCategory(category)}><FiEdit /></i>
+                                        <i className="delete-button" onClick={() => handleDeleteCategory(category.CategoryID)}><FiTrash2 /></i>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-                    {/* Add more content here */}
                 </div>
             </div>
         </div>

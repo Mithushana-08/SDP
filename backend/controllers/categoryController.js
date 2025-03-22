@@ -13,19 +13,27 @@ const getCategories = (req, res) => {
 };
 
 const addCategory = (req, res) => {
-    const { CategoryID, CategoryName, Description } = req.body;
+    const { CategoryName, Description } = req.body;
 
-    if (!CategoryID || !CategoryName || !Description) {
+    if (!CategoryName || !Description) {
         return res.status(400).json({ error: "All fields are required" });
     }
 
-    const sql = "INSERT INTO Categories (CategoryID, CategoryName, Description) VALUES (?, ?, ?)";
-    db.query(sql, [CategoryID, CategoryName, Description], (err, result) => {
+    const sql = "INSERT INTO Categories (CategoryName, Description) VALUES (?, ?)";
+    db.query(sql, [CategoryName, Description], (err, result) => {
         if (err) {
             console.error("Error inserting category:", err);
             return res.status(500).json({ error: "Database error" });
         }
-        res.status(201).json({ id: result.insertId, CategoryID, CategoryName, Description });
+        // Fetch the newly inserted category to get the generated CategoryID
+        const fetchSql = "SELECT * FROM Categories WHERE CategoryID = ?";
+        db.query(fetchSql, [result.insertId], (fetchErr, fetchResult) => {
+            if (fetchErr) {
+                console.error("Error fetching new category:", fetchErr);
+                return res.status(500).json({ error: "Database error" });
+            }
+            res.status(201).json(fetchResult[0]);
+        });
     });
 };
 

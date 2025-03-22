@@ -8,9 +8,9 @@ router.post("/login", loginUser); // Public route, no auth middleware needed
 
 // Example protected route
 router.get("/user-profile", authenticateUser, (req, res) => {
-    // Use req.userId to fetch user data from the database
+    // Use req.user.id to fetch user data from the database
     const sql = "SELECT * FROM users WHERE id = ?";
-    db.query(sql, [req.userId], (err, results) => {
+    db.query(sql, [req.user.id], (err, results) => {
         if (err) {
             console.error("Database Query Error: ", err);
             return res.status(500).json({ message: "Database error", error: err.message });
@@ -26,7 +26,7 @@ router.get("/user-profile", authenticateUser, (req, res) => {
 
 // New protected route for testing
 router.get("/protected", authenticateUser, (req, res) => {
-    res.json({ message: "This is a protected route", userId: req.id, role: req.role });
+    res.json({ message: "This is a protected route", userId: req.user.id, role: req.user.role });
 });
 
 module.exports = router;
