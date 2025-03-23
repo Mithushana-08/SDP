@@ -12,6 +12,9 @@ const App = () => {
     { id: 4, name: 'Toys', imageUrl: 'https://via.placeholder.com/150' },
     { id: 5, name: 'Books', imageUrl: 'https://via.placeholder.com/150' },
     { id: 6, name: 'Beauty', imageUrl: 'https://via.placeholder.com/150' },
+    { id: 7, name: 'Sports', imageUrl: 'https://via.placeholder.com/150' },  // New
+    { id: 8, name: 'Jewelry', imageUrl: 'https://via.placeholder.com/150' }, // New
+    { id: 9, name: 'Home Decor', imageUrl: 'https://via.placeholder.com/150' }
   ];
 
   return (
@@ -37,10 +40,7 @@ const App = () => {
         </div>
       </section>
 
-      <section id="cart" className="section">
-        <h1>Shopping Cart</h1>
-        <p>Your cart is empty. Start adding items to it!</p>
-      </section>
+      
 
       <section id="about" className="section">
         <h1>About Us</h1>

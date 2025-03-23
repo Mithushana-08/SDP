@@ -32,12 +32,47 @@ const WorkUpload = () => {
     fetchUploads();
   }, []);
 
-  const handlePriceChange = (workId, newPrice) => {
-    // Handle price change logic here
+  const handlePriceChange = async (workId, newPrice) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/upload/update-price/${workId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ price: newPrice }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update price');
+      }
+      fetchUploads(); // Refresh the uploads list
+    } catch (error) {
+      console.error("Failed to update price:", error);
+      setError("Failed to update price!");
+    }
   };
 
-  const handleStatusChange = (workId, newStatus) => {
-    // Handle status change logic here
+  const handleStatusChange = async (workId, newStatus) => {
+    try {
+      if (newStatus === 'Approved') {
+        const response = await fetch(`http://localhost:5000/api/upload/approve/${workId}`, {
+          method: 'POST',
+        });
+        if (!response.ok) {
+          throw new Error('Failed to approve upload');
+        }
+      } else if (newStatus === 'Rejected') {
+        const response = await fetch(`http://localhost:5000/api/upload/reject/${workId}`, {
+          method: 'POST',
+        });
+        if (!response.ok) {
+          throw new Error('Failed to reject upload');
+        }
+      }
+      fetchUploads(); // Refresh the uploads list
+    } catch (error) {
+      console.error("Failed to update upload status:", error);
+      setError("Failed to update upload status!");
+    }
   };
 
   const handleSearch = (event) => {
@@ -52,7 +87,7 @@ const WorkUpload = () => {
     return (
       upload.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       upload.CategoryName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      upload.status.toLowerCase().includes(searchTerm.toLowerCase())||
+      upload.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
       upload.crafter.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });

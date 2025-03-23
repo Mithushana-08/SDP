@@ -11,6 +11,7 @@ import '../../components/styles/search-container.css';
 const Products = () => {
     const [products, setProducts] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         fetchProducts();
@@ -19,9 +20,11 @@ const Products = () => {
     const fetchProducts = async () => {
         try {
             const response = await axios.get('http://localhost:5000/api/products');  // Matches backend
+            console.log("Fetched products:", response.data);  // Log the fetched data
             setProducts(response.data);
         } catch (error) {
             console.error("Failed to fetch products:", error);
+            setError("Failed to fetch products. Please try again later.");
         }
     };
 
@@ -57,6 +60,7 @@ const Products = () => {
                             </div>
                         </div>
                     </div>
+                    {error && <p className="error-message">{error}</p>}
                     <table className="table products-table">
                         <thead>
                             <tr>
@@ -77,9 +81,9 @@ const Products = () => {
                                     <td>{product.product_id}</td>
                                     <td>{product.product_name}</td>
                                     <td>{product.category}</td>
-                                    <td>Rs.{product.price.toFixed(2)}</td>
+                                    <td>Rs.{product.price ? product.price.toFixed(2) : 'N/A'}</td>
                                     <td>{product.stock_qty}</td>
-                                    <td>Rs.{product.total_price.toFixed(2)}</td>
+                                    <td>Rs.{product.total_price ? product.total_price.toFixed(2) : 'N/A'}</td>
                                     <td>{product.crafter_name}</td>
                                     <td>{product.status}</td>
                                     <td>
