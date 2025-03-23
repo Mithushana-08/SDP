@@ -5,7 +5,8 @@ const userController = require('../controllers/userController');
 // Define the route for getting users
 router.get('/users', userController.getUsers);
 
-
+// Define the route for getting crafters
+router.get('/users/crafter', userController.getCrafters);
 
 // Define the route for adding a new user
 router.post('/users', userController.addUser);

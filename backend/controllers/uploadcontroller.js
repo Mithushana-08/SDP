@@ -83,10 +83,56 @@ const addUpload = (req, res) => {
     });
 };
 
+// Update an existing upload
+const updateUpload = (req, res) => {
+    const { product_id, category_id, quantity, crafter_id } = req.body;
+    const { id } = req.params;
+
+    if (!product_id || !category_id || !quantity || !crafter_id) {
+        console.error("Missing required fields:", { product_id, category_id, quantity, crafter_id });
+        return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const query = `
+        UPDATE work_upload
+        SET product_id = ?, category_id = ?, quantity = ?, crafter_id = ?
+        WHERE work_id = ?
+    `;
+
+    db.query(query, [product_id, category_id, quantity, crafter_id, id], (err, result) => {
+        if (err) {
+            console.error("Error updating upload:", err);
+            return res.status(500).json({ message: "Internal server error", error: err.message });
+        }
+        console.log("Upload updated successfully:", result);
+        res.status(200).json({ message: "Upload updated successfully" });
+    });
+};
+
+// Delete an upload
+const deleteUpload = (req, res) => {
+    const { id } = req.params;
+
+    const query = `
+        DELETE FROM work_upload
+        WHERE work_id = ?
+    `;
+
+    db.query(query, [id], (err, result) => {
+        if (err) {
+            console.error("Error deleting upload:", err);
+            return res.status(500).json({ message: "Internal server error", error: err.message });
+        }
+        console.log("Upload deleted successfully:", result);
+        res.status(200).json({ message: "Upload deleted successfully" });
+    });
+};
 
 module.exports = {
     getAllUploads,
     getAllUploadsForAdmin,
     getAllProducts,
     addUpload,
+    updateUpload,
+    deleteUpload
 };

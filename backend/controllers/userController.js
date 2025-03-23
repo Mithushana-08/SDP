@@ -12,7 +12,17 @@ const getUsers = (req, res) => {
     });
 };
 
-
+// Controller function to get crafters
+const getCrafters = (req, res) => {
+    const sql = "SELECT id, username, password, role, phone, address FROM users WHERE role = 'crafter'";
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error('Error querying the database:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(results);
+    });
+};
 
 // Function to add a new user
 const addUser = (req, res) => {
@@ -61,4 +71,4 @@ const deleteUser = (req, res) => {
     });
 };
 
-module.exports = { getUsers, addUser, updateUser, deleteUser };
+module.exports = { getUsers, getCrafters, addUser, updateUser, deleteUser };

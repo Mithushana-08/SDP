@@ -10,29 +10,81 @@ const Uploads = () => {
     const [products, setProducts] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
-    const [isLoading, setIsLoading] = useState(true); // Loading state for products
+    const [isLoading, setIsLoading] = useState(true);
 
     const [formData, setFormData] = useState({
         product_id: "",
         product_name: "",
         category_id: "",
-        CategoryName: "",    // This will be populated from backend response
+        CategoryName: "",
         customizable: "",
         base_price: 0,
         quantity: 1,
-        crafter_id: "U2"  // Replace with actual logged-in crafter ID if available
+        crafter_id: ""
     });
 
-    
+    const [editMode, setEditMode] = useState(false); // State to track if we're in edit mode
+    const [selectedUploadId, setSelectedUploadId] = useState(null); // Track which upload is being edited
 
     useEffect(() => {
-        fetchUploads();
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            console.error("No token found, please login again.");
+            return;
+        }
+
+        const fetchCrafterId = async () => {
+            try {
+                const response = await fetch("http://localhost:5000/api/user/users/crafter", {
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+                if (!response.ok) throw new Error("Failed to fetch crafter ID");
+        
+                const crafters = await response.json(); // Now expecting an array
+                console.log("Crafter response:", crafters);
+        
+                // Get the logged in user ID from the token
+                const decodedToken = JSON.parse(atob(token.split('.')[1]));
+                const loggedInUserId = decodedToken.id;
+                
+                // Find the crafter that matches the logged in user ID
+                const currentCrafter = crafters.find(crafter => crafter.id === loggedInUserId);
+        
+                if (currentCrafter) {
+                    setFormData(prevData => ({
+                        ...prevData,
+                        crafter_id: currentCrafter.id,
+                    }));
+                    fetchUploads(currentCrafter.id);
+                } else {
+                    console.error("No matching crafter found for logged-in user.");
+                }
+            } catch (error) {
+                console.error("Error fetching crafter ID:", error);
+            }
+        };
+
+        fetchCrafterId();
         fetchProducts();
     }, []);
 
-    const fetchUploads = async () => {
+    const fetchUploads = async (crafterId) => {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            console.error("No token found for fetching uploads.");
+            return;
+        }
+
         try {
-            const response = await fetch("http://localhost:5000/api/upload");   // Adjust if your route differs
+            const response = await fetch(`http://localhost:5000/api/upload?crafter_id=${crafterId}`, {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
             if (!response.ok) throw new Error("Failed to fetch uploads");
             const data = await response.json();
             setUploads(data);
@@ -42,15 +94,26 @@ const Uploads = () => {
     };
 
     const fetchProducts = async () => {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            console.error("No token found for fetching products.");
+            return;
+        }
+
         try {
-            const response = await fetch("http://localhost:5000/api/productmaster");  // Adjust if your route differs
+            const response = await fetch("http://localhost:5000/api/productmaster", {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
             if (!response.ok) throw new Error(`Failed to fetch products: ${response.statusText}`);
             const data = await response.json();
             setProducts(data);
-            setIsLoading(false);  // Set loading to false when done
+            setIsLoading(false);
         } catch (error) {
             console.error("Error fetching products:", error);
-            setIsLoading(false);  // Ensure loading is set to false even if there's an error
+            setIsLoading(false);
         }
     };
 
@@ -63,9 +126,9 @@ const Uploads = () => {
                 ...formData,
                 product_id: selectedProduct.product_id,
                 product_name: selectedProduct.product_name,
-                category_id: selectedProduct.category_id,  // Ensure this matches the data structure
-                CategoryName: selectedProduct.category_name,  // Ensure this matches the data structure
-                customizable: selectedProduct.customizable || "No",  // Default to "No" if 'customizable' is missing
+                category_id: selectedProduct.category_id,
+                CategoryName: selectedProduct.category_name,
+                customizable: selectedProduct.customizable || "No",
                 base_price: selectedProduct.base_price
             });
         } else {
@@ -75,19 +138,85 @@ const Uploads = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("Form Data to be sent:", formData); // Log form data to ensure it's correct
+        console.log("Form Data to be sent:", formData);
+
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            console.error("No token found for submitting upload.");
+            return;
+        }
 
         try {
-            const response = await fetch("http://localhost:5000/api/upload", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
-            });
-            if (!response.ok) throw new Error("Failed to add upload");
+            let response;
+            if (editMode) {
+                // Edit existing upload
+                response = await fetch(`http://localhost:5000/api/upload/${selectedUploadId}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify(formData),
+                });
+            } else {
+                // Create new upload
+                response = await fetch("http://localhost:5000/api/upload", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify(formData),
+                });
+            }
+
+            if (!response.ok) throw new Error("Failed to save upload");
             setShowModal(false);
-            fetchUploads();
+            fetchUploads(formData.crafter_id);
         } catch (error) {
-            console.error("Error adding upload:", error);
+            console.error("Error saving upload:", error);
+        }
+    };
+
+    const handleEdit = (uploadId) => {
+        const uploadToEdit = uploads.find(upload => upload.work_id === uploadId);
+        if (uploadToEdit) {
+            setFormData({
+                ...formData,
+                product_id: uploadToEdit.product_id,
+                product_name: uploadToEdit.product_name,
+                category_id: uploadToEdit.category_id,
+                CategoryName: uploadToEdit.CategoryName,
+                customizable: uploadToEdit.customizable,
+                base_price: uploadToEdit.base_price,
+                quantity: uploadToEdit.quantity,
+            });
+            setSelectedUploadId(uploadId);
+            setEditMode(true); // Enable edit mode
+            setShowModal(true);
+        }
+    };
+
+    const handleDelete = async (workId) => {
+        const token = localStorage.getItem("token");
+    
+        if (!token) {
+            console.error("No token found for deleting upload.");
+            return;
+        }
+    
+        try {
+            const response = await fetch(`http://localhost:5000/api/upload/${workId}`, {
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+            if (!response.ok) throw new Error("Failed to delete upload");
+            fetchUploads(formData.crafter_id);
+        } catch (error) {
+            console.error("Error deleting upload:", error);
         }
     };
 
@@ -106,7 +235,7 @@ const Uploads = () => {
                 <AdminNavbar />
                 <div className="content">
                     <div className="header">
-                        <button className="add-button" onClick={() => setShowModal(true)}>+ Add Upload</button>
+                        <button className="add-button" onClick={() => { setEditMode(false); setShowModal(true); }}>+ Add Upload</button>
                         <div className="search-container">
                             <FiSearch className="search-icon" />
                             <input
@@ -133,12 +262,12 @@ const Uploads = () => {
                                 filteredUploads.map((upload) => (
                                     <tr key={upload.work_id}>
                                         <td>{upload.product_name}</td>
-                                        <td>{upload.CategoryName}</td> {/* Category name coming from backend */}
+                                        <td>{upload.CategoryName}</td>
                                         <td>{upload.quantity}</td>
                                         <td>{upload.status}</td>
                                         <td>
-                                            <FiEdit className="icon" />
-                                            <FiTrash2 className="icon" />
+                                            <FiEdit className="icon" onClick={() => handleEdit(upload.work_id)} />
+                                            <FiTrash2 className="icon" onClick={() => handleDelete(upload.work_id)}/>
                                         </td>
                                     </tr>
                                 ))
@@ -148,14 +277,13 @@ const Uploads = () => {
                         </tbody>
                     </table>
 
-                    {/* Add Upload Modal */}
                     {showModal && (
                         <div className="modal">
                             <div className="modal-content">
-                                <h2>Add Work Upload</h2>
+                                <h2>{editMode ? "Edit Work Upload" : "Add Work Upload"}</h2>
                                 <form onSubmit={handleSubmit}>
                                     <label>Product</label>
-                                    <select onChange={handleProductSelect} required>
+                                    <select onChange={handleProductSelect} value={formData.product_id} required>
                                         <option value="">Select Product</option>
                                         {isLoading ? (
                                             <option disabled>Loading products...</option>
@@ -184,15 +312,15 @@ const Uploads = () => {
                                     <input type="text" value={formData.category_id} disabled />
 
                                     <label>Category</label>
-                                    <input type="text" value={formData.CategoryName} disabled />  {/* Display category name */}
+                                    <input type="text" value={formData.CategoryName} disabled />
 
                                     <label>Customizable</label>
-                                    <input type="text" value={formData.customizable} disabled />  {/* Display customizable status */}
+                                    <input type="text" value={formData.customizable} disabled />
 
                                     <label>Base Price</label>
-                                    <input type="number" value={formData.base_price} disabled />  {/* Display base price */}
+                                    <input type="number" value={formData.base_price} disabled />
 
-                                    <button type="submit">Submit</button>
+                                    <button type="submit">{editMode ? "Update" : "Submit"}</button>
                                     <button type="button" onClick={() => setShowModal(false)}>Cancel</button>
                                 </form>
                             </div>
