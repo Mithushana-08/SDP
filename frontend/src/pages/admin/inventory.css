@@ -86,10 +86,12 @@
 
 .form-buttons .btn-adding {
     color: green;
+    border: 2px solid green;
 }
 
 .form-buttons .btn-close {
    color: red;
+   border: 2px solid red;
 }
 
 .form-buttons .btn-adding i,

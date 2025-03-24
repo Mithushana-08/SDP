@@ -23,8 +23,11 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/productmaster", productmaster); 
+app.use('/uploads', express.static('uploads')); // Serve images
+router.get('/categories', getCategories); 
 
-// Error handling middleware
+
+// Error handling middlewarecd 
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).send('Something broke!');

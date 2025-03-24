@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { getProducts } = require('../controllers/productmasterController');
+const { getProducts, addProduct, deleteProduct, getCategories,upload } = require('../controllers/productmasterController');
 
-router.get('/', getProducts); // Changed path to '/'
+router.get('/', getProducts);
+router.post('/add', upload.single('image'), addProduct);  // Add image upload route
+router.delete('/:id', deleteProduct);
+router.get('/categories', getCategories); 
 
 module.exports = router;
