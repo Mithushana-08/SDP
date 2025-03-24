@@ -53,25 +53,26 @@ const WorkUpload = () => {
 
   const handleStatusChange = async (workId, newStatus) => {
     try {
+      let response;
       if (newStatus === 'Approved') {
-        const response = await fetch(`http://localhost:5000/api/upload/approve/${workId}`, {
+        response = await fetch(`http://localhost:5000/api/upload/approve/${workId}`, {
           method: 'POST',
         });
-        if (!response.ok) {
-          throw new Error('Failed to approve upload');
-        }
       } else if (newStatus === 'Rejected') {
-        const response = await fetch(`http://localhost:5000/api/upload/reject/${workId}`, {
+        response = await fetch(`http://localhost:5000/api/upload/reject/${workId}`, {
           method: 'POST',
         });
-        if (!response.ok) {
-          throw new Error('Failed to reject upload');
-        }
       }
+  
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to update status: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+  
       fetchUploads(); // Refresh the uploads list
     } catch (error) {
       console.error("Failed to update upload status:", error);
-      setError("Failed to update upload status!");
+      setError(`Failed to update upload status: ${error.message}`);
     }
   };
 

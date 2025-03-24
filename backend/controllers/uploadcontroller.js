@@ -128,16 +128,15 @@ const deleteUpload = (req, res) => {
   });
 };
 
-// Approve upload
 const approveUpload = async (req, res) => {
   const { workId } = req.params;
 
   try {
     // Fetch the upload details
     const uploadQuery = 'SELECT * FROM work_upload WHERE work_id = ?';
-    const [upload] = await db.query(uploadQuery, [workId]);
+    const upload = await db.query(uploadQuery, [workId]);
 
-    if (upload.length === 0) {
+    if (!upload || upload.length === 0) {
       return res.status(404).json({ message: 'Upload not found' });
     }
 
@@ -147,12 +146,22 @@ const approveUpload = async (req, res) => {
     const updateStatusQuery = 'UPDATE work_upload SET status = ? WHERE work_id = ?';
     await db.query(updateStatusQuery, ['approved', workId]);
 
-    // Add to inventory
-    const insertInventoryQuery = `
-      INSERT INTO inventory (product_id, crafter_id, price, stock_qty, source, source_work_id)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `;
-    await db.query(insertInventoryQuery, [product_id, crafter_id, price, quantity, 'crafter_upload', workId]);
+    // Check if the product already exists in the inventory
+    const inventoryCheckQuery = 'SELECT * FROM inventory WHERE product_id = ? AND crafter_id = ?';
+    const inventory = await db.query(inventoryCheckQuery, [product_id, crafter_id]);
+
+    if (inventory.length > 0) {
+      // Update the existing inventory quantity
+      const updateInventoryQuery = 'UPDATE inventory SET stock_qty = stock_qty + ? WHERE product_id = ? AND crafter_id = ?';
+      await db.query(updateInventoryQuery, [quantity, product_id, crafter_id]);
+    } else {
+      // Add to inventory
+      const insertInventoryQuery = `
+        INSERT INTO inventory (product_id, crafter_id, price, stock_qty, source, source_work_id)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `;
+      await db.query(insertInventoryQuery, [product_id, crafter_id, price, quantity, 'crafter_upload', workId]);
+    }
 
     res.status(200).json({ message: 'Upload approved and added to inventory' });
   } catch (error) {
@@ -160,7 +169,6 @@ const approveUpload = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
-
 // Reject upload
 const rejectUpload = async (req, res) => {
   const { workId } = req.params;
