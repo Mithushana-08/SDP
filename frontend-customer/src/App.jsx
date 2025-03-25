@@ -1,29 +1,24 @@
-// src/App.jsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Navbar from './components/Navbar';
 import './App.css';
 
 const App = () => {
-  // Sample categories for the shop section
-  const categories = [
-    { id: 1, name: 'Electronics', imageUrl: 'https://via.placeholder.com/150' },
-    { id: 2, name: 'Clothing', imageUrl: 'https://via.placeholder.com/150' },
-    { id: 3, name: 'Furniture', imageUrl: 'https://via.placeholder.com/150' },
-    { id: 4, name: 'Toys', imageUrl: 'https://via.placeholder.com/150' },
-    { id: 5, name: 'Books', imageUrl: 'https://via.placeholder.com/150' },
-    { id: 6, name: 'Beauty', imageUrl: 'https://via.placeholder.com/150' },
-    { id: 7, name: 'Sports', imageUrl: 'https://via.placeholder.com/150' },  // New
-    { id: 8, name: 'Jewelry', imageUrl: 'https://via.placeholder.com/150' }, // New
-    { id: 9, name: 'Home Decor', imageUrl: 'https://via.placeholder.com/150' }
-  ];
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    // Fetch categories from the backend
+    fetch('http://localhost:5000/api/categories')
+      .then(response => response.json())
+      .then(data => setCategories(data))
+      .catch(error => console.error('Error fetching categories:', error));
+  }, []);
 
   return (
     <div>
       <Navbar />
       
       <section id="home" className="section">
-        <h1>Welcome to our E-Shop!</h1>
-        <p>Find the best products here!</p>
+       
       </section>
 
       <section id="shop" className="section">
@@ -32,15 +27,13 @@ const App = () => {
         
         <div className="category-grid">
           {categories.map(category => (
-            <div key={category.id} className="category-card">
-              <img src={category.imageUrl} alt={category.name} />
-              <h3>{category.name}</h3>
+            <div key={category.CategoryID} className="category-card">
+              <img src={category.imageUrl || 'https://via.placeholder.com/150'} alt={category.CategoryName} />
+              <h3>{category.CategoryName}</h3>
             </div>
           ))}
         </div>
       </section>
-
-      
 
       <section id="about" className="section">
         <h1>About Us</h1>

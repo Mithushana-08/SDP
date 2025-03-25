@@ -1,100 +1,165 @@
 /* src/components/Navbar.css */
 .navbar {
-    background-color: #1f1f1f;
-    padding: 10px 20px;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
+  background-color: #fefbfb;
+  padding: 10px 0px;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  color: black;
+}
+
+.navbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   
-  .navbar-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 10px 20px;
-    width: 100%;
-  }
   
-  .logo {
-    font-size: 24px;
-    font-weight: 700;
-    color: #fff;
-    text-transform: uppercase;
-  }
-  
-  .logo a {
-    text-decoration: none;
-    color: inherit;
-  }
-  
+  padding: 10px 0px;
+  width: 100%;
+  color: #400a0a;
+}
+
+.logo {
+  padding-left: 20px;
+  display: flex;
+  align-items: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: #400a0a;
+  text-transform: uppercase;
+}
+
+.logo a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 30px;
+}
+
+.nav-links li a {
+  text-decoration: none;
+  color: #400a0a;
+  font-size: 16px;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.nav-links li a:hover {
+  color: #f0a500;
+}
+
+.menu-toggle {
+  display: none;
+  flex-direction: column;
+  cursor: pointer;
+}
+
+.menu-toggle .bar {
+  width: 30px;
+  height: 4px;
+  background-color: #fff;
+  margin: 4px 0;
+  transition: all 0.3s ease;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
   .nav-links {
-    list-style: none;
-    display: flex;
-    gap: 30px;
-  }
-  
-  .nav-links li a {
-    text-decoration: none;
-    color: #fff;
-    font-size: 16px;
-    font-weight: 500;
-    transition: color 0.3s ease;
-  }
-  
-  .nav-links li a:hover {
-    color: #f0a500;
-  }
-  
-  .menu-toggle {
-    display: none;
+    position: absolute;
+    top: 80px;
+    left: 0;
+    width: 100%;
+    background-color: #1f1f1f;
     flex-direction: column;
-    cursor: pointer;
+    align-items: center;
+    justify-content: space-around;
+    height: 100vh;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
   }
-  
-  .menu-toggle .bar {
-    width: 30px;
-    height: 4px;
-    background-color: #fff;
-    margin: 4px 0;
-    transition: all 0.3s ease;
+
+  .nav-links.active {
+    transform: translateX(0);
   }
-  
-  /* Mobile Responsive */
-  @media (max-width: 768px) {
-    .nav-links {
-      position: absolute;
-      top: 80px;
-      left: 0;
-      width: 100%;
-      background-color: #1f1f1f;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-around;
-      height: 100vh;
-      transform: translateX(-100%);
-      transition: transform 0.3s ease;
-    }
-  
-    .nav-links.active {
-      transform: translateX(0);
-    }
-  
-    .menu-toggle {
-      display: flex;
-    }
-  
-    .nav-links li a {
-      font-size: 18px;
-      padding: 20px;
-      width: 100%;
-      text-align: center;
-    }
-  
-    .nav-links li a:hover {
-      background-color: #333;
-    }
+
+  .menu-toggle {
+    display: flex;
   }
-  
+
+  .nav-links li a {
+    font-size: 18px;
+    padding: 0px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .nav-links li a:hover {
+    background-color: #333;
+  }
+}
+
+.logo-image {
+  height: 60px; /* Adjust the height as needed */
+  margin-right: 20px;
+  margin-left: 0px; /* Adjust the spacing as needed */
+}
+
+.search-bar {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.search-bar input {
+  width: 70%;
+  padding: 5px 10px;
+  border: 2px solid #400a0a;
+  border-radius: 20px;
+}
+
+.search-icon {
+  position: absolute;
+  right: 15%;
+  cursor: pointer;
+  color:#400a0a;
+}
+
+.navbar-icons {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-left: 180px;
+  margin-right: 0; /* Remove right margin */
+  margin-left: 100px; /* Push the icons to the right */
+}
+
+.icon {
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.login-button,
+.signup-button {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.login-button {
+  background-color: #823723;
+  color: white;
+}
+
+.signup-button {
+  background-color: #400a0a;
+  color: white;
+}
