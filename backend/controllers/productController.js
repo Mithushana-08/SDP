@@ -5,7 +5,7 @@ const getProducts = (req, res) => {
         SELECT i.product_id, 
                p.product_name, 
                c.CategoryName AS category, 
-               i.price, 
+               p.base_price, 
                i.stock_qty, 
                i.total_price, 
                u.username AS crafter_name, 
@@ -25,4 +25,20 @@ const getProducts = (req, res) => {
     });
 };
 
-module.exports = { getProducts };
+const deleteProduct = (req, res) => {
+    const { productId } = req.params;
+    const query = 'DELETE FROM inventory WHERE product_id = ?';
+
+    db.query(query, [productId], (err, result) => {
+        if (err) {
+            console.error("Error deleting product:", err);
+            return res.status(500).json({ error: "Database query error" });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Product not found" });
+        }
+        res.json({ message: "Product deleted successfully" });
+    });
+};
+
+module.exports = { getProducts, deleteProduct };

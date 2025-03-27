@@ -43,8 +43,8 @@ const addProduct = (req, res) => {
     const { product_name, category_id, base_price, customizable, description, status } = req.body;
     const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
 
-    // Convert customizable to boolean
-    const isCustomizable = customizable === 'true' || customizable === true || customizable === '1' || customizable === 1 ? 1 : 0;
+    // Ensure customizable is either 'yes' or 'no'
+    const isCustomizable = customizable === 'true' || customizable === true || customizable === '1' || customizable === 1 || customizable === 'yes' ? 'yes' : 'no';
 
     const query = `
         INSERT INTO product_master (product_name, category_id, base_price, customizable, description, image, status) 
@@ -90,7 +90,33 @@ const getCategories = (req, res) => {
     });
 };
 
-module.exports = { getProducts, addProduct, deleteProduct, getCategories, upload };
+const getProductsByCategory = (req, res) => {
+    const { category_id } = req.query;
+  
+    if (!category_id) {
+      return res.status(400).json({ message: 'category_id is required' });
+    }
+  
+    const query = `
+      SELECT p.product_id, p.product_name, p.base_price, p.image
+      FROM product_master p
+      WHERE p.category_id = ?
+    `;
+  
+    db.query(query, [category_id], (err, results) => {
+      if (err) {
+        console.error('Error fetching products:', err);
+        return res.status(500).json({ message: 'Internal server error', error: err.message });
+      }
+      res.json(results);
+    });
+  };
+
+  
+
+  
+  
+module.exports = { getProducts, addProduct, deleteProduct, getCategories, getProductsByCategory,upload };
 
 
 

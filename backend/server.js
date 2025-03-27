@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path"); // Import the path module
 require("dotenv").config();
 
 const authRoutes = require("./routes/authRoutes"); 
@@ -23,7 +24,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/productmaster", productmaster); 
-app.use('/uploads', express.static('uploads')); // Serve images
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve images
 
 // Error handling middleware
 app.use((err, req, res, next) => {

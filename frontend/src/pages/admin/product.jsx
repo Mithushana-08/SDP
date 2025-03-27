@@ -14,9 +14,36 @@ const Product = () => {
     useEffect(() => {
         fetch('http://localhost:5000/api/productmaster')
             .then(response => response.json())
-            .then(data => setProducts(data))
+            .then(data => {
+                updateStockStatus(data);
+            })
             .catch(error => console.error('Error fetching product data:', error));
     }, []);
+
+    const updateStockStatus = (products) => {
+        const updatedProductsPromises = products.map(product => {
+            return fetch(`http://localhost:5000/api/inventory/${product.product_id}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.quantity > 10) {
+                        product.stock_status = 'In Stock';
+                    } else if (data.quantity > 0) {
+                        product.stock_status = 'Low Stock';
+                    } else {
+                        product.stock_status = 'Out of Stock';
+                    }
+                    return product;
+                })
+                .catch(error => {
+                    console.error('Error fetching inventory data:', error);
+                    return product;
+                });
+        });
+
+        Promise.all(updatedProductsPromises).then(updatedProducts => {
+            setProducts(updatedProducts);
+        });
+    };
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
@@ -71,26 +98,40 @@ const Product = () => {
                                 <th>Base Price</th>
                                 <th>Customizable</th>
                                 <th>Description</th>
+                                
+                                
                                 <th>Image</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredProducts.map(product => (
-                                <tr key={product.product_id}>
-                                    <td>{product.product_id}</td>
-                                    <td>{product.product_name}</td>
-                                    <td>{product.category_name}</td>
-                                    <td>Rs.{product.base_price.toFixed(2)}</td>
-                                    <td>{product.customizable}</td>
-                                    <td>{product.description}</td>
-                                    <td><img src={`http://localhost:5000/uploads/${product.image}`} alt={product.product_name} width="50" /></td>
-                                    <td>
-                                        <button className="edit-button"><FiEdit /></button>
-                                        <button className="delete-button" onClick={() => handleDelete(product.product_id)}><FiTrash2 /></button>
-                                    </td>
-                                </tr>
-                            ))}
+                        {filteredProducts.map(product => (
+  <tr key={product.product_id}>
+    <td>{product.product_id}</td>
+    <td>{product.product_name}</td>
+    <td>{product.category_name}</td>
+    <td>Rs.{product.base_price.toFixed(2)}</td>
+    <td>{product.customizable}</td>
+    <td>{product.description}</td>
+    <td>
+      <img
+        src={product.image.startsWith('/uploads') ? `http://localhost:5000${product.image}` : `http://localhost:5000/uploads/${product.image}`}
+        alt={product.product_name}
+        width="50"
+        onError={(e) => {
+          if (e.target.src !== 'http://localhost:5000/uploads/placeholder.png') {
+            e.target.src = 'http://localhost:5000/uploads/placeholder.png';
+          }
+        }}
+      />
+    </td>
+    <td>
+      <button className="edit-button"><FiEdit /></button>
+      <button className="delete-button" onClick={() => handleDelete(product.product_id)}><FiTrash2 /></button>
+    </td>
+  </tr>
+))}
+                            
                         </tbody>
                     </table>
                     {isModalOpen && <AddProductModal setProducts={setProducts} onClose={() => setIsModalOpen(false)} />}
@@ -185,7 +226,7 @@ const AddProductModal = ({ setProducts, onClose }) => {
                     </select>
                     <input type="text" name="customizable" placeholder="Customizable (true/false)" onChange={handleChange} required />
                     <textarea name="description" placeholder="Description" onChange={handleChange} required></textarea>
-                    <input type="file" name="image" accept="image/*" onChange={handleChange} required />
+                    <input type="file" name="image" accept="image/*" onChange={handleChange}  />
                     <div className="form-buttons">
                         <button type="submit" className="btn-adding"><i className="fas fa-check"></i></button>
                         <button type="button" className="btn-close" onClick={onClose}><i className="fas fa-times"></i></button>

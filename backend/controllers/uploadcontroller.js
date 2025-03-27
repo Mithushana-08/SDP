@@ -1,15 +1,21 @@
 const db = require("../config/db");
 
-// Fetch all uploads
 const getAllUploads = (req, res) => {
+  const { crafter_id } = req.query; // Assuming crafter_id is passed as a query parameter
+
+  if (!crafter_id) {
+    return res.status(400).json({ message: "crafter_id is required" });
+  }
+
   const query = `
     SELECT w.work_id, p.product_name, w.quantity, w.status, c.CategoryName, c.CategoryID
     FROM work_upload w
     JOIN product_master p ON w.product_id = p.product_id
     JOIN Categories c ON w.category_id = c.CategoryID
+    WHERE w.crafter_id = ?
   `;
 
-  db.query(query, (err, results) => {
+  db.query(query, [crafter_id], (err, results) => {
     if (err) {
       console.error("Error fetching uploads:", err);
       res.status(500).json({ message: "Internal server error", error: err.message });
@@ -18,7 +24,6 @@ const getAllUploads = (req, res) => {
     }
   });
 };
-
 // Fetch all uploads with additional details for admin
 const getAllUploadsForAdmin = (req, res) => {
   const query = `
@@ -186,13 +191,38 @@ const rejectUpload = async (req, res) => {
 };
 
 // Update price of an upload
+// Update price of an upload
 const updatePrice = async (req, res) => {
   const { workId } = req.params;
-  const { price } = req.body;
+  let { price } = req.body;
 
   try {
+    // Fetch the existing price from product_master if the new price is not provided
+    if (!price) {
+      const fetchPriceQuery = `
+        SELECT p.base_price AS price
+        FROM work_upload w
+        JOIN product_master p ON w.product_id = p.product_id
+        WHERE w.work_id = ?
+      `;
+      const [result] = await db.query(fetchPriceQuery, [workId]);
+      if (result.length === 0) {
+        return res.status(404).json({ message: 'Upload not found' });
+      }
+      price = result[0].price;
+    }
+
     const updatePriceQuery = 'UPDATE work_upload SET price = ? WHERE work_id = ?';
     await db.query(updatePriceQuery, [price, workId]);
+
+    // Update the price in the inventory table
+    const updateInventoryPriceQuery = `
+      UPDATE inventory i
+      JOIN work_upload w ON i.product_id = w.product_id AND i.crafter_id = w.crafter_id
+      SET i.price = ?
+      WHERE w.work_id = ?
+    `;
+    await db.query(updateInventoryPriceQuery, [price, workId]);
 
     res.status(200).json({ message: 'Price updated successfully' });
   } catch (error) {

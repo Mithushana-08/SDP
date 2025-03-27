@@ -32,6 +32,16 @@ const Products = () => {
         setSearchTerm(event.target.value);
     };
 
+    const handleDeleteCategory = async (productId) => {
+        try {
+            await axios.delete(`http://localhost:5000/api/products/${productId}`);
+            setProducts(products.filter(product => product.product_id !== productId));
+        } catch (error) {
+            console.error("Failed to delete product:", error);
+            setError("Failed to delete product. Please try again later.");
+        }
+    };
+
     const filteredProducts = products.filter((product) => {
         return (
             product.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -67,7 +77,7 @@ const Products = () => {
                                 <th>Product ID</th>
                                 <th>Product Name</th>
                                 <th>Category</th>
-                                <th>Price</th>
+                                <th>Base Price</th>
                                 <th>Quantity</th>
                                 <th>Total Price</th>
                                 <th>Crafter Name</th>
@@ -81,9 +91,9 @@ const Products = () => {
                                     <td>{product.product_id}</td>
                                     <td>{product.product_name}</td>
                                     <td>{product.category}</td>
-                                    <td>Rs.{product.price ? product.price.toFixed(2) : 'N/A'}</td>
+                                    <td>Rs.{product.base_price ? product.base_price.toFixed(2) : 'N/A'}</td>
                                     <td>{product.stock_qty}</td>
-                                    <td>Rs.{product.total_price ? product.total_price.toFixed(2) : 'N/A'}</td>
+                                    <td>Rs.{product.base_price && product.stock_qty ? (product.base_price * product.stock_qty).toFixed(2) : 'N/A'}</td>
                                     <td>{product.crafter_name}</td>
                                     <td>{product.status}</td>
                                     <td>

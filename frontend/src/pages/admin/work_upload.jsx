@@ -32,43 +32,26 @@ const WorkUpload = () => {
     fetchUploads();
   }, []);
 
-  const handlePriceChange = async (workId, newPrice) => {
-    try {
-      const response = await fetch(`http://localhost:5000/api/upload/update-price/${workId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ price: newPrice }),
-      });
-      if (!response.ok) {
-        throw new Error('Failed to update price');
-      }
-      fetchUploads(); // Refresh the uploads list
-    } catch (error) {
-      console.error("Failed to update price:", error);
-      setError("Failed to update price!");
-    }
-  };
-
   const handleStatusChange = async (workId, newStatus) => {
     try {
       let response;
+
       if (newStatus === 'Approved') {
         response = await fetch(`http://localhost:5000/api/upload/approve/${workId}`, {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
         });
       } else if (newStatus === 'Rejected') {
         response = await fetch(`http://localhost:5000/api/upload/reject/${workId}`, {
           method: 'POST',
         });
       }
-  
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to update status: ${response.status} ${response.statusText} - ${errorText}`);
       }
-  
+
       fetchUploads(); // Refresh the uploads list
     } catch (error) {
       console.error("Failed to update upload status:", error);
@@ -135,13 +118,7 @@ const WorkUpload = () => {
                   <td>{upload.CategoryName}</td>
                   <td>{upload.crafter}</td>
                   <td>{upload.quantity}</td>
-                  <td>
-                    <input
-                      type="text"
-                      defaultValue={upload.price}
-                      onBlur={(e) => handlePriceChange(upload.work_id, e.target.value)}
-                    />
-                  </td>
+                  <td>{upload.price}</td>
                   <td>{upload.status}</td>
                   <td>
                     <select

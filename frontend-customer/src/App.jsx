@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import ProductsPage from './pages/Products_customer';
 import './App.css';
 
-const App = () => {
+const Home = () => {
   const [categories, setCategories] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Fetch categories from the backend
@@ -12,6 +15,10 @@ const App = () => {
       .then(data => setCategories(data))
       .catch(error => console.error('Error fetching categories:', error));
   }, []);
+
+  const handleCategoryClick = (categoryId) => {
+    navigate(`/products/${categoryId}`);
+  };
 
   return (
     <div>
@@ -27,7 +34,11 @@ const App = () => {
         
         <div className="category-grid">
           {categories.map(category => (
-            <div key={category.CategoryID} className="category-card">
+            <div 
+              key={category.CategoryID} 
+              className="category-card" 
+              onClick={() => handleCategoryClick(category.CategoryID)}
+            >
               <img src={category.imageUrl || 'https://via.placeholder.com/150'} alt={category.CategoryName} />
               <h3>{category.CategoryName}</h3>
             </div>
@@ -45,6 +56,17 @@ const App = () => {
         <p>Have any questions? Feel free to reach out to us!</p>
       </section>
     </div>
+  );
+};
+
+const App = () => {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/products/:categoryId" element={<ProductsPage />} />
+      </Routes>
+    </Router>
   );
 };
 
