@@ -13,7 +13,8 @@ const Inventory = () => {
     const [newCategory, setNewCategory] = useState({
         CategoryID: '',
         CategoryName: '',
-        Description: ''
+        Description: '',
+        CategoryImage: null // Updated to match the backend field name
     });
     const [showForm, setShowForm] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -38,8 +39,12 @@ const Inventory = () => {
 
     // Handle input changes
     const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setNewCategory({ ...newCategory, [name]: value });
+        const { name, value, files } = e.target;
+        if (name === "CategoryImage" && files && files[0]) {
+            setNewCategory({ ...newCategory, [name]: files[0] });
+        } else {
+            setNewCategory({ ...newCategory, [name]: value });
+        }
     };
 
     // Handle search input
@@ -50,19 +55,22 @@ const Inventory = () => {
     // Add new category
     const handleAddCategory = async (e) => {
         e.preventDefault();
-        const { CategoryID, ...categoryData } = newCategory; // Exclude CategoryID
+        const { CategoryID, CategoryImage, ...categoryData } = newCategory; // Exclude CategoryID
+
+        const formData = new FormData();
+        Object.keys(categoryData).forEach((key) => formData.append(key, categoryData[key]));
+        if (CategoryImage) formData.append("CategoryImage", CategoryImage); // Match the backend field name
 
         try {
             const response = await fetch("http://localhost:5000/api/categories", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(categoryData),
+                body: formData,
             });
 
             if (!response.ok) throw new Error("Failed to add category");
 
             await fetchCategories(); // Refresh data after adding
-            setNewCategory({ CategoryID: "", CategoryName: "", Description: "" });
+            setNewCategory({ CategoryID: "", CategoryName: "", Description: "", CategoryImage: null });
             setShowForm(false);
         } catch (error) {
             console.error("Error adding category:", error);
@@ -72,19 +80,22 @@ const Inventory = () => {
     // Update category
     const handleUpdateCategory = async (e) => {
         e.preventDefault();
-        const { CategoryID, ...categoryData } = newCategory; // Exclude CategoryID
+        const { CategoryID, CategoryImage, ...categoryData } = newCategory; // Exclude CategoryID
+
+        const formData = new FormData();
+        Object.keys(categoryData).forEach((key) => formData.append(key, categoryData[key]));
+        if (CategoryImage) formData.append("CategoryImage", CategoryImage); // Match the backend field name
 
         try {
             const response = await fetch(`http://localhost:5000/api/categories/${newCategory.CategoryID}`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(categoryData),
+                body: formData,
             });
 
             if (!response.ok) throw new Error("Failed to update category");
 
             await fetchCategories(); // Refresh data after updating
-            setNewCategory({ CategoryID: "", CategoryName: "", Description: "" });
+            setNewCategory({ CategoryID: "", CategoryName: "", Description: "", CategoryImage: null });
             setShowForm(false);
             setIsEditing(false);
         } catch (error) {
@@ -114,7 +125,7 @@ const Inventory = () => {
     const handleCloseForm = () => {
         setShowForm(false);
         setIsEditing(false);
-        setNewCategory({ CategoryID: "", CategoryName: "", Description: "" });
+        setNewCategory({ CategoryID: "", CategoryName: "", Description: "", CategoryImage: null });
     };
 
     // Edit category
@@ -172,6 +183,12 @@ const Inventory = () => {
                                         onChange={handleInputChange}
                                         required
                                     />
+                                    <input
+                                        type="file"
+                                        name="CategoryImage" // Match the backend field name
+                                        accept="image/*"
+                                        onChange={handleInputChange}
+                                    />
                                     <div className="form-buttons">
                                         <button type="submit" className="btn-adding">
                                             <i className="fas fa-check"></i>
@@ -191,6 +208,7 @@ const Inventory = () => {
                                 <th>Category ID</th>
                                 <th>Category Name</th>
                                 <th>Description</th>
+                                <th>Image</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -200,6 +218,22 @@ const Inventory = () => {
                                     <td>{category.CategoryID}</td>
                                     <td>{category.CategoryName}</td>
                                     <td>{category.Description}</td>
+                                    <td>
+                                        <img
+                                            src={
+                                                category.CategoryImage?.startsWith("/uploads")
+                                                    ? `http://localhost:5000${category.CategoryImage}`
+                                                    : `http://localhost:5000/uploads/${category.CategoryImage}`
+                                            }
+                                            alt={category.CategoryName}
+                                            width="50"
+                                            onError={(e) => {
+                                                if (e.target.src !== "http://localhost:5000/uploads/placeholder.png") {
+                                                    e.target.src = "http://localhost:5000/uploads/placeholder.png";
+                                                }
+                                            }}
+                                        />
+                                    </td>
                                     <td>
                                         <i className="edit-button" onClick={() => handleEditCategory(category)}><FiEdit /></i>
                                         <i className="delete-button" onClick={() => handleDeleteCategory(category.CategoryID)}><FiTrash2 /></i>

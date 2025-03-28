@@ -25,7 +25,7 @@ const Home = () => {
       <Navbar />
       
       <section id="home" className="section">
-       
+        {/* Add a banner or introductory content here if needed */}
       </section>
 
       <section id="shop" className="section">
@@ -39,7 +39,15 @@ const Home = () => {
               className="category-card" 
               onClick={() => handleCategoryClick(category.CategoryID)}
             >
-              <img src={category.imageUrl || 'https://via.placeholder.com/150'} alt={category.CategoryName} />
+              <img 
+                src={
+                  category.CategoryImage?.startsWith('/uploads')
+                    ? `http://localhost:5000${category.CategoryImage}`
+                    : category.CategoryImage || 'https://via.placeholder.com/150'
+                } 
+                alt={category.CategoryName} 
+                className="category-image"
+              />
               <h3>{category.CategoryName}</h3>
             </div>
           ))}
