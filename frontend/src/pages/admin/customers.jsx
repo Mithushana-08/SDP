@@ -3,8 +3,8 @@ import AdminSidebar from "../../components/Admin/adminsidebar";
 import AdminNavbar from "../../components/Admin/adminnavbar";
 import "./customers.css";
 import "../../components/styles/table.css";
-import "../../components/styles/buttons.css"; // Import button styles
-import "../../components/styles/search-container.css";
+
+
 import { FiSearch, FiEdit, FiTrash2 } from 'react-icons/fi';
 
 const Customers = () => {

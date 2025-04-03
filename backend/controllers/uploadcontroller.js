@@ -21,7 +21,7 @@ const getAllUploads = (req, res) => {
       res.status(500).json({ message: "Internal server error", error: err.message });
     } else {
       res.json(results);
-    }
+    }s
   });
 };
 // Fetch all uploads with additional details for admin

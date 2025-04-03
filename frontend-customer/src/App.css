@@ -4,7 +4,7 @@ body {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    background-color: #f4f4f4;
+    background-color: white;
   }
   
   html {
@@ -23,17 +23,41 @@ body {
       background-image: url('./assets/web.png'); /* Replace with your image URL */
       background-size: cover;
       background-position: center;
-      margin-top: 90px;
-      height: 250px;
+      margin-top: 100px;
+      height: 200px;
       color: white; /* Optional: to make text readable on the background */
       padding: 50px 0; /* Optional: adjust padding as needed */
     }
   
   
+ 
   #shop {
-    background-color: #f8f8f8;
-  }
-  
+    background-image: url('./assets/we.png'); /* Replace with your image URL */
+    
+    background-color: rgb(249, 247, 246); /* Semi-transparent version of #281004 */
+    padding: 20px 20px; /* Add padding for spacing */
+    text-align: center; /* Center-align content */
+    border-radius: 0px; /* Add rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Add hover effects */
+    margin-top: 10px;
+    
+}
+
+
+#shop h1 {
+    font-size: 24px; /* Modern font size */
+    margin-bottom: 20px; /* Add spacing below the heading */
+    color:#310e05;
+    
+}
+
+#shop p {
+    font-size: 16px; /* Readable font size for text */
+    line-height: 1.6; /* Improve readability */
+    color: #45200a; /* Subtle text color */
+}
+
   #cart {
     background-color: #dcdcdc;
   }
@@ -48,37 +72,53 @@ body {
 
   .category-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 items per row */
-    gap: 15px;
-    padding: 20px;
+    grid-template-columns: repeat(4, 1fr); /* 3 items per row */
+    gap: 40px;
+    padding: 0px;
   }
   
   .category-card {
-    background-color: #fff;
-    padding: 15px;
-    height: 300px;
+    background-color: #ebd2ab; /* White background for cards */
+    padding: 0; /* Remove padding to align content properly */
+    height: auto; /* Adjust height to fit content */
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     text-align: center;
+    position: relative; /* Set position to relative for child positioning */
+    overflow: hidden; /* Ensure content doesn't overflow the card */
     transition: transform 0.3s ease-in-out;
-  }
-  
-  .category-card:hover {
-    transform: translateY(-5px);
-  }
-  
-  .category-card img {
+}
+
+.category-card img {
     width: 100%;
-    height: 120px;
+    height: 290px;
     object-fit: cover;
-    border-radius: 8px;
-  }
-  
-  .category-card h3 {
-    margin-top: 10px;
-    font-size: 16px;
-    color: #333;
-  }
+    border-radius: 8px 8px 0 0; /* Rounded corners only at the top */
+}
+
+.category-card img::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.345); /* Black transparent overlay */
+  z-index: 1; /* Ensure it appears above the image */
+  display: block; /* Ensure it is visible */
+}
+.category-card h3 {
+  margin: 10px 0; /* Add spacing around the text */
+  font-size: 18px;
+  color:rgb(57, 22, 9); /* Neutral color for the text */
+  background-color: transparent; /* Remove background color */
+  padding: 0; /* Remove padding */
+  position: static; /* Default positioning to place it below the image */
+}
+
+.category-card:hover {
+    transform: translateY(-5px);
+}
   
   
   

@@ -29,8 +29,8 @@ const Home = () => {
       </section>
 
       <section id="shop" className="section">
-        <h1>Shop</h1>
-        <p>Browse through our amazing collection of products!</p>
+        <h1>Shop Here</h1>
+        <p>Explore our products by category and discover the perfect picks for you!</p>
         
         <div className="category-grid">
           {categories.map(category => (
