@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FiEdit, FiTrash2, FiSearch } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiSearch, FiEye } from 'react-icons/fi'; // Added FiEye for the view icon
 import AdminSidebar from "../../components/Admin/adminsidebar";
 import AdminNavbar from "../../components/Admin/adminnavbar";
 import './product.css';
@@ -10,40 +10,18 @@ const Product = () => {
     const [products, setProducts] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false); // State for the view modal
+    const [customizationDetails, setCustomizationDetails] = useState([]); // State for customization details
+    const [selectedProduct, setSelectedProduct] = useState(null); // State for the selected product
 
     useEffect(() => {
         fetch('http://localhost:5000/api/productmaster')
             .then(response => response.json())
             .then(data => {
-                updateStockStatus(data);
+                setProducts(data);
             })
             .catch(error => console.error('Error fetching product data:', error));
     }, []);
-
-    const updateStockStatus = (products) => {
-        const updatedProductsPromises = products.map(product => {
-            return fetch(`http://localhost:5000/api/inventory/${product.product_id}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.quantity > 10) {
-                        product.stock_status = 'In Stock';
-                    } else if (data.quantity > 0) {
-                        product.stock_status = 'Low Stock';
-                    } else {
-                        product.stock_status = 'Out of Stock';
-                    }
-                    return product;
-                })
-                .catch(error => {
-                    console.error('Error fetching inventory data:', error);
-                    return product;
-                });
-        });
-
-        Promise.all(updatedProductsPromises).then(updatedProducts => {
-            setProducts(updatedProducts);
-        });
-    };
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
@@ -66,7 +44,23 @@ const Product = () => {
         }
     };
 
-    const filteredProducts = products.filter(product => 
+    const handleViewCustomizations = async (productId) => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/productmaster/customizations/${productId}`);
+            if (response.ok) {
+                const data = await response.json();
+                setCustomizationDetails(data);
+                setSelectedProduct(productId);
+                setIsViewModalOpen(true);
+            } else {
+                alert('Error fetching customization details');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    };
+
+    const filteredProducts = products.filter(product =>
         product.product_name && product.product_name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -98,99 +92,192 @@ const Product = () => {
                                 <th>Base Price</th>
                                 <th>Customizable</th>
                                 <th>Description</th>
-                                
-                                
+                                <th>Status</th>
+                                <th>Quantity</th>
                                 <th>Image</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                         {filteredProducts.map(product => (
-  <tr key={product.product_id}>
-    <td>{product.product_id}</td>
-    <td>{product.product_name}</td>
-    <td>{product.category_name}</td>
-    <td>Rs.{product.base_price.toFixed(2)}</td>
-    <td>{product.customizable}</td>
-    <td>{product.description}</td>
-    <td>
-      <img
-        src={product.image.startsWith('/uploads') ? `http://localhost:5000${product.image}` : `http://localhost:5000/uploads/${product.image}`}
-        alt={product.product_name}
-        width="50"
-        onError={(e) => {
-          if (e.target.src !== 'http://localhost:5000/uploads/placeholder.png') {
-            e.target.src = 'http://localhost:5000/uploads/placeholder.png';
-          }
-        }}
-      />
-    </td>
-    <td>
-      <button className="edit-button"><FiEdit /></button>
-      <button className="delete-button" onClick={() => handleDelete(product.product_id)}><FiTrash2 /></button>
-    </td>
-  </tr>
-))}
-                            
+                            <tr key={product.product_id}>
+                                <td>{product.product_id}</td>
+                                <td>{product.product_name}</td>
+                                <td>{product.category_name}</td>
+                                <td>Rs.{product.base_price.toFixed(2)}</td>
+                                <td>{product.customizable}</td>
+                                <td>{product.description}</td>
+                                <td>{product.status}</td>
+                                <td>{product.stock_qty || 0}</td>
+                                <td>
+                                    <img
+                                        src={product.image.startsWith('/uploads') ? `http://localhost:5000${product.image}` : `http://localhost:5000/uploads/${product.image}`}
+                                        alt={product.product_name}
+                                        width="50"
+                                        onError={(e) => {
+                                            if (e.target.src !== 'http://localhost:5000/uploads/placeholder.png') {
+                                                e.target.src = 'http://localhost:5000/uploads/placeholder.png';
+                                            }
+                                        }}
+                                    />
+                                </td>
+                                <td>
+                                    <button className="edit-button"><FiEdit /></button>
+                                    <button className="delete-button" onClick={() => handleDelete(product.product_id)}><FiTrash2 /></button>
+                                    <button className="view-button" onClick={() => handleViewCustomizations(product.product_id)}>
+                                        <FiEye />
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
                         </tbody>
                     </table>
                     {isModalOpen && <AddProductModal setProducts={setProducts} onClose={() => setIsModalOpen(false)} />}
+                    {isViewModalOpen && (
+                        <div className="overlay">
+                            <div className="modal-content">
+                                <span className="close" onClick={() => setIsViewModalOpen(false)}>&times;</span>
+                                <h2>Customization Details</h2>
+                                {customizationDetails.length > 0 ? (
+                                    <table className="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Customization ID</th>
+                                                <th>Type</th>
+                                                <th>Description</th>
+                                                <th>Size Type</th>
+                                                <th>Height</th>
+                                                <th>Width</th>
+                                                <th>Depth</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {customizationDetails.map(detail => (
+                                                <tr key={detail.customization_id}>
+                                                    <td>{detail.customization_id}</td>
+                                                    <td>{detail.customization_type}</td>
+                                                    <td>{detail.description}</td>
+                                                    <td>{detail.size_type || 'N/A'}</td>
+                                                    <td>{detail.height || 'N/A'}</td>
+                                                    <td>{detail.width || 'N/A'}</td>
+                                                    <td>{detail.depth || 'N/A'}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                ) : (
+                                    <p>No customization details available.</p>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     );
 };
 
+
 const AddProductModal = ({ setProducts, onClose }) => {
     const [productData, setProductData] = useState({
         product_name: '',
         category_id: '',
         base_price: '',
-        customizable: '',
+        customizable: false,
+        customizations: [],
         description: '',
-        image: null
+        image: null,
     });
     const [categories, setCategories] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         fetch('http://localhost:5000/api/productmaster/categories')
-            .then(response => response.json())
-            .then(data => {
+            .then((response) => response.json())
+            .then((data) => {
                 setCategories(data);
                 setIsLoading(false);
             })
-            .catch(error => {
+            .catch((error) => {
                 console.error('Error fetching categories:', error);
                 setIsLoading(false);
             });
     }, []);
 
     const handleChange = (e) => {
-        if (e.target.name === "image") {
-            setProductData({ ...productData, image: e.target.files[0] });
+        const { name, value, type, checked, files } = e.target;
+        if (type === 'checkbox') {
+            setProductData({ ...productData, [name]: checked });
+        } else if (type === 'file') {
+            setProductData({ ...productData, [name]: files[0] });
         } else {
-            setProductData({ ...productData, [e.target.name]: e.target.value });
+            setProductData({ ...productData, [name]: value });
         }
+    };
+
+    const handleAddCustomization = () => {
+        setProductData({
+            ...productData,
+            customizations: [
+                ...productData.customizations,
+                { type: '', sizes: [{ size_type: '', height: '', width: '', depth: '' }] },
+            ],
+        });
+    };
+
+    const handleRemoveCustomization = (index) => {
+        const updatedCustomizations = [...productData.customizations];
+        updatedCustomizations.splice(index, 1);
+        setProductData({ ...productData, customizations: updatedCustomizations });
+    };
+
+    const handleCustomizationChange = (index, field, value) => {
+        const updatedCustomizations = [...productData.customizations];
+        updatedCustomizations[index][field] = value;
+        setProductData({ ...productData, customizations: updatedCustomizations });
+    };
+
+    const handleAddSize = (customizationIndex) => {
+        const updatedCustomizations = [...productData.customizations];
+        updatedCustomizations[customizationIndex].sizes.push({ size_type: '', height: '', width: '', depth: '' });
+        setProductData({ ...productData, customizations: updatedCustomizations });
+    };
+
+    const handleRemoveSize = (customizationIndex, sizeIndex) => {
+        const updatedCustomizations = [...productData.customizations];
+        updatedCustomizations[customizationIndex].sizes.splice(sizeIndex, 1);
+        setProductData({ ...productData, customizations: updatedCustomizations });
+    };
+
+    const handleSizeChange = (customizationIndex, sizeIndex, field, value) => {
+        const updatedCustomizations = [...productData.customizations];
+        updatedCustomizations[customizationIndex].sizes[sizeIndex][field] = value;
+        setProductData({ ...productData, customizations: updatedCustomizations });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData();
+    
         for (let key in productData) {
-            formData.append(key, productData[key]);
+            if (key === 'customizations') {
+                // Stringify customizations array
+                formData.append(key, JSON.stringify(productData[key]));
+            } else if (productData[key] !== '') {
+                formData.append(key, productData[key]);
+            }
         }
-
+    
         try {
             const response = await fetch('http://localhost:5000/api/productmaster/add', {
                 method: 'POST',
-                body: formData
+                body: formData,
             });
-
+    
             if (response.ok) {
                 alert('Product added successfully!');
                 const newProduct = await response.json();
-                setProducts(prevProducts => [...prevProducts, newProduct]);
+                setProducts((prevProducts) => [...prevProducts, newProduct]);
                 onClose();
             } else {
                 alert('Error adding product');
@@ -199,37 +286,201 @@ const AddProductModal = ({ setProducts, onClose }) => {
             console.error('Error:', error);
         }
     };
-
     return (
         <div className="overlay">
             <div className="modal-content">
-                <span className="close" onClick={onClose}>&times;</span>
-                <form onSubmit={handleSubmit} className="add-product-form">
+                <span className="close" onClick={onClose}>
+                    &times;
+                </span>
+                <form onSubmit={handleSubmit} className="add-product-form" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
                     <h2>Add Product</h2>
-                    <input type="text" name="product_name" placeholder="Product Name" onChange={handleChange} required />
-                    <input type="number" name="base_price" placeholder="Base Price" onChange={handleChange} required />
-                    <select name="category_id" onChange={handleChange} value={productData.category_id} required>
+                    <input
+                        type="text"
+                        name="product_name"
+                        placeholder="Product Name"
+                        onChange={handleChange}
+                        required
+                    />
+                    <input
+                        type="number"
+                        name="base_price"
+                        placeholder="Base Price"
+                        onChange={handleChange}
+                        required
+                    />
+                    <select
+                        name="category_id"
+                        onChange={handleChange}
+                        value={productData.category_id}
+                        required
+                    >
                         <option value="">Select Category</option>
                         {isLoading ? (
                             <option disabled>Loading categories...</option>
+                        ) : categories.length > 0 ? (
+                            categories.map((category) => (
+                                <option key={category.category_id} value={category.category_id}>
+                                    {category.category_name}
+                                </option>
+                            ))
                         ) : (
-                            categories.length > 0 ? (
-                                categories.map((category) => (
-                                    <option key={category.category_id} value={category.category_id}>
-                                        {category.category_name}
-                                    </option>
-                                ))
-                            ) : (
-                                <option disabled>No categories available</option>
-                            )
+                            <option disabled>No categories available</option>
                         )}
                     </select>
-                    <input type="text" name="customizable" placeholder="Customizable (true/false)" onChange={handleChange} required />
-                    <textarea name="description" placeholder="Description" onChange={handleChange} required></textarea>
-                    <input type="file" name="image" accept="image/*" onChange={handleChange}  />
+                    <label className="customizable-field">
+                        Customizable:
+                        <input
+                            type="checkbox"
+                            name="customizable"
+                            checked={productData.customizable}
+                            onChange={handleChange}
+                        />
+                    </label>
+                    {productData.customizable && (
+                        <>
+                            <button
+                                type="button"
+                                onClick={handleAddCustomization}
+                                disabled={productData.customizations.length >= 3}
+                            >
+                                Add Customization
+                            </button>
+                            {productData.customizations.map((customization, index) => {
+                                const selectedTypes = productData.customizations.map(c => c.type);
+
+                                return (
+                                    <div key={index} className="customization-section">
+                                        <label>
+                                            Customization Type:
+                                            <select
+                                                value={customization.type}
+                                                onChange={(e) =>
+                                                    handleCustomizationChange(index, 'type', e.target.value)
+                                                }
+                                                required
+                                            >
+                                                <option value="">Select Type</option>
+                                                {['text', 'photo', 'size']
+                                                    .filter(option => !selectedTypes.includes(option) || option === customization.type)
+                                                    .map(option => (
+                                                        <option key={option} value={option}>
+                                                            {option.charAt(0).toUpperCase() + option.slice(1)}
+                                                        </option>
+                                                    ))}
+                                            </select>
+                                        </label>
+                                        <button
+                                            type="button"
+                                            className="remove-button"
+                                            onClick={() => handleRemoveCustomization(index)}
+                                        >
+                                            &times;
+                                        </button>
+                                        {customization.type === 'size' && (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleAddSize(index)}
+                                                    disabled={customization.sizes.length >= 3}
+                                                >
+                                                    Add Size
+                                                </button>
+                                                {customization.sizes.map((size, sizeIndex) => {
+                                                    const selectedSizeTypes = customization.sizes.map(s => s.size_type);
+
+                                                    return (
+                                                        <div key={sizeIndex} className="size-section">
+                                                            <label>
+                                                                Size Type:
+                                                                <select
+                                                                    value={size.size_type}
+                                                                    onChange={(e) =>
+                                                                        handleSizeChange(index, sizeIndex, 'size_type', e.target.value)
+                                                                    }
+                                                                    required
+                                                                >
+                                                                    <option value="">Select Size</option>
+                                                                    {['small', 'medium', 'large']
+                                                                        .filter(option => !selectedSizeTypes.includes(option) || option === size.size_type)
+                                                                        .map(option => (
+                                                                            <option key={option} value={option}>
+                                                                                {option.charAt(0).toUpperCase() + option.slice(1)}
+                                                                            </option>
+                                                                        ))}
+                                                                </select>
+                                                            </label>
+                                                            <button
+                                                                type="button"
+                                                                className="remove-button"
+                                                                onClick={() => handleRemoveSize(index, sizeIndex)}
+                                                            >
+                                                                &times;
+                                                            </button>
+                                                            <label>
+                                                                Height:
+                                                                <input
+                                                                    type="number"
+                                                                    placeholder="Height"
+                                                                    value={size.height}
+                                                                    onChange={(e) =>
+                                                                        handleSizeChange(index, sizeIndex, 'height', e.target.value)
+                                                                    }
+                                                                    required
+                                                                />
+                                                            </label>
+                                                            <label>
+                                                                Width:
+                                                                <input
+                                                                    type="number"
+                                                                    placeholder="Width"
+                                                                    value={size.width}
+                                                                    onChange={(e) =>
+                                                                        handleSizeChange(index, sizeIndex, 'width', e.target.value)
+                                                                    }
+                                                                    required
+                                                                />
+                                                            </label>
+                                                            <label>
+                                                                Depth:
+                                                                <input
+                                                                    type="number"
+                                                                    placeholder="Depth"
+                                                                    value={size.depth}
+                                                                    onChange={(e) =>
+                                                                        handleSizeChange(index, sizeIndex, 'depth', e.target.value)
+                                                                    }
+                                                                    required
+                                                                />
+                                                            </label>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </>
+                    )}
+                    <textarea
+                        name="description"
+                        placeholder="Product Description"
+                        onChange={handleChange}
+                        required
+                    ></textarea>
+                    <input
+                        type="file"
+                        name="image"
+                        accept="image/*"
+                        onChange={handleChange}
+                    />
                     <div className="form-buttons">
-                        <button type="submit" className="btn-adding"><i className="fas fa-check"></i></button>
-                        <button type="button" className="btn-close" onClick={onClose}><i className="fas fa-times"></i></button>
+                        <button type="submit" className="btn-adding">
+                            <i className="fas fa-check"></i>
+                        </button>
+                        <button type="button" className="btn-close" onClick={onClose}>
+                            <i className="fas fa-times"></i>
+                        </button>
                     </div>
                 </form>
             </div>

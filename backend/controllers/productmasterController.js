@@ -23,11 +23,18 @@ const getProducts = (req, res) => {
             pm.customizable,
             pm.description,
             pm.image,
-            pm.status
+            CASE
+                WHEN i.stock_qty > 10 THEN 'In Stock'
+                WHEN i.stock_qty > 0 THEN 'Low Stock'
+                ELSE 'Out of Stock'
+            END AS status,
+            COALESCE(i.stock_qty, 0) AS stock_qty
         FROM 
             product_master pm
         JOIN 
             Categories c ON pm.category_id = c.CategoryID
+        LEFT JOIN 
+            inventory i ON pm.product_id = i.product_id
     `;
 
     db.query(query, (error, results) => {
@@ -39,25 +46,123 @@ const getProducts = (req, res) => {
     });
 };
 
-const addProduct = (req, res) => {
-    const { product_name, category_id, base_price, customizable, description, status } = req.body;
-    const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
+const addProduct = async (req, res) => {
+    try {
+        const { product_name, category_id, base_price, customizable, description, status, customizations } = req.body;
+        const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
+        const isCustomizable = customizable === 'true' || customizable === true || customizable === '1' || customizable === 1 || customizable === 'yes' ? 'yes' : 'no';
+        const productStatus = status || 'out of stock';
 
-    // Ensure customizable is either 'yes' or 'no'
-    const isCustomizable = customizable === 'true' || customizable === true || customizable === '1' || customizable === 1 || customizable === 'yes' ? 'yes' : 'no';
+        // Start a transaction
+        await new Promise((resolve, reject) => {
+            db.beginTransaction(err => {
+                if (err) reject(err);
+                resolve();
+            });
+        });
 
-    const query = `
-        INSERT INTO product_master (product_name, category_id, base_price, customizable, description, image, status) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    `;
+        // Get the next product ID
+        const getNextProductIdQuery = `
+            SELECT COALESCE(MAX(CAST(SUBSTRING(product_id, 3) AS UNSIGNED)), 0) + 1 as next_id 
+            FROM product_master
+        `;
 
-    db.query(query, [product_name, category_id, base_price, isCustomizable, description, imagePath, status], (error, results) => {
-        if (error) {
-            console.error('Error inserting product:', error);
-            return res.status(500).json({ error: 'Internal Server Error' });
+        const nextIdResult = await new Promise((resolve, reject) => {
+            db.query(getNextProductIdQuery, [], (error, results) => {
+                if (error) reject(error);
+                resolve(results[0].next_id);
+            });
+        });
+
+        const productId = `P_${String(nextIdResult).padStart(2, '0')}`;
+
+        // Insert into product_master
+        const productQuery = `
+            INSERT INTO product_master (product_id, product_name, category_id, base_price, customizable, description, image, status) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        await new Promise((resolve, reject) => {
+            db.query(productQuery, [
+                productId,
+                product_name, 
+                category_id, 
+                base_price, 
+                isCustomizable, 
+                description, 
+                imagePath, 
+                productStatus
+            ], (error, results) => {
+                if (error) reject(error);
+                resolve(results);
+            });
+        });
+
+        // Handle customizations if product is customizable
+        if (isCustomizable === 'yes' && customizations) {
+            const customizationsArray = JSON.parse(customizations);
+
+            for (const customization of customizationsArray) {
+                // Insert into product_customizations
+                const customizationQuery = `
+                    INSERT INTO product_customizations (product_id, customization_type, description)
+                    VALUES (?, ?, ?)
+                `;
+
+                await new Promise((resolve, reject) => {
+                    db.query(customizationQuery, [productId, customization.type, ''], (error, results) => {
+                        if (error) reject(error);
+                        resolve(results);
+                    });
+                });
+
+                // If customization type is 'size', handle size customizations
+                if (customization.type === 'size' && customization.sizes) {
+                    for (const size of customization.sizes) {
+                        const sizeQuery = `
+                            INSERT INTO size_customizations (product_id, size_type, height, width, depth)
+                            VALUES (?, ?, ?, ?, ?)
+                        `;
+
+                        await new Promise((resolve, reject) => {
+                            db.query(sizeQuery, [
+                                productId,
+                                size.size_type,
+                                size.height,
+                                size.width,
+                                size.depth
+                            ], (error, results) => {
+                                if (error) reject(error);
+                                resolve(results);
+                            });
+                        });
+                    }
+                }
+            }
         }
-        res.json({ message: 'Product added successfully', productId: results.insertId });
-    });
+
+        // Commit the transaction
+        await new Promise((resolve, reject) => {
+            db.commit(err => {
+                if (err) reject(err);
+                resolve();
+            });
+        });
+
+        res.json({
+            message: 'Product added successfully',
+            productId: productId
+        });
+
+    } catch (error) {
+        // Rollback in case of error
+        await new Promise((resolve) => {
+            db.rollback(() => resolve());
+        });
+
+        console.error('Error adding product:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
 };
 
 
@@ -114,9 +219,42 @@ const getProductsByCategory = (req, res) => {
 
   
 
+  const getCustomizationDetails = async (req, res) => {
+    const { productId } = req.params;
+    try {
+        const query = `
+            SELECT 
+                pc.customization_id,
+                pc.product_id,
+                pc.customization_type,
+                pc.description,
+                COALESCE(sc.size_type, NULL) AS size_type,
+                COALESCE(sc.height, NULL) AS height,
+                COALESCE(sc.width, NULL) AS width,
+                COALESCE(sc.depth, NULL) AS depth
+            FROM product_customizations pc
+            LEFT JOIN size_customizations sc 
+                ON pc.product_id = sc.product_id
+                AND pc.customization_type = 'size'
+            WHERE pc.product_id = ?;
+        `;
+        const results = await new Promise((resolve, reject) => {
+            db.query(query, [productId], (error, results) => {
+                if (error) reject(error);
+                resolve(results);
+            });
+        });
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'No customizations found for this product' });
+        }
+
+        res.status(200).json(results);
+    } catch (error) {
+        console.error('Error fetching customization details:', error);
+        res.status(500).json({ message: 'Error fetching customization details' });
+    }
+};
+
   
-  
-module.exports = { getProducts, addProduct, deleteProduct, getCategories, getProductsByCategory,upload };
-
-
-
+module.exports = { getProducts, addProduct, deleteProduct, getCategories, getProductsByCategory, getCustomizationDetails, upload };
