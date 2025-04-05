@@ -1,19 +1,25 @@
 import React, { useState } from 'react';
 import { FiSearch, FiUser, FiShoppingCart } from 'react-icons/fi';
+import { Link, useNavigate } from 'react-router-dom';
 import './Navbar.css';
-import logo from '../assets/logo.png'; // Adjust the path as needed
-import LoginModal from './LoginModal'; // Import the LoginModal component
+import logo from '../assets/logo.png';
+import LoginModal from './LoginModal';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false); // State for LoginModal
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
   const toggleLoginModal = () => {
-    setIsLoginModalOpen(!isLoginModalOpen); // Toggle the modal visibility
+    setIsLoginModalOpen(!isLoginModalOpen);
+  };
+
+  const handleCartClick = () => {
+    navigate('/cart'); // Navigate to the cart page
   };
 
   return (
@@ -21,22 +27,30 @@ const Navbar = () => {
       <div className="navbar-container">
         <div className="logo">
           <img src={logo} alt="Logo" className="logo-image" />
-          <a href="#home">CRAFTTARY</a>
+          <Link to="/">CRAFTTARY</Link>
         </div>
         <div className="search-bar">
           <input type="text" placeholder="Search here..." />
           <FiSearch className="search-icon" />
         </div>
         <ul className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
-          <li><a href="#home">Home</a></li>
-          <li><a href="#shop">Shop</a></li>
-          <li><a href="#about">About</a></li>
-          <li><a href="#contact">Contact</a></li>
+          <li>
+            <Link to="/" onClick={() => handleScrollToSection('home')}>Home</Link>
+          </li>
+          <li>
+            <Link to="/" onClick={() => handleScrollToSection('shop')}>Shop</Link>
+          </li>
+          <li>
+            <Link to="/" onClick={() => handleScrollToSection('about')}>About</Link>
+          </li>
+          <li>
+            <Link to="/" onClick={() => handleScrollToSection('contact')}>Contact</Link>
+          </li>
         </ul>
         <div className="navbar-icons">
           <button className="login-button" onClick={toggleLoginModal}>Login</button>
           <button className="signup-button">Sign Up</button>
-          <FiShoppingCart className="icon" />
+          <FiShoppingCart className="icon" onClick={handleCartClick} /> {/* Add onClick handler */}
           <FiUser className="icon" />
         </div>
         <div className="menu-toggle" onClick={toggleMenu}>
@@ -45,7 +59,7 @@ const Navbar = () => {
           <span className="bar"></span>
         </div>
       </div>
-      {isLoginModalOpen && <LoginModal onClose={toggleLoginModal} />} {/* Conditionally render LoginModal */}
+      {isLoginModalOpen && <LoginModal onClose={toggleLoginModal} />}
     </nav>
   );
 };

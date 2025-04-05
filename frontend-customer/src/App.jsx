@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import ProductsPage from './pages/Products_customer';
+import CartPage from './pages/Cart'; // Import the CartPage component
 import './App.css';
 
 const Home = () => {
@@ -72,6 +73,7 @@ const App = () => {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/cart" element={<CartPage />} /> {/* Add the cart route */}
         <Route path="/products/:categoryId" element={<ProductsPage />} />
       </Routes>
     </Router>

@@ -203,9 +203,18 @@ const getProductsByCategory = (req, res) => {
     }
   
     const query = `
-      SELECT p.product_id, p.product_name, p.base_price, p.image
-      FROM product_master p
-      WHERE p.category_id = ?
+       SELECT 
+            p.product_id, 
+            p.product_name, 
+            p.base_price, 
+            p.image,
+            COALESCE(i.stock_qty, 0) AS stock_qty
+        FROM 
+            product_master p
+        LEFT JOIN 
+            inventory i ON p.product_id = i.product_id
+        WHERE 
+            p.category_id = ?
     `;
   
     db.query(query, [category_id], (err, results) => {
