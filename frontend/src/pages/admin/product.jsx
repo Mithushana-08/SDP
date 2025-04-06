@@ -10,9 +10,11 @@ const Product = () => {
     const [products, setProducts] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false); // State for edit modal
     const [isViewModalOpen, setIsViewModalOpen] = useState(false); // State for the view modal
     const [customizationDetails, setCustomizationDetails] = useState([]); // State for customization details
     const [selectedProduct, setSelectedProduct] = useState(null); // State for the selected product
+    const [productToEdit, setProductToEdit] = useState(null); // State for the product to edit
 
     useEffect(() => {
         fetch('http://localhost:5000/api/productmaster')
@@ -58,6 +60,11 @@ const Product = () => {
         } catch (error) {
             console.error('Error:', error);
         }
+    };
+
+    const handleEdit = (product) => {
+        setProductToEdit(product);
+        setIsEditModalOpen(true);
     };
 
     const filteredProducts = products.filter(product =>
@@ -122,7 +129,7 @@ const Product = () => {
                                     />
                                 </td>
                                 <td>
-                                    <button className="edit-button"><FiEdit /></button>
+                                    <button className="edit-button" onClick={() => handleEdit(product)}><FiEdit /></button>
                                     <button className="delete-button" onClick={() => handleDelete(product.product_id)}><FiTrash2 /></button>
                                     <button className="view-button" onClick={() => handleViewCustomizations(product.product_id)}>
                                         <FiEye />
@@ -133,6 +140,13 @@ const Product = () => {
                         </tbody>
                     </table>
                     {isModalOpen && <AddProductModal setProducts={setProducts} onClose={() => setIsModalOpen(false)} />}
+                    {isEditModalOpen && (
+                        <AddProductModal
+                            setProducts={setProducts}
+                            onClose={() => setIsEditModalOpen(false)}
+                            productToEdit={productToEdit} // Pass product to edit
+                        />
+                    )}
                     {isViewModalOpen && (
                         <div className="overlay">
                             <div className="modal-content">
@@ -177,8 +191,7 @@ const Product = () => {
     );
 };
 
-
-const AddProductModal = ({ setProducts, onClose }) => {
+const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
     const [productData, setProductData] = useState({
         product_name: '',
         category_id: '',
@@ -188,6 +201,7 @@ const AddProductModal = ({ setProducts, onClose }) => {
         description: '',
         image: null,
     });
+
     const [categories, setCategories] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -202,7 +216,17 @@ const AddProductModal = ({ setProducts, onClose }) => {
                 console.error('Error fetching categories:', error);
                 setIsLoading(false);
             });
-    }, []);
+
+        if (productToEdit) {
+            setProductData({
+                ...productToEdit,
+                category_id: productToEdit.category_id || '',
+                customizable: productToEdit.customizable || false,
+                customizations: productToEdit.customizations || [],
+                image: null, // Reset image field
+            });
+        }
+    }, [productToEdit]);
 
     const handleChange = (e) => {
         const { name, value, type, checked, files } = e.target;
@@ -258,34 +282,45 @@ const AddProductModal = ({ setProducts, onClose }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData();
-    
+
         for (let key in productData) {
             if (key === 'customizations') {
-                // Stringify customizations array
                 formData.append(key, JSON.stringify(productData[key]));
             } else if (productData[key] !== '') {
                 formData.append(key, productData[key]);
             }
         }
-    
+
         try {
-            const response = await fetch('http://localhost:5000/api/productmaster/add', {
-                method: 'POST',
+            const url = productToEdit
+                ? `http://localhost:5000/api/productmaster/update/${productToEdit.product_id}`
+                : 'http://localhost:5000/api/productmaster/add';
+            const method = productToEdit ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method,
                 body: formData,
             });
-    
+
             if (response.ok) {
-                alert('Product added successfully!');
-                const newProduct = await response.json();
-                setProducts((prevProducts) => [...prevProducts, newProduct]);
+                alert(productToEdit ? 'Product updated successfully!' : 'Product added successfully!');
+                const updatedProduct = await response.json();
+                setProducts((prevProducts) =>
+                    productToEdit
+                        ? prevProducts.map((product) =>
+                              product.product_id === updatedProduct.product_id ? updatedProduct : product
+                          )
+                        : [...prevProducts, updatedProduct]
+                );
                 onClose();
             } else {
-                alert('Error adding product');
+                alert('Error saving product');
             }
         } catch (error) {
             console.error('Error:', error);
         }
     };
+
     return (
         <div className="overlay">
             <div className="modal-content">
@@ -293,11 +328,12 @@ const AddProductModal = ({ setProducts, onClose }) => {
                     &times;
                 </span>
                 <form onSubmit={handleSubmit} className="add-product-form" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
-                    <h2>Add Product</h2>
+                    <h2>{productToEdit ? 'Edit Product' : 'Add Product'}</h2>
                     <input
                         type="text"
                         name="product_name"
                         placeholder="Product Name"
+                        value={productData.product_name}
                         onChange={handleChange}
                         required
                     />
@@ -305,6 +341,7 @@ const AddProductModal = ({ setProducts, onClose }) => {
                         type="number"
                         name="base_price"
                         placeholder="Base Price"
+                        value={productData.base_price}
                         onChange={handleChange}
                         required
                     />
@@ -465,6 +502,7 @@ const AddProductModal = ({ setProducts, onClose }) => {
                     <textarea
                         name="description"
                         placeholder="Product Description"
+                        value={productData.description}
                         onChange={handleChange}
                         required
                     ></textarea>

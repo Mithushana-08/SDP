@@ -165,6 +165,123 @@ const addProduct = async (req, res) => {
     }
 };
 
+const editProduct = async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const { product_name, category_id, base_price, customizable, description, status, customizations } = req.body;
+        const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
+
+        // Start a transaction
+        await new Promise((resolve, reject) => {
+            db.beginTransaction(err => {
+                if (err) reject(err);
+                resolve();
+            });
+        });
+
+        // Update product_master table
+        const updateProductQuery = `
+            UPDATE product_master 
+            SET 
+                product_name = ?, 
+                category_id = ?, 
+                base_price = ?, 
+                customizable = ?, 
+                description = ?, 
+                image = COALESCE(?, image), 
+                status = ?
+            WHERE product_id = ?
+        `;
+
+        await new Promise((resolve, reject) => {
+            db.query(updateProductQuery, [
+                product_name,
+                category_id,
+                base_price,
+                customizable === 'true' || customizable === true || customizable === '1' || customizable === 1 || customizable === 'yes' ? 'yes' : 'no',
+                description,
+                imagePath,
+                status || 'out of stock',
+                productId
+            ], (error, results) => {
+                if (error) reject(error);
+                resolve(results);
+            });
+        });
+
+        // Handle customizations if product is customizable
+        if (customizable === 'yes' && customizations) {
+            const customizationsArray = JSON.parse(customizations);
+
+            // Delete existing customizations for the product
+            const deleteCustomizationsQuery = `DELETE FROM product_customizations WHERE product_id = ?`;
+            await new Promise((resolve, reject) => {
+                db.query(deleteCustomizationsQuery, [productId], (error, results) => {
+                    if (error) reject(error);
+                    resolve(results);
+                });
+            });
+
+            // Insert new customizations
+            for (const customization of customizationsArray) {
+                const customizationQuery = `
+                    INSERT INTO product_customizations (product_id, customization_type, description)
+                    VALUES (?, ?, ?)
+                `;
+
+                await new Promise((resolve, reject) => {
+                    db.query(customizationQuery, [productId, customization.type, ''], (error, results) => {
+                        if (error) reject(error);
+                        resolve(results);
+                    });
+                });
+
+                // If customization type is 'size', handle size customizations
+                if (customization.type === 'size' && customization.sizes) {
+                    for (const size of customization.sizes) {
+                        const sizeQuery = `
+                            INSERT INTO size_customizations (product_id, size_type, height, width, depth)
+                            VALUES (?, ?, ?, ?, ?)
+                        `;
+
+                        await new Promise((resolve, reject) => {
+                            db.query(sizeQuery, [
+                                productId,
+                                size.size_type,
+                                size.height,
+                                size.width,
+                                size.depth
+                            ], (error, results) => {
+                                if (error) reject(error);
+                                resolve(results);
+                            });
+                        });
+                    }
+                }
+            }
+        }
+
+        // Commit the transaction
+        await new Promise((resolve, reject) => {
+            db.commit(err => {
+                if (err) reject(err);
+                resolve();
+            });
+        });
+
+        res.json({ message: 'Product updated successfully' });
+    } catch (error) {
+        // Rollback in case of error
+        await new Promise((resolve) => {
+            db.rollback(() => resolve());
+        });
+
+        console.error('Error updating product:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+
 
 const deleteProduct = (req, res) => {
     const productId = req.params.id;
@@ -266,4 +383,4 @@ const getProductsByCategory = (req, res) => {
 };
 
   
-module.exports = { getProducts, addProduct, deleteProduct, getCategories, getProductsByCategory, getCustomizationDetails, upload };
+module.exports = { getProducts, addProduct, deleteProduct, getCategories, getProductsByCategory, getCustomizationDetails, editProduct, upload };

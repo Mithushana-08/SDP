@@ -49,7 +49,7 @@ const Navbar = () => {
         </ul>
         <div className="navbar-icons">
           <button className="login-button" onClick={toggleLoginModal}>Login</button>
-          <button className="signup-button">Sign Up</button>
+         
           <FiShoppingCart className="icon" onClick={handleCartClick} /> {/* Add onClick handler */}
           <FiUser className="icon" />
         </div>

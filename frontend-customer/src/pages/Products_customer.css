@@ -23,8 +23,8 @@
 }
 
 .product-card img {
-  max-width: 100%;
-  height: auto;
+  width: 200px;
+  height: 200px;
   border-radius: 8px;
 }
 
@@ -207,3 +207,4 @@
   border-radius: 5px;
   z-index: 1001; /* Ensure it appears above other elements */
 }
+
