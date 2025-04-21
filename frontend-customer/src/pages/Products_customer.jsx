@@ -9,8 +9,8 @@ const ProductsPage = () => {
   const [products, setProducts] = useState([]);
   const [quantities, setQuantities] = useState({});
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [customizations, setCustomizations] = useState([]); // State for customizations
-  const [selectedCustomizations, setSelectedCustomizations] = useState({}); // State for selected customizations
+  const [customizations, setCustomizations] = useState([]);
+  const [selectedCustomizations, setSelectedCustomizations] = useState({});
 
   useEffect(() => {
     fetch(`http://localhost:5000/api/productmaster/by-category?category_id=${categoryId}`)
@@ -35,13 +35,13 @@ const ProductsPage = () => {
 
   const openProductModal = (product) => {
     setSelectedProduct(product);
-    fetchCustomizations(product.product_id); // Fetch customizations for the selected product
+    fetchCustomizations(product.product_id);
   };
 
   const closeProductModal = () => {
     setSelectedProduct(null);
-    setCustomizations([]); // Clear customizations
-    setSelectedCustomizations({}); // Clear selected customizations
+    setCustomizations([]);
+    setSelectedCustomizations({});
   };
 
   const handleCustomizationChange = (customization) => {
@@ -55,12 +55,10 @@ const ProductsPage = () => {
     setSelectedCustomizations(prevState => {
       const isSelected = prevState[customization.customization_id]?.customization_type === 'text';
       if (isSelected) {
-        // Deselect the radio button using delete
         const newState = { ...prevState };
         delete newState[customization.customization_id];
         return newState;
       } else {
-        // Select the radio button
         return {
           ...prevState,
           [customization.customization_id]: { ...customization, customization_type: 'text', customization_value: '' },
@@ -68,24 +66,22 @@ const ProductsPage = () => {
       }
     });
   };
-  
+
   const handlePhotoRadioChange = (customization) => {
     setSelectedCustomizations(prevState => {
       const isSelected = prevState[customization.customization_id]?.customization_type === 'photo';
       if (isSelected) {
-        // Deselect the radio button using delete
         const newState = { ...prevState };
         delete newState[customization.customization_id];
         return newState;
       } else {
-        // Select the radio button
         return {
           ...prevState,
           [customization.customization_id]: { ...customization, customization_type: 'photo', uploaded_image: null },
         };
       }
     });
-  };  
+  };
 
   const handleTextCustomizationChange = (e, customization) => {
     const textValue = e.target.value;
@@ -120,17 +116,45 @@ const ProductsPage = () => {
     }));
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (product) => {
+    // Retrieve the token from localStorage
+    const token = localStorage.getItem("token");
+  
+    if (!token) {
+      alert("You must be logged in to add items to the cart.");
+      return;
+    }
+  
     const cartItem = {
-      product_id: selectedProduct.product_id,
-      quantity: quantities[selectedProduct.product_id],
+      product_id: product.product_id,
+      quantity: quantities[product.product_id],
+      price: product.base_price,
       customizations: Object.values(selectedCustomizations),
     };
-
-    // Send cartItem to the backend or update the cart state
-    console.log('Adding to cart:', cartItem);
+  
+    fetch("http://localhost:5000/api/cart/add", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // Ensure the token is prefixed with "Bearer"
+      },
+      body: JSON.stringify(cartItem),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to add item to cart");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log("Item added to cart:", data);
+        alert("Item added to cart successfully!");
+      })
+      .catch((error) => {
+        console.error("Error adding item to cart:", error);
+        alert("Failed to add item to cart.");
+      });
   };
-
   return (
     <div>
       <Navbar />
@@ -154,14 +178,18 @@ const ProductsPage = () => {
                       <p className="out-of-stock">Out of Stock</p>
                     )}
                     <div className="quantity-selector">
-                      <button onClick={() => decrementQuantity(product.product_id)}>-</button>
+                      <button onClick={(e) => { e.stopPropagation(); decrementQuantity(product.product_id); }}>-</button>
                       <span>{quantities[product.product_id]}</span>
-                      <button onClick={() => incrementQuantity(product.product_id)}>+</button>
+                      <button onClick={(e) => { e.stopPropagation(); incrementQuantity(product.product_id); }}>+</button>
                     </div>
                   </div>
                   <button
                     className="add-to-cart"
                     disabled={product.stock_qty === 0 || quantities[product.product_id] === 0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddToCart(product);
+                    }}
                   >
                     <ShoppingCart size={16} />
                   </button>
@@ -174,7 +202,6 @@ const ProductsPage = () => {
         </div>
       </section>
 
-      {/* Product Modal */}
       {selectedProduct && (
         <div className="product-modal">
           <div className="modal-content">
@@ -189,81 +216,78 @@ const ProductsPage = () => {
               <h2>{selectedProduct.product_name}</h2>
               <p className="price">Rs.{selectedProduct.base_price.toFixed(2)}</p>
               <p>{selectedProduct.description}</p>
-              {/* Stock Availability */}
               {selectedProduct.stock_qty > 0 ? (
                 <p className="available">Available: {selectedProduct.stock_qty}</p>
               ) : (
                 <p className="out-of-stock">Out of Stock</p>
               )}
-              {/* Customizations */}
               {customizations.length > 0 && (
-  <div className="customizations">
-    <h3>Available Customizations:</h3>
-    {customizations.map(customization => (
-      <div key={customization.customization_id} className="customization-item">
-        <p>Type: {customization.customization_type}</p>
-        {customization.customization_type === 'size' && (
-          <div>
-            <label>
-              <input
-                type="radio"
-                name={`size-${customization.customization_id}`} // Unique name for each size customization
-                value={customization.size_type}
-                checked={selectedCustomizations[customization.customization_id]?.size_type === customization.size_type}
-                onChange={() => handleCustomizationChange(customization)}
-              />
-              Size: {customization.size_type} (H: {customization.height}, W: {customization.width}, D: {customization.depth})
-            </label>
-          </div>
-        )}
-     {customization.customization_type === 'text' && (
-  <div>
-    <label>
-      <input
-        type="radio"
-        name={`text-${customization.customization_id}`} // Unique name for each text customization
-        value={customization.customization_id}
-        checked={selectedCustomizations[customization.customization_id]?.customization_type === 'text'}
-        onClick={() => handleTextRadioChange(customization)} // Use onClick for toggling
-      />
-      Add Text
-    </label>
-    {selectedCustomizations[customization.customization_id]?.customization_type === 'text' && (
-      <input
-        type="text"
-        placeholder="Enter text"
-        value={selectedCustomizations[customization.customization_id]?.customization_value || ''}
-        onChange={(e) => handleTextCustomizationChange(e, customization)}
-      />
-    )}
-  </div>
-)}
-{customization.customization_type === 'photo' && (
-  <div>
-    <label>
-      <input
-        type="radio"
-        name={`photo-${customization.customization_id}`} // Unique name for each photo customization
-        value={customization.customization_id}
-        checked={selectedCustomizations[customization.customization_id]?.customization_type === 'photo'}
-        onClick={() => handlePhotoRadioChange(customization)} // Use onClick for toggling
-      />
-      Add Photo
-    </label>
-    {selectedCustomizations[customization.customization_id]?.customization_type === 'photo' && (
-      <input
-        type="file"
-        name="photo"
-        onChange={(e) => handlePhotoUpload(e, customization)}
-      />
-    )}
-  </div>
-)}
-      </div>
-    ))}
-  </div>
-)}
-  
+                <div className="customizations">
+                  <h3>Available Customizations:</h3>
+                  {customizations.map(customization => (
+                    <div key={customization.customization_id} className="customization-item">
+                      <p>Type: {customization.customization_type}</p>
+                      {customization.customization_type === 'size' && (
+                        <div>
+                          <label>
+                            <input
+                              type="radio"
+                              name={`size-${customization.customization_id}`}
+                              value={customization.size_type}
+                              checked={selectedCustomizations[customization.customization_id]?.size_type === customization.size_type}
+                              onChange={() => handleCustomizationChange(customization)}
+                            />
+                            Size: {customization.size_type} (H: {customization.height}, W: {customization.width}, D: {customization.depth})
+                          </label>
+                        </div>
+                      )}
+                      {customization.customization_type === 'text' && (
+                        <div>
+                          <label>
+                            <input
+                              type="radio"
+                              name={`text-${customization.customization_id}`}
+                              value={customization.customization_id}
+                              checked={selectedCustomizations[customization.customization_id]?.customization_type === 'text'}
+                              onClick={() => handleTextRadioChange(customization)}
+                            />
+                            Add Text
+                          </label>
+                          {selectedCustomizations[customization.customization_id]?.customization_type === 'text' && (
+                            <input
+                              type="text"
+                              placeholder="Enter text"
+                              value={selectedCustomizations[customization.customization_id]?.customization_value || ''}
+                              onChange={(e) => handleTextCustomizationChange(e, customization)}
+                            />
+                          )}
+                        </div>
+                      )}
+                      {customization.customization_type === 'photo' && (
+                        <div>
+                          <label>
+                            <input
+                              type="radio"
+                              name={`photo-${customization.customization_id}`}
+                              value={customization.customization_id}
+                              checked={selectedCustomizations[customization.customization_id]?.customization_type === 'photo'}
+                              onClick={() => handlePhotoRadioChange(customization)}
+                            />
+                            Add Photo
+                          </label>
+                          {selectedCustomizations[customization.customization_id]?.customization_type === 'photo' && (
+                            <input
+                              type="file"
+                              name="photo"
+                              onChange={(e) => handlePhotoUpload(e, customization)}
+                            />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="quantity-selector">
                 <button onClick={() => decrementQuantity(selectedProduct.product_id)}>-</button>
                 <span>{quantities[selectedProduct.product_id]}</span>
@@ -272,7 +296,7 @@ const ProductsPage = () => {
               <button
                 className="add-to-cart"
                 disabled={selectedProduct.stock_qty === 0 || quantities[selectedProduct.product_id] === 0}
-                onClick={handleAddToCart}
+                onClick={() => handleAddToCart(selectedProduct)}
               >
                 Add to Cart
               </button>
