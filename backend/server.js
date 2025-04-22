@@ -13,6 +13,10 @@ const productmaster = require("./routes/productmasterRoutes");
 const customerRoutes = require("./routes/customerRoutes"); // Import 
 const cartRoutes = require("./routes/cartRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const adminOrderRoutes = require("./routes/adminOrderRoutes"); // Import the admin order routes
+
+// Mount the admin order routes
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -33,6 +37,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // Serve i
 app.use("/api/customers", customerRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/admin", adminOrderRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

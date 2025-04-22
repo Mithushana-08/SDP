@@ -30,7 +30,7 @@ const App = () => {
         <Route path="/admin/reports" element={<Reports />} />
         <Route path="/admin/inventory" element={<Inventory />} />
         <Route path="/admin/work_upload" element={<WorkUpload />} />
-        <Route path="/admin/order_items" element={<Items />} />
+        <Route path="/admin/order_items/:orderId" element={<Items />} /> {/* Updated route */}
         <Route path="/admin/crafter_assign" element={<CrafterAssign />} />
         <Route path="/crafter/cdashboard" element={<CrafterDashboard />} />
         <Route path="/crafter/Assignments" element={<Assignments />} /> 
