@@ -12,6 +12,8 @@ const productRoutes = require("./routes/productRoutes");
 const productmaster = require("./routes/productmasterRoutes");
 const customerRoutes = require("./routes/customerRoutes"); // Import 
 const cartRoutes = require("./routes/cartRoutes");
+const orderRoutes = require("./routes/orderRoutes");
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -30,6 +32,7 @@ app.use("/api/productmaster", productmaster);
 app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // Serve images
 app.use("/api/customers", customerRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/orders", orderRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
