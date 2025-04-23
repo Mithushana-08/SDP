@@ -32,10 +32,11 @@ const getOrderDetails = (req, res) => {
     const query = `
         SELECT 
             oi.item_id, oi.product_id, oi.quantity, oi.price, oi.total_price,
-            p.product_name,
+            p.product_name, c.CategoryName AS category_name,
             cd.customization_type, cd.customization_value, cd.uploaded_image, cd.size_type
         FROM order_items oi
         JOIN product_master p ON oi.product_id = p.product_id
+        JOIN Categories c ON p.category_id = c.CategoryID
         LEFT JOIN customization_details cd ON oi.item_id = cd.item_id
         WHERE oi.order_id = ?;
     `;
