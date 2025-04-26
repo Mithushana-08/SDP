@@ -103,10 +103,16 @@ const ProductsPage = () => {
   };
 
   const incrementQuantity = (productId) => {
-    setQuantities(prevQuantities => ({
-      ...prevQuantities,
-      [productId]: prevQuantities[productId] + 1,
-    }));
+    setQuantities((prevQuantities) => {
+      const product = products.find((p) => p.product_id === productId);
+      if (prevQuantities[productId] < product.stock_qty) {
+        return {
+          ...prevQuantities,
+          [productId]: prevQuantities[productId] + 1,
+        };
+      }
+      return prevQuantities; // Do not increase if it exceeds stock
+    });
   };
 
   const decrementQuantity = (productId) => {
@@ -152,7 +158,7 @@ const ProductsPage = () => {
       })
       .catch((error) => {
         console.error("Error adding item to cart:", error);
-        alert("Failed to add item to cart.");
+        alert("Failed to add item to cart login to add items to cart.");
       });
   };
   return (

@@ -92,7 +92,7 @@ const Sidebar = () => {
                         </NavLink>
                     </li>
                     <li>
-                        <NavLink to="/admin/settings" activeClassName="active">
+                        <NavLink to="/admin/Profile" activeClassName="active">
                             <FiSettings /> Settings
                         </NavLink>
                     </li>

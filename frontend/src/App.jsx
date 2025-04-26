@@ -12,6 +12,7 @@ import Inventory from "./pages/admin/inventory";
 import WorkUpload from "./pages/admin/work_upload";
 import Items from "./pages/admin/order_items";
 import CrafterAssign from "./pages/admin/crafter_assign";
+import Profile from "./pages/admin/Profile"; // Import the Profile page
 import CrafterDashboard from "./pages/crafter/cdashboard";
 import Assignments from "./pages/crafter/Assignments";
 import Uploads from "./pages/crafter/Uploads";
@@ -30,6 +31,7 @@ const App = () => {
         <Route path="/admin/reports" element={<Reports />} />
         <Route path="/admin/inventory" element={<Inventory />} />
         <Route path="/admin/work_upload" element={<WorkUpload />} />
+        <Route path="/admin/profile" element={<Profile />} /> {/* Add Profile route */}
         <Route path="/admin/order_items/:orderId" element={<Items />} /> {/* Updated route */}
         <Route path="/admin/crafter_assign" element={<CrafterAssign />} />
         <Route path="/crafter/cdashboard" element={<CrafterDashboard />} />

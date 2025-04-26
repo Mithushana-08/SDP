@@ -14,7 +14,7 @@ const customerRoutes = require("./routes/customerRoutes"); // Import
 const cartRoutes = require("./routes/cartRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const adminOrderRoutes = require("./routes/adminOrderRoutes"); // Import the admin order routes
-
+const profileRoutes = require("./routes/ProfileRoutes");
 // Mount the admin order routes
 
 
@@ -38,6 +38,7 @@ app.use("/api/customers", customerRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminOrderRoutes);
+app.use("/api/profile", profileRoutes); // Add profile routes
 
 // Error handling middleware
 app.use((err, req, res, next) => {

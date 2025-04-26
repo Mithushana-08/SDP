@@ -18,38 +18,54 @@ const CartPage = () => {
   const token = localStorage.getItem("token");
 
   // Fetch cart items
-  useEffect(() => {
-    fetch("http://localhost:5000/api/cart/items", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        const groupedItems = [];
-        data.forEach((item) => {
-          const normalizedCustomization = item.customizations?.length ? item.customizations : null;
-          const match = groupedItems.find((existing) => {
-            const existingCustomization = existing.customizations?.length ? existing.customizations : null;
-            return (
-              existing.product_id === item.product_id &&
-              JSON.stringify(existingCustomization) === JSON.stringify(normalizedCustomization)
-            );
-          });
-          if (match) {
-            match.quantity += item.quantity;
-          } else {
-            groupedItems.push({ ...item, customizations: normalizedCustomization });
-          }
-        });
-        setCartItems(groupedItems);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Error fetching cart items:", err);
-        setLoading(false);
+ // Replace only the useEffect hook that fetches cart items
+
+useEffect(() => {
+  fetch("http://localhost:5000/api/cart/items", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      console.log("Original cart data:", data);
+      
+      // Create a map to group items with the same product_id and customizations
+      const groupedMap = new Map();
+      
+      data.forEach((item) => {
+        // Create a unique key based on product_id and serialized customizations
+        const customizationString = item.customizations && item.customizations.length 
+          ? JSON.stringify(item.customizations) 
+          : "no_customization";
+          
+        const itemKey = `${item.product_id}_${customizationString}`;
+        
+        if (groupedMap.has(itemKey)) {
+          // If this item already exists in our map, update its quantity
+          const existingItem = groupedMap.get(itemKey);
+          existingItem.quantity += item.quantity;
+          
+          // Update the map
+          groupedMap.set(itemKey, existingItem);
+        } else {
+          // If this is a new item, add it to the map
+          groupedMap.set(itemKey, { ...item });
+        }
       });
-  }, [token]);
+      
+      // Convert the map values back to an array
+      const groupedItems = Array.from(groupedMap.values());
+      console.log("Grouped cart items:", groupedItems);
+      
+      setCartItems(groupedItems);
+      setLoading(false);
+    })
+    .catch((err) => {
+      console.error("Error fetching cart items:", err);
+      setLoading(false);
+    });
+}, [token]);
 
   // Fetch saved address
   useEffect(() => {
@@ -85,6 +101,40 @@ const CartPage = () => {
         ? prevSelected.filter((itemId) => itemId !== id)
         : [...prevSelected, id]
     );
+  };
+
+  const handleQuantityChange = (itemId, change) => {
+    setCartItems(prevItems => 
+      prevItems.map(item => {
+        if (item.cart_item_id === itemId) {
+          const newQuantity = Math.max(1, item.quantity + change);
+          
+          // Update quantity on the server
+          updateItemQuantity(itemId, newQuantity);
+          
+          return { ...item, quantity: newQuantity };
+        }
+        return item;
+      })
+    );
+  };
+  
+  const updateItemQuantity = (itemId, newQuantity) => {
+    fetch(`http://localhost:5000/api/cart/update-quantity/${itemId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ quantity: newQuantity }),
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("Failed to update quantity");
+        }
+        return response.json();
+      })
+      .catch(error => console.error("Error updating quantity:", error));
   };
 
   const handleRemove = (id) => {
@@ -205,13 +255,21 @@ const CartPage = () => {
                     onChange={() => handleSelectItem(item.cart_item_id)}
                   />
                   <img
-                    src={item.image.startsWith("/uploads") ? `http://localhost:5000${item.image}` : item.image}
+                    src={item.image?.startsWith("/uploads") ? `http://localhost:5000${item.image}` : item.image}
                     alt={item.name}
                     className="cart-image"
                   />
                   <div className="cart-details">
                     <h3>{item.name}</h3>
-                    {item.customized && <span className="custom-tag">Customized</span>}
+                    
+                    {/* Display customization details if they exist */}
+                    {item.customizationDisplay && (
+                      <div className="customization-details">
+                        <span className="custom-tag">Customized</span>
+                        <p className="customization-text">{item.customizationDisplay}</p>
+                      </div>
+                    )}
+                    
                     <div className="cart-actions">
                       <button onClick={() => handleQuantityChange(item.cart_item_id, -1)}>-</button>
                       <span>{item.quantity}</span>
@@ -234,11 +292,11 @@ const CartPage = () => {
               <>
                 {selectedCartItems.map((item) => (
                   <p key={item.cart_item_id}>
-                    {item.name} x {item.quantity}: Rs{(item.price * item.quantity).toFixed(2)}
+                    {item.name} {item.customizationDisplay ? `(${item.customizationDisplay})` : ""} x {item.quantity}: Rs{(item.price * item.quantity).toFixed(2)}
                   </p>
                 ))}
                 <p>Subtotal: Rs{subtotal.toFixed(2)}</p>
-                <p>Shipping: Free</p>
+                
                 <h3>Total: Rs{total.toFixed(2)}</h3>
                 <button className="checkout-btn" onClick={handleCheckout}>
                   Proceed to Checkout
@@ -259,7 +317,7 @@ const CartPage = () => {
               </button>
               {/* Address Section */}
               <div className="address-section">
-                <h3>Shipping Address</h3>
+                <h3>Delivery Address</h3>
                 <form>
                   <div className="form-group">
                     <input
