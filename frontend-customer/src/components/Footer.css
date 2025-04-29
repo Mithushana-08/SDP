@@ -1,0 +1,154 @@
+/* Footer.css */
+.footer {
+    background-color: #2f1502; /* Dark brown background */
+    color: #ddd6d6; /* Light text color */
+    padding: 20px 5%; /* Previous padding */
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    gap: 100px; /* Previous gap */
+    flex-wrap: wrap;
+  }
+  
+  .footer-section {
+    flex: 1;
+    min-width: 200px; /* Ensure sections don't collapse too much */
+    margin-bottom: 10px; /* Previous margin */
+  }
+  
+  .footer-section h3 {
+    font-size: 18px; /* Previous heading size */
+    font-family: 'Playfair Display', serif;
+    color: #e67e22; /* Accent color */
+    margin-bottom: 10px; /* Previous margin */
+  }
+  
+  .footer-section p {
+    font-size: 13px; /* Previous font size */
+    font-family: 'Lora', serif;
+    line-height: 1.5; /* Previous line height */
+    margin: 3px 0; /* Previous margin */
+  }
+  
+  .footer-links ul {
+    list-style: none;
+    padding: 0;
+    display: flex; /* Keep links in one row */
+    flex-direction: row;
+    gap: 10px; /* Previous gap */
+    flex-wrap: wrap; /* Allow wrapping if needed */
+  }
+  
+  .footer-links li {
+    margin-bottom: 0; /* No vertical margin since links are in a row */
+  }
+  
+  .footer-links a {
+    color: #ddd6d6;
+    text-decoration: none;
+    font-size: 13px; /* Previous font size */
+    font-family: 'Lora', serif;
+    transition: color 0.3s;
+  }
+  
+  .footer-links a:hover {
+    color: #e67e22; /* Accent color on hover */
+  }
+  
+  .footer-contact p a {
+    color: #ddd6d6;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+  
+  .footer-contact p a:hover {
+    color: #e67e22;
+  }
+  
+  .footer-services ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .footer-services li {
+    font-size: 13px;
+    font-family: 'Lora', serif;
+    line-height: 1.5;
+    margin: 5px 0;
+    color: #ddd6d6;
+  }
+  
+  .footer-bottom {
+    text-align: center;
+    padding-top: 10px; /* Previous padding */
+    border-top: 1px solid rgba(221, 214, 214, 0.2);
+    margin-top: 10px; /* Previous margin */
+  }
+  
+  .footer-bottom p {
+    font-size: 11px; /* Previous font size */
+    font-family: 'Lora', serif;
+    color: #ddd6d6;
+    margin: 0;
+  }
+  
+  /* Responsive Adjustments */
+  
+  /* Tablets (max-width: 768px) */
+  @media (max-width: 768px) {
+    .footer {
+      padding: 15px 3%; /* Previous padding */
+    }
+  
+    .footer-container {
+      flex-direction: column; /* Stack sections vertically */
+      align-items: center;
+      text-align: center;
+      gap: 10px; /* Previous gap */
+    }
+  
+    .footer-section {
+      min-width: 100%; /* Full width for each section */
+      margin-bottom: 5px; /* Previous margin */
+    }
+  
+    .footer-links ul {
+      justify-content: center; /* Center the links */
+      gap: 10px; /* Previous gap for smaller screens */
+    }
+  
+    .footer-services ul {
+      text-align: center;
+    }
+  }
+  
+  /* Mobile (max-width: 480px) */
+  @media (max-width: 480px) {
+    .footer {
+      padding: 10px 2%; /* Previous padding */
+    }
+  
+    .footer-section h3 {
+      font-size: 16px; /* Previous heading size */
+    }
+  
+    .footer-section p,
+    .footer-links a,
+    .footer-services li {
+      font-size: 12px; /* Previous font size */
+    }
+  
+    .footer-links ul {
+      gap: 8px; /* Previous gap */
+    }
+  
+    .footer-bottom p {
+      font-size: 10px; /* Previous font size */
+    }
+  }

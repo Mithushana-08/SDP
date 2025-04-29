@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "../components/Navbar"; // Import the Navbar component
 import "./Cart.css"; // Import styles for the cart page
+import { FiTrash2, FiShoppingCart } from 'react-icons/fi'; // For the "Remove" and empty cart icons
+import { useNavigate } from 'react-router-dom';
 
 const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showCheckoutForm, setShowCheckoutForm] = useState(false); // State to toggle the form
+  const [showCheckoutForm, setShowCheckoutForm] = useState(false);
   const [address, setAddress] = useState({
     addressLine1: "",
     addressLine2: "",
@@ -15,57 +17,50 @@ const CartPage = () => {
     postalCode: "",
   });
 
+  const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
   // Fetch cart items
- // Replace only the useEffect hook that fetches cart items
-
-useEffect(() => {
-  fetch("http://localhost:5000/api/cart/items", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      console.log("Original cart data:", data);
-      
-      // Create a map to group items with the same product_id and customizations
-      const groupedMap = new Map();
-      
-      data.forEach((item) => {
-        // Create a unique key based on product_id and serialized customizations
-        const customizationString = item.customizations && item.customizations.length 
-          ? JSON.stringify(item.customizations) 
-          : "no_customization";
-          
-        const itemKey = `${item.product_id}_${customizationString}`;
-        
-        if (groupedMap.has(itemKey)) {
-          // If this item already exists in our map, update its quantity
-          const existingItem = groupedMap.get(itemKey);
-          existingItem.quantity += item.quantity;
-          
-          // Update the map
-          groupedMap.set(itemKey, existingItem);
-        } else {
-          // If this is a new item, add it to the map
-          groupedMap.set(itemKey, { ...item });
-        }
-      });
-      
-      // Convert the map values back to an array
-      const groupedItems = Array.from(groupedMap.values());
-      console.log("Grouped cart items:", groupedItems);
-      
-      setCartItems(groupedItems);
-      setLoading(false);
+  useEffect(() => {
+    fetch("http://localhost:5000/api/cart/items", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
-    .catch((err) => {
-      console.error("Error fetching cart items:", err);
-      setLoading(false);
-    });
-}, [token]);
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Original cart data:", data);
+
+        // Create a map to group items with the same product_id and customizations
+        const groupedMap = new Map();
+
+        data.forEach((item) => {
+          const customizationString = item.customizations && item.customizations.length
+            ? JSON.stringify(item.customizations)
+            : "no_customization";
+
+          const itemKey = `${item.product_id}_${customizationString}`;
+
+          if (groupedMap.has(itemKey)) {
+            const existingItem = groupedMap.get(itemKey);
+            existingItem.quantity += item.quantity;
+            groupedMap.set(itemKey, existingItem);
+          } else {
+            groupedMap.set(itemKey, { ...item });
+          }
+        });
+
+        const groupedItems = Array.from(groupedMap.values());
+        console.log("Grouped cart items:", groupedItems);
+
+        setCartItems(groupedItems);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching cart items:", err);
+        setLoading(false);
+      });
+  }, [token]);
 
   // Fetch saved address
   useEffect(() => {
@@ -73,14 +68,13 @@ useEffect(() => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // Include the token in the Authorization header
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({}), // No address details needed for fetching
+      body: JSON.stringify({}),
     })
       .then((res) => res.json())
       .then((data) => {
         if (data.address) {
-          // Map backend keys to frontend state keys
           setAddress({
             addressLine1: data.address.address_line1 || "",
             addressLine2: data.address.address_line2 || "",
@@ -94,7 +88,7 @@ useEffect(() => {
         console.error("Error fetching saved address:", err);
       });
   }, [token]);
-  
+
   const handleSelectItem = (id) => {
     setSelectedItems((prevSelected) =>
       prevSelected.includes(id)
@@ -104,21 +98,18 @@ useEffect(() => {
   };
 
   const handleQuantityChange = (itemId, change) => {
-    setCartItems(prevItems => 
-      prevItems.map(item => {
+    setCartItems((prevItems) =>
+      prevItems.map((item) => {
         if (item.cart_item_id === itemId) {
           const newQuantity = Math.max(1, item.quantity + change);
-          
-          // Update quantity on the server
           updateItemQuantity(itemId, newQuantity);
-          
           return { ...item, quantity: newQuantity };
         }
         return item;
       })
     );
   };
-  
+
   const updateItemQuantity = (itemId, newQuantity) => {
     fetch(`http://localhost:5000/api/cart/update-quantity/${itemId}`, {
       method: "PUT",
@@ -128,18 +119,21 @@ useEffect(() => {
       },
       body: JSON.stringify({ quantity: newQuantity }),
     })
-      .then(response => {
+      .then((response) => {
         if (!response.ok) {
           throw new Error("Failed to update quantity");
         }
         return response.json();
       })
-      .catch(error => console.error("Error updating quantity:", error));
+      .catch((error) => console.error("Error updating quantity:", error));
   };
 
   const handleRemove = (id) => {
-    setCartItems((prevCart) => prevCart.filter((item) => item.cart_item_id !== id));
-    setSelectedItems((prevSelected) => prevSelected.filter((itemId) => itemId !== id));
+    setCartItems((prevCart) => {
+      const updatedCart = prevCart.filter((item) => item.cart_item_id !== id);
+      setSelectedItems((prevSelected) => prevSelected.filter((itemId) => itemId !== id));
+      return updatedCart;
+    });
 
     fetch(`http://localhost:5000/api/cart/remove-item/${id}`, {
       method: "DELETE",
@@ -159,8 +153,34 @@ useEffect(() => {
       .catch((error) => console.error("Error removing item:", error));
   };
 
+  const handleClearCart = () => {
+    setCartItems([]);
+    setSelectedItems([]);
+
+    fetch("http://localhost:5000/api/cart/clear", {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to clear cart");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log("Cart cleared successfully:", data);
+      })
+      .catch((error) => console.error("Error clearing cart:", error));
+  };
+
+  const handleContinueShopping = () => {
+    navigate('/'); // Navigate back to the homepage
+  };
+
   const handleCheckout = () => {
-    setShowCheckoutForm(true); // Show the checkout form
+    setShowCheckoutForm(true);
   };
 
   const handleAddressChange = (e) => {
@@ -176,9 +196,9 @@ useEffect(() => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // Include the token in the Authorization header
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ ...address }), // Send only the address details
+      body: JSON.stringify({ ...address }),
     })
       .then((res) => {
         if (!res.ok) {
@@ -188,7 +208,6 @@ useEffect(() => {
       })
       .then((data) => {
         if (data.address) {
-          // If an address already exists, pre-fill the form
           setAddress(data.address);
           alert("Address already exists and has been loaded.");
         } else {
@@ -208,9 +227,9 @@ useEffect(() => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // Include the token for authentication
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ shipping_address: shippingAddress }), // Send the shipping address
+      body: JSON.stringify({ shipping_address: shippingAddress }),
     })
       .then((res) => {
         if (!res.ok) {
@@ -221,7 +240,9 @@ useEffect(() => {
       .then((data) => {
         console.log("Order placed successfully:", data);
         alert("Order placed successfully!");
-        // Optionally, redirect to an order confirmation page or clear the cart
+        setShowCheckoutForm(false);
+        setCartItems([]);
+        setSelectedItems([]);
       })
       .catch((err) => {
         console.error("Error placing order:", err);
@@ -242,80 +263,91 @@ useEffect(() => {
     <div>
       <Navbar />
       <div className="cart-container">
-        <h2>Shopping Cart ({cartItems.length} items)</h2>
-        <div className="cart-content">
-          {/* Cart Items Section */}
-          <div className="cart-items">
-            {cartItems.length > 0 ? (
-              cartItems.map((item) => (
+        <h2 className="cart-title">Your Cart</h2>
+        {cartItems.length > 0 ? (
+          <div className="cart-content">
+            {/* Cart Items Section */}
+            <div className="cart-items">
+              <div className="cart-table-header">
+                <span>Product</span>
+                <span>Price</span>
+                <span>Quantity</span>
+                <span>Total</span>
+              </div>
+              {cartItems.map((item) => (
                 <div className="cart-item" key={item.cart_item_id}>
-                  <input
-                    type="checkbox"
-                    checked={selectedItems.includes(item.cart_item_id)}
-                    onChange={() => handleSelectItem(item.cart_item_id)}
-                  />
-                  <img
-                    src={item.image?.startsWith("/uploads") ? `http://localhost:5000${item.image}` : item.image}
-                    alt={item.name}
-                    className="cart-image"
-                  />
-                  <div className="cart-details">
-                    <h3>{item.name}</h3>
-                    
-                    {/* Display customization details if they exist */}
-                    {item.customizationDisplay && (
-                      <div className="customization-details">
-                        <span className="custom-tag">Customized</span>
-                        <p className="customization-text">{item.customizationDisplay}</p>
-                      </div>
-                    )}
-                    
-                    <div className="cart-actions">
-                      <button onClick={() => handleQuantityChange(item.cart_item_id, -1)}>-</button>
-                      <span>{item.quantity}</span>
-                      <button onClick={() => handleQuantityChange(item.cart_item_id, 1)}>+</button>
+                  <div className="cart-product">
+                    <input
+                      type="checkbox"
+                      checked={selectedItems.includes(item.cart_item_id)}
+                      onChange={() => handleSelectItem(item.cart_item_id)}
+                    />
+                    <img
+                      src={item.image?.startsWith("/uploads") ? `http://localhost:5000${item.image}` : item.image}
+                      alt={item.name}
+                      className="cart-image"
+                    />
+                    <div className="cart-product-details">
+                      <h3>{item.name}</h3>
+                      {item.customizationDisplay && (
+                        <div className="customization-details">
+                          <span className="custom-tag">Customized</span>
+                          <p className="customization-text">{item.customizationDisplay}</p>
+                        </div>
+                      )}
+                      <button className="remove-btn" onClick={() => handleRemove(item.cart_item_id)}>
+                        <FiTrash2 /> Remove
+                      </button>
                     </div>
+                  </div>
+                  <div className="cart-price">
+                    <p>Rs{item.price.toFixed(2)}</p>
+                  </div>
+                  <div className="cart-quantity">
+                    <button onClick={() => handleQuantityChange(item.cart_item_id, -1)}>-</button>
+                    <span>{item.quantity}</span>
+                    <button onClick={() => handleQuantityChange(item.cart_item_id, 1)}>+</button>
+                  </div>
+                  <div className="cart-total">
                     <p>Rs{(item.price * item.quantity).toFixed(2)}</p>
-                    <button className="remove-btn" onClick={() => handleRemove(item.cart_item_id)}>X</button>
                   </div>
                 </div>
-              ))
-            ) : (
-              <p>Your cart is empty.</p>
-            )}
-          </div>
+              ))}
+              <div className="cart-actions">
+                <button className="clear-cart-btn" onClick={handleClearCart}>Clear Cart</button>
+                <button className="continue-shopping-btn" onClick={handleContinueShopping}>Continue Shopping</button>
+              </div>
+            </div>
 
-          {/* Order Summary Section */}
-          <div className="order-summary">
-            <h3>Order Summary</h3>
-            {selectedCartItems.length > 0 ? (
-              <>
-                {selectedCartItems.map((item) => (
-                  <p key={item.cart_item_id}>
-                    {item.name} {item.customizationDisplay ? `(${item.customizationDisplay})` : ""} x {item.quantity}: Rs{(item.price * item.quantity).toFixed(2)}
-                  </p>
-                ))}
-                <p>Subtotal: Rs{subtotal.toFixed(2)}</p>
-                
-                <h3>Total: Rs{total.toFixed(2)}</h3>
-                <button className="checkout-btn" onClick={handleCheckout}>
-                  Proceed to Checkout
-                </button>
-              </>
-            ) : (
-              <p>No items selected.</p>
-            )}
+            {/* Order Summary Section */}
+            <div className="order-summary">
+              <h3>Order Summary</h3>
+              {selectedCartItems.length > 0 ? (
+                <>
+                  <p>Subtotal ({selectedCartItems.reduce((acc, item) => acc + item.quantity, 0)} items): Rs{subtotal.toFixed(2)}</p>
+                  <p>Shipping: Calculated at checkout</p>
+                  <h4>Total: Rs{total.toFixed(2)}</h4>
+                  <button className="checkout-btn" onClick={handleCheckout}>Proceed to Checkout</button>
+                  <p className="tax-note">Taxes and shipping calculated at checkout</p>
+                </>
+              ) : (
+                <p>No items selected.</p>
+              )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="empty-cart">
+            <FiShoppingCart className="empty-cart-icon" />
+            <h3>Your cart is empty</h3>
+            <p>Looks like you haven’t added any products to your cart yet.</p>
+            <button className="continue-shopping-btn" onClick={handleContinueShopping}>Continue Shopping</button>
+          </div>
+        )}
 
         {showCheckoutForm && (
           <div className="checkout-popup">
             <div className="popup-content">
-              {/* Close Button */}
-              <button className="close-popup-btn" onClick={() => setShowCheckoutForm(false)}>
-                &times;
-              </button>
-              {/* Address Section */}
+              <button className="close-popup-btn" onClick={() => setShowCheckoutForm(false)}>×</button>
               <div className="address-section">
                 <h3>Delivery Address</h3>
                 <form>
@@ -368,23 +400,15 @@ useEffect(() => {
                       required
                     />
                   </div>
-                  <button type="button" className="save-address-btn" onClick={handleSaveAddress}>
-                    Save Address
-                  </button>
+                  <button type="button" className="save-address-btn" onClick={handleSaveAddress}>Save Address</button>
                 </form>
               </div>
-
-              {/* Payment Section */}
               <div className="payment-section">
                 <h3>Payment Details</h3>
                 <p>Payment process will go here (e.g., card details, etc.).</p>
               </div>
             </div>
-
-            {/* Place Order Button */}
-            <button className="place-order-btn" onClick={handlePlaceOrder}>
-              Place Order
-            </button>
+            <button className="place-order-btn" onClick={handlePlaceOrder}>Place Order</button>
           </div>
         )}
       </div>

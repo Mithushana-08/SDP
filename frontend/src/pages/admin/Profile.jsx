@@ -49,7 +49,7 @@ const Profile = () => {
                 <div className="content">
                     <h1>User Profile</h1>
                     <div className="profile-details">
-                        <p><strong>User ID:</strong> {user.id}</p>
+                       
                         <p><strong>Username:</strong> {user.username}</p>
                         <p><strong>Role:</strong> {user.role}</p>
                         <p><strong>Phone:</strong> {user.phone}</p>

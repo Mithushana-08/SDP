@@ -22,6 +22,10 @@ const Navbar = () => {
     navigate('/cart'); // Navigate to the cart page
   };
 
+  const handleProfileClick = () => {
+    navigate('/profile'); // Navigate to the cart page
+  };
+
   return (
     <nav className="navbar">
       <div className="navbar-container">
@@ -46,12 +50,13 @@ const Navbar = () => {
           <li>
             <Link to="/" onClick={() => handleScrollToSection('contact')}>Contact</Link>
           </li>
+          
         </ul>
         <div className="navbar-icons">
           <button className="login-button" onClick={toggleLoginModal}>Login</button>
          
           <FiShoppingCart className="icon" onClick={handleCartClick} /> {/* Add onClick handler */}
-          <FiUser className="icon" />
+          <FiUser className="icon" onClick={handleProfileClick}/>{/* Add onClick handler */}
         </div>
         <div className="menu-toggle" onClick={toggleMenu}>
           <span className="bar"></span>

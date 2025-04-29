@@ -1,6 +1,6 @@
 /* src/components/Navbar.css */
 .navbar {
-  background-color: #fefbfb;
+  background-color: rgba(255, 255, 255, 0.95);
   padding: 10px 0px;
   position: fixed;
   top: 0;
@@ -10,15 +10,14 @@
   color: black;
 }
 
+
 .navbar-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  
-  
   padding: 10px 0px;
   width: 100%;
-  color: #400a0a;
+  color: rgb(254, 224, 199);;
 }
 
 .logo {
@@ -27,15 +26,19 @@
   align-items: center;
   font-size: 24px;
   font-weight: 700;
-  color: #400a0a;
+  
+  color: #d4a373;
   text-transform: uppercase;
+  font-family: 'Philosopher', sans-serif;
 }
 
 .logo a {
   text-decoration: none;
   color: inherit;
 }
-
+.logo-image {
+  border-radius:50px ;
+}
 .nav-links {
   list-style: none;
   display: flex;
@@ -44,14 +47,15 @@
 
 .nav-links li a {
   text-decoration: none;
-  color: #400a0a;
+  color: #4a3c31;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 800;
   transition: color 0.3s ease;
+  font-family: 'Philosopher', sans-serif;
 }
 
 .nav-links li a:hover {
-  color: #f0a500;
+  color: #d4a373;
 }
 
 .menu-toggle {
@@ -75,7 +79,7 @@
     top: 80px;
     left: 0;
     width: 100%;
-    background-color: #1f1f1f;
+    background-color: white;
     flex-direction: column;
     align-items: center;
     justify-content: space-around;
@@ -121,7 +125,8 @@
 .search-bar input {
   width: 70%;
   padding: 5px 10px;
-  border: 2px solid #400a0a;
+  background-color: #fff;
+  border: 1px solid #d4a373;
   border-radius: 20px;
 }
 
@@ -129,7 +134,7 @@
   position: absolute;
   right: 15%;
   cursor: pointer;
-  color:#400a0a;
+  color: #d4a373;
 }
 
 .navbar-icons {
@@ -137,13 +142,18 @@
   align-items: center;
   gap: 15px;
   margin-left: 180px;
-  margin-right: 0; /* Remove right margin */
+  margin-right: 60px; /* Remove right margin */
   margin-left: 100px; /* Push the icons to the right */
+  
 }
 
 .icon {
   font-size: 24px;
   cursor: pointer;
+
+  color: #400a0a;
+  
+
 }
 
 .login-button,
