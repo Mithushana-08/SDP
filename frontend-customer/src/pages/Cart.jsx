@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import Navbar from "../components/Navbar"; // Import the Navbar component
-import "./Cart.css"; // Import styles for the cart page
-import { FiTrash2, FiShoppingCart } from 'react-icons/fi'; // For the "Remove" and empty cart icons
+import Navbar from "../components/Navbar";
+import "./Cart.css";
+import { FiTrash2, FiShoppingCart } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 
 const CartPage = () => {
@@ -16,6 +16,7 @@ const CartPage = () => {
     province: "",
     postalCode: "",
   });
+  const [isAddressSaved, setIsAddressSaved] = useState(false); // Track if address exists
 
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
@@ -31,16 +32,13 @@ const CartPage = () => {
       .then((data) => {
         console.log("Original cart data:", data);
 
-        // Create a map to group items with the same product_id and customizations
         const groupedMap = new Map();
-
         data.forEach((item) => {
           const customizationString = item.customizations && item.customizations.length
             ? JSON.stringify(item.customizations)
             : "no_customization";
 
           const itemKey = `${item.product_id}_${customizationString}`;
-
           if (groupedMap.has(itemKey)) {
             const existingItem = groupedMap.get(itemKey);
             existingItem.quantity += item.quantity;
@@ -62,32 +60,45 @@ const CartPage = () => {
       });
   }, [token]);
 
-  // Fetch saved address
+  // Fetch saved address when checkout form is opened
   useEffect(() => {
-    fetch("http://localhost:5000/api/customers/save-address", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({}),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.address) {
-          setAddress({
-            addressLine1: data.address.address_line1 || "",
-            addressLine2: data.address.address_line2 || "",
-            city: data.address.city || "",
-            province: data.address.province || "",
-            postalCode: data.address.postal_code || "",
-          });
-        }
+    if (showCheckoutForm) {
+      fetch("http://localhost:5000/api/customers/save-address", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({}),
       })
-      .catch((err) => {
-        console.error("Error fetching saved address:", err);
-      });
-  }, [token]);
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.address) {
+            setAddress({
+              addressLine1: data.address.address_line1 || "",
+              addressLine2: data.address.address_line2 || "",
+              city: data.address.city || "",
+              province: data.address.province || "",
+              postalCode: data.address.postal_code || "",
+            });
+            setIsAddressSaved(true);
+          } else {
+            setAddress({
+              addressLine1: "",
+              addressLine2: "",
+              city: "",
+              province: "",
+              postalCode: "",
+            });
+            setIsAddressSaved(false);
+          }
+        })
+        .catch((err) => {
+          console.error("Error fetching saved address:", err);
+          setIsAddressSaved(false);
+        });
+    }
+  }, [showCheckoutForm, token]);
 
   const handleSelectItem = (id) => {
     setSelectedItems((prevSelected) =>
@@ -176,7 +187,7 @@ const CartPage = () => {
   };
 
   const handleContinueShopping = () => {
-    navigate('/'); // Navigate back to the homepage
+    navigate('/');
   };
 
   const handleCheckout = () => {
@@ -192,8 +203,19 @@ const CartPage = () => {
   };
 
   const handleSaveAddress = () => {
-    fetch("http://localhost:5000/api/customers/save-address", {
-      method: "POST",
+    if (!address.addressLine1 || !address.city || !address.province || !address.postalCode) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    const endpoint = isAddressSaved
+      ? "http://localhost:5000/api/customers/address"
+      : "http://localhost:5000/api/customers/save-address";
+
+    const method = isAddressSaved ? "PUT" : "POST";
+
+    fetch(endpoint, {
+      method,
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
@@ -207,11 +229,16 @@ const CartPage = () => {
         return res.json();
       })
       .then((data) => {
+        setIsAddressSaved(true);
+        alert(isAddressSaved ? "Address updated successfully!" : "Address saved successfully!");
         if (data.address) {
-          setAddress(data.address);
-          alert("Address already exists and has been loaded.");
-        } else {
-          alert("Address saved successfully!");
+          setAddress({
+            addressLine1: data.address.address_line1 || "",
+            addressLine2: data.address.address_line2 || "",
+            city: data.address.city || "",
+            province: data.address.province || "",
+            postalCode: data.address.postal_code || "",
+          });
         }
       })
       .catch((err) => {
@@ -221,7 +248,20 @@ const CartPage = () => {
   };
 
   const handlePlaceOrder = () => {
-    const shippingAddress = `${address.addressLine1}, ${address.addressLine2}, ${address.city}, ${address.province}, ${address.postalCode}`;
+    // Check if an address is saved
+    if (!isAddressSaved) {
+      alert("Please save your address before placing the order.");
+      return;
+    }
+
+    // Verify that the current address is valid
+    if (!address.addressLine1 || !address.city || !address.province || !address.postalCode) {
+      alert("Your saved address is incomplete. Please update your address.");
+      return;
+    }
+
+    // Place the order using the saved address
+    const shippingAddress = `${address.addressLine1}, ${address.addressLine2 || ""}, ${address.city}, ${address.province}, ${address.postalCode}`;
 
     fetch("http://localhost:5000/api/orders/checkout", {
       method: "POST",
@@ -252,7 +292,7 @@ const CartPage = () => {
 
   const selectedCartItems = cartItems.filter((item) => selectedItems.includes(item.cart_item_id));
   const subtotal = selectedCartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const shipping = 0; // Free shipping
+  const shipping = 0;
   const total = subtotal + shipping;
 
   if (loading) {
@@ -266,7 +306,6 @@ const CartPage = () => {
         <h2 className="cart-title">Your Cart</h2>
         {cartItems.length > 0 ? (
           <div className="cart-content">
-            {/* Cart Items Section */}
             <div className="cart-items">
               <div className="cart-table-header">
                 <span>Product</span>
@@ -319,7 +358,6 @@ const CartPage = () => {
               </div>
             </div>
 
-            {/* Order Summary Section */}
             <div className="order-summary">
               <h3>Order Summary</h3>
               {selectedCartItems.length > 0 ? (
@@ -400,7 +438,13 @@ const CartPage = () => {
                       required
                     />
                   </div>
-                  <button type="button" className="save-address-btn" onClick={handleSaveAddress}>Save Address</button>
+                  <button
+                    type="button"
+                    className="save-address-btn"
+                    onClick={handleSaveAddress}
+                  >
+                    {isAddressSaved ? "Update Address" : "Save Address"}
+                  </button>
                 </form>
               </div>
               <div className="payment-section">

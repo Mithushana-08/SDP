@@ -136,18 +136,20 @@ const proceedToCheckout = (req, res) => {
 
 const clearCart = (customerId, res) => {
     const clearCartQuery = `
-        DELETE ci, c FROM cart_items ci
-        JOIN cart c ON ci.cart_id = c.cart_id
+        DELETE cc, ci, c
+        FROM cart_customizations cc
+        RIGHT JOIN cart_items ci ON cc.cart_item_id = ci.cart_item_id
+        RIGHT JOIN cart c ON ci.cart_id = c.cart_id
         WHERE c.Customer_id = ?
     `;
 
     db.query(clearCartQuery, [customerId], (err) => {
         if (err) {
-            console.error("Error clearing cart:", err);
-            return res.status(500).json({ error: "Failed to clear cart" });
+            console.error("Error clearing cart, items, and customizations:", err);
+            return res.status(500).json({ error: "Failed to clear cart, items, and customizations" });
         }
 
-        res.status(200).json({ message: "Order placed successfully and cart cleared" });
+        res.status(200).json({ message: "Cart cleared successfully, including all items and customizations" });
     });
 };
 
