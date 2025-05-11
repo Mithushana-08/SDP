@@ -72,7 +72,7 @@ const Orders = () => {
                     <table className="table orders-table">
                         <thead>
                             <tr>
-                                <th>Order ID</th>
+                                
                                 <th>Order Date</th>
                                 <th>Customer Name</th>
                                 <th>Phone</th>
@@ -86,7 +86,7 @@ const Orders = () => {
                         <tbody>
                             {filteredOrders.map((order) => (
                                 <tr key={order.order_id}>
-                                    <td>{order.order_id}</td>
+                                   
                                     <td>{new Date(order.order_date).toLocaleDateString()}</td>
                                     <td>{order.customer_name}</td>
                                     <td>{order.customer_phone}</td>

@@ -1,10 +1,26 @@
-const express = require("express");
-const { getOrdersWithDetails, getOrderDetails, getCrafters , assignCrafter} = require("../controllers/adminOrderController");
-
+const express = require('express');
 const router = express.Router();
+const {
+    getOrdersWithDetails,
+    getOrderDetails,
+    getCrafters,
+    assignCrafter,
+    updateStatus,
+} = require('../controllers/adminOrderController');
 
-router.get("/orders", getOrdersWithDetails);
-router.get("/orders/:orderId", getOrderDetails);
-router.get("/crafters", getCrafters); // New route for fetching crafters
-router.post("/orders/:orderId/assign-crafter", assignCrafter);
+// Get all orders with details
+router.get('/orders', getOrdersWithDetails);
+
+// Get details of a specific order
+router.get('/orders/:orderId', getOrderDetails);
+
+// Get all crafters
+router.get('/crafters', getCrafters);
+
+// Assign a crafter to an order item
+router.post('/orders/:orderId/assign-crafter', assignCrafter);
+
+// Update the status of an order item
+router.post('/orders/:orderId/update-status', updateStatus);
+
 module.exports = router;

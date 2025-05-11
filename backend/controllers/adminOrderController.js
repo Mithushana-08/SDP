@@ -30,22 +30,24 @@ const getOrderDetails = (req, res) => {
     const { orderId } = req.params;
 
     const query = `
-        SELECT 
-                oi.item_id,oi.product_id,oi.quantity,oi.price,oi.total_price,p.product_name,oi.status,
-                c.CategoryName AS category_name,cd.customization_type,cd.customization_value,cd.uploaded_image,cd.size_type,
-                u.username AS crafter_username, -- added line
-                SUM(CASE WHEN cd.customization_id IS NOT NULL THEN 1 ELSE 0 END) AS customizable_count
-        FROM order_items oi
-        JOIN product_master p ON oi.product_id = p.product_id
-        JOIN Categories c ON p.category_id = c.CategoryID
-        LEFT JOIN customization_details cd ON oi.item_id = cd.item_id
-        LEFT JOIN users u ON oi.crafter_id = u.id -- added join
-        WHERE oi.order_id = ?
-        GROUP BY 
-              oi.item_id, oi.product_id, oi.quantity, oi.price, oi.total_price, 
-              p.product_name, c.CategoryName, 
-              cd.customization_type, cd.customization_value, cd.uploaded_image, cd.size_type,
-              u.username; -- added u.username in GROUP BY
+       SELECT 
+    oi.item_id, oi.product_id, oi.quantity, oi.price, oi.total_price, p.product_name, oi.status,
+    c.CategoryName AS category_name, cd.customization_type, cd.customization_value, cd.uploaded_image, cd.size_type,
+    oi.crafter_id, -- Added
+    u.username AS crafter_username,
+    SUM(CASE WHEN cd.customization_id IS NOT NULL THEN 1 ELSE 0 END) AS customizable_count
+FROM order_items oi
+JOIN product_master p ON oi.product_id = p.product_id
+JOIN Categories c ON p.category_id = c.CategoryID
+LEFT JOIN customization_details cd ON oi.item_id = cd.item_id
+LEFT JOIN users u ON oi.crafter_id = u.id
+WHERE oi.order_id = ?
+GROUP BY 
+    oi.item_id, oi.product_id, oi.quantity, oi.price, oi.total_price, 
+    p.product_name, c.CategoryName, 
+    cd.customization_type, cd.customization_value, cd.uploaded_image, cd.size_type,
+    oi.crafter_id, -- Added
+    u.username;
 
     
 `
@@ -94,11 +96,42 @@ const assignCrafter = (req, res) => {
     });
 };
 
+// Update the status of an order item
+const updateStatus = (req, res) => {
+    const { orderId } = req.params;
+    const { item_id, status } = req.body;
+
+    // Validate request body
+    if (!item_id || !status) {
+        return res.status(400).json({ error: "item_id and status are required" });
+    }
+
+    const query = `
+        UPDATE order_items
+        SET status = ?
+        WHERE item_id = ? AND order_id = ?
+    `;
+
+    db.query(query, [status, item_id, orderId], (err, result) => {
+        if (err) {
+            console.error("Error updating status:", err);
+            return res.status(500).json({ error: "Failed to update status" });
+        }
+
+        // Check if any rows were affected (i.e., the item was found and updated)
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Order item not found" });
+        }
+
+        res.status(200).json({ message: "Status updated successfully" });
+    });
+};
 
 module.exports = {
     getOrdersWithDetails,
     getOrderDetails,
-    getCrafters, 
-    assignCrafter,// Export the new function
+    getCrafters,
+    assignCrafter,
+    updateStatus,
 };
 

@@ -81,16 +81,8 @@ const Sidebar = () => {
                             <FiUsers /> Customer Details
                         </NavLink>
                     </li>
-                    <li>
-                        <NavLink to="/admin/reports" activeClassName="active">
-                            <FiFileText /> Reports
-                        </NavLink>
-                    </li>
-                    <li>
-                        <NavLink to="/admin/crafter_assign" activeClassName="active">
-                            <FiUserCheck /> Crafter Assignments
-                        </NavLink>
-                    </li>
+                   
+                   
                     <li>
                         <NavLink to="/admin/Profile" activeClassName="active">
                             <FiSettings /> Settings

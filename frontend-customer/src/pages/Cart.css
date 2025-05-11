@@ -263,17 +263,15 @@
 
 .popup-content {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 20px;
 }
 
-.address-section,
-.payment-section {
+.address-section {
   flex: 1;
 }
 
-.address-section h3,
-.payment-section h3 {
+.address-section h3 {
   font-family: 'Playfair Display', serif;
   font-size: 1.5rem;
   color: #4a3c31;
@@ -323,12 +321,6 @@
   background: #b88b5e;
 }
 
-.payment-section p {
-  font-family: 'Lora', serif;
-  font-size: 1rem;
-  color: #7a6c5d;
-}
-
 .place-order-btn {
   width: 100%;
   padding: 12px;
@@ -364,6 +356,300 @@
   color: #b88b5e;
 }
 
+/* Checkout Popup */
+.checkout-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #fff;
+  border: 1px solid #e8d9c5;
+  border-radius: 10px;
+  padding: 20px;
+  width: 50%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
+.popup-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.step-indicator {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.step {
+  flex: 1;
+  text-align: center;
+  padding: 10px;
+  background: #f8f1e9;
+  border-radius: 5px;
+  font-family: 'Lora', serif;
+  font-size: 1rem;
+  color: #7a6c5d;
+}
+
+.step.active {
+  background: #d4a373;
+  color: #fff;
+}
+
+.address-section, .payment-section, .success-section {
+  flex: 1;
+}
+
+.address-section h3, .payment-section h3, .success-section h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  color: #4a3c31;
+  margin-bottom: 20px;
+}
+
+.payment-methods {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.payment-option {
+  padding: 10px;
+  background: #e8f1fa;
+  border-radius: 5px;
+  font-family: 'Lora', serif;
+  font-size: 1rem;
+  color: #4a3c31;
+}
+
+.address-section form, .payment-section form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.form-group {
+  position: relative;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e8d9c5;
+  border-radius: 5px;
+  font-family: 'Lora', serif;
+  font-size: 1rem;
+  color: #4a3c31;
+  background: #f8f1e9;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.card-number-group {
+  display: flex;
+  gap: 10px;
+}
+
+.card-number-group input {
+  width: 20%;
+  text-align: center;
+}
+
+.form-group input::placeholder {
+  color: #7a6c5d;
+}
+
+.form-group input:focus {
+  border-color: #d4a373;
+}
+
+.error {
+  color: #ff0000;
+  font-size: 0.9rem;
+  margin-top: 5px;
+  display: block;
+}
+
+/* Consistent Button Styles */
+.action-btn {
+  padding: 12px;
+  background: #d4a373;
+  color: #fff;
+  border: none;
+  border-radius: 25px;
+  font-family: 'Lora', serif;
+  font-size: 1.1rem;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background 0.3s ease, transform 0.2s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.action-btn:hover {
+  background: #b88b5e;
+  transform: scale(1.05);
+}
+/* Button Row */
+.button-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.save-address-btn {
+  flex: 1;
+  padding: 10px 15px;
+  background: #d4a373;
+  color: #fff;
+  border: none;
+  border-radius: 25px;
+  font-family: 'Lora', serif;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+
+
+/* Next Button */
+.next-btn {
+  flex: 0.3;
+  padding: 10px;
+  background: #d4a373;
+  color: #fff;
+  border: none;
+  border-radius: 25px;
+  font-family: 'Lora', serif;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background 0.3s ease;
+}
+
+
+/* Confirm Payment Button */
+.confirm-payment-btn {
+  flex: 1;
+  padding: 10px;
+  background: #d4a373;
+  color: #fff;
+  border: none;
+  border-radius: 25px;
+  font-family: 'Lora', serif;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background 0.3s ease;
+}
+
+.back-btn {
+  flex: 0.3;
+  padding: 10px;
+  background: #7a6c5d;
+  color: #fff;
+  border: none;
+  border-radius: 25px;
+  font-family: 'Lora', serif;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background 0.3s ease;
+}
+
+ .place-order-btn {
+  padding: 12px;
+  background: #d4a373;
+  color: #fff;
+  border: none;
+  border-radius: 25px;
+  font-family: 'Lora', serif;
+  font-size: 1.1rem;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background 0.3s ease, transform 0.2s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.save-address-btn:hover, .next-btn:hover, .confirm-payment-btn:hover, .place-order-btn:hover, .back-btn:hover {
+  background: #b88b5e;
+  transform: scale(1.05);
+}
+
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+
+
+
+
+ 
+
+.close-popup-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #fe7965;
+}
+
+.close-popup-btn:hover {
+  color: #961010;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .checkout-popup {
+    width: 90%;
+  }
+
+  .popup-content {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .small-btn {
+    width: 70%;
+  }
+
+  .card-number-group input {
+    width: 22%;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .checkout-popup {
+    width: 90%;
+  }
+
+  .popup-content {
+    flex-direction: column;
+    gap: 20px;
+  }
+}
 /* Responsive Design */
 @media (max-width: 768px) {
   .cart-content {
@@ -394,12 +680,5 @@
     gap: 10px;
   }
 
-  .checkout-popup {
-    width: 90%;
-  }
-
-  .popup-content {
-    flex-direction: column;
-    gap: 20px;
-  }
+ 
 }

@@ -1,0 +1,53 @@
+
+
+.view-customization-btn {
+    background: none;
+    border: none;
+    color: #5c2c2b;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-left: 5px;
+    text-decoration: underline;
+}
+
+.view-customization-btn:hover {
+    color: #ff6f61;
+}
+
+.selected-crafter {
+    margin-top: 5px;
+    color: #5c2c2b;
+    font-size: 0.9rem;
+}
+
+/* New style for Confirm button */
+.confirm-button {
+    background-color: #ff6f61; /* Matches modern button design */
+    color: #ffffff;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.confirm-button:hover {
+    background-color: #e65b50;
+    box-shadow: 0 2px 5px rgba(255, 111, 97, 0.5);
+}
+
+/* Optional: Style for confirmed status (if not already in table.css) */
+.status-confirmed {
+    color: #28a745; /* Green for confirmed status */
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+    }
+}

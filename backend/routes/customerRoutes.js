@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getCustomers, saveAddress , updateAddress } = require('../controllers/customercontroller');
+const { getCustomers, saveAddress , updateAddress , deleteCustomer } = require('../controllers/customercontroller');
 const authenticateCustomer = require("../middleware/customerAuthMiddleware");
 
 // Existing route to get customers
@@ -10,5 +10,8 @@ router.get('/customers', getCustomers);
 router.post('/save-address', authenticateCustomer, saveAddress);
 
 router.put('/address', authenticateCustomer, updateAddress);
+
+router.delete('/customer/:customer_id', deleteCustomer);
+
 
 module.exports = router;

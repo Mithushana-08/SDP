@@ -56,25 +56,28 @@ const loginUser = async (req, res) => {
     }
 };
 // Register a new user
+// Register a new user
 const registerUser = async (req, res) => {
-    const { username, email, phone, password, address_line1, address_line2, city, province, postal_code } = req.body;
+    const { first_name, last_name, email, phone, password } = req.body;
 
     try {
         // Check if the email already exists
         const emailCheckQuery = "SELECT * FROM Customer WHERE email = ?";
-        const [existingUser] = await db.query(emailCheckQuery, [email]);
+        const existingUser = await db.query(emailCheckQuery, [email]); // Use promisified query
 
         if (existingUser.length > 0) {
             return res.status(400).json({ message: "Email already exists" });
         }
 
+        // Concatenate first_name and last_name to create the username
+        const username = `${first_name} ${last_name}`;
+
         // Insert the new user into the Customer table
-        const customerId = uuidv4().slice(0, 10); // Trim UUID to match VARCHAR(10)
         const insertCustomerQuery = `
-            INSERT INTO Customer (Customer_id, username, email, phone, password)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO Customer (first_name, last_name, username, email, phone, password)
+            VALUES (?, ?, ?, ?, ?, ?)
         `;
-        await db.query(insertCustomerQuery, [customerId, username, email, phone, password]);
+        await db.query(insertCustomerQuery, [first_name, last_name, username, email, phone, password]);
 
         res.status(201).json({ message: "Registration successful" });
     } catch (error) {
@@ -82,7 +85,6 @@ const registerUser = async (req, res) => {
         res.status(500).json({ message: "An error occurred during registration" });
     }
 };
-
 // Example of a protected route using the middleware
 const getCustomerProfile = [
     authenticateCustomer, // Use the middleware to authenticate the customer

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import "./Cart.css";
-import { FiTrash2, FiShoppingCart } from 'react-icons/fi';
+import { FiTrash2, FiShoppingCart, FiArrowLeft, FiArrowRight } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 
 const CartPage = () => {
@@ -16,7 +16,16 @@ const CartPage = () => {
     province: "",
     postalCode: "",
   });
-  const [isAddressSaved, setIsAddressSaved] = useState(false); // Track if address exists
+  const [isAddressSaved, setIsAddressSaved] = useState(false);
+  const [checkoutStep, setCheckoutStep] = useState(1);
+const [paymentDetails, setPaymentDetails] = useState({
+  email: "",
+  cardHolder: "",
+  cardNumber: "", // Single field for the full card number
+  expiryDate: "",
+  cvv: "",
+});
+  const [paymentErrors, setPaymentErrors] = useState({});
 
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
@@ -192,6 +201,7 @@ const CartPage = () => {
 
   const handleCheckout = () => {
     setShowCheckoutForm(true);
+    setCheckoutStep(1);
   };
 
   const handleAddressChange = (e) => {
@@ -248,20 +258,23 @@ const CartPage = () => {
   };
 
   const handlePlaceOrder = () => {
-    // Check if an address is saved
     if (!isAddressSaved) {
       alert("Please save your address before placing the order.");
       return;
     }
 
-    // Verify that the current address is valid
     if (!address.addressLine1 || !address.city || !address.province || !address.postalCode) {
       alert("Your saved address is incomplete. Please update your address.");
       return;
     }
 
-    // Place the order using the saved address
+    if (checkoutStep !== 3) {
+      alert("Please complete the payment process before placing the order.");
+      return;
+    }
+
     const shippingAddress = `${address.addressLine1}, ${address.addressLine2 || ""}, ${address.city}, ${address.province}, ${address.postalCode}`;
+    const fullCardNumber = `${paymentDetails.cardNumber1}${paymentDetails.cardNumber2}${paymentDetails.cardNumber3}${paymentDetails.cardNumber4}`;
 
     fetch("http://localhost:5000/api/orders/checkout", {
       method: "POST",
@@ -269,7 +282,7 @@ const CartPage = () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ shipping_address: shippingAddress }),
+      body: JSON.stringify({ shipping_address: shippingAddress, card_number: fullCardNumber }),
     })
       .then((res) => {
         if (!res.ok) {
@@ -283,11 +296,117 @@ const CartPage = () => {
         setShowCheckoutForm(false);
         setCartItems([]);
         setSelectedItems([]);
+        setCheckoutStep(1);
       })
       .catch((err) => {
         console.error("Error placing order:", err);
         alert("Failed to place order. Please try again.");
       });
+  };
+
+ const handlePaymentChange = (e) => {
+  const { name, value } = e.target;
+
+  let updatedValue = value;
+
+  if (name === "cardNumber") {
+    // Remove all non-digit characters
+    updatedValue = value.replace(/\D/g, "");
+
+    // Format as XXXX XXXX XXXX XXXX
+    updatedValue = updatedValue
+      .replace(/(\d{4})(?=\d)/g, "$1 ")
+      .trim();
+  } else if (name === "expiryDate") {
+    // Remove all non-digit characters
+    updatedValue = value.replace(/\D/g, "");
+
+    // Format expiry date as MM/YY
+    if (updatedValue.length > 2) {
+      const month = parseInt(updatedValue.slice(0, 2), 10);
+
+      // Ensure month is valid (1-12)
+      if (month > 12) {
+        updatedValue = "12" + updatedValue.slice(2);
+      }
+
+      updatedValue = updatedValue.slice(0, 2) + "/" + updatedValue.slice(2, 4);
+    }
+  }
+
+  setPaymentDetails((prevDetails) => ({
+    ...prevDetails,
+    [name]: updatedValue,
+  }));
+
+  // Clear error for the field being edited
+  setPaymentErrors((prevErrors) => ({
+    ...prevErrors,
+    [name]: "",
+  }));
+};
+
+  const handleCardNumberFocus = (e) => {
+    const { name } = e.target;
+    const index = parseInt(name.replace("cardNumber", "")) - 1;
+    if (index < 3 && paymentDetails[`cardNumber${index + 2}`]) {
+      document.querySelector(`input[name="cardNumber${index + 2}"]`).focus();
+    }
+  };
+
+const validatePaymentDetails = () => {
+  const errors = {};
+
+  // Card number validation
+  const cardNumberRegex = /^\d{4} \d{4} \d{4} \d{4}$/;
+  if (!paymentDetails.cardNumber || !cardNumberRegex.test(paymentDetails.cardNumber)) {
+    errors.cardNumber = "Card number must be in the format XXXX XXXX XXXX XXXX.";
+  }
+
+  // Expiry date validation (MM/YY format and future date)
+  const expiryRegex = /^(0[1-9]|1[0-2])\/([0-9]{2})$/;
+  if (!paymentDetails.expiryDate || !expiryRegex.test(paymentDetails.expiryDate)) {
+    errors.expiryDate = "Expiry date must be in MM/YY format.";
+  } else {
+    const [month, year] = paymentDetails.expiryDate.split("/").map(Number);
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear() % 100; // Last two digits of the year
+    const currentMonth = currentDate.getMonth() + 1; // 1-12
+
+    if (year < currentYear || (year === currentYear && month < currentMonth)) {
+      errors.expiryDate = "Expiry date must be in the future.";
+    }
+  }
+
+  // CVV validation
+  const cvvRegex = /^\d{3,4}$/;
+  if (!paymentDetails.cvv || !cvvRegex.test(paymentDetails.cvv)) {
+    errors.cvv = "CVV must be 3 or 4 digits.";
+  }
+
+  setPaymentErrors(errors);
+  return Object.keys(errors).length === 0;
+};
+  const handleNextStep = () => {
+    if (checkoutStep === 1) {
+      if (!isAddressSaved) {
+        alert("Please save your address before proceeding.");
+        return;
+      }
+      setCheckoutStep(2);
+    }
+  };
+
+  const handleBackStep = () => {
+    if (checkoutStep === 2) {
+      setCheckoutStep(1);
+    }
+  };
+
+  const handleConfirmPayment = () => {
+    if (validatePaymentDetails()) {
+      setCheckoutStep(3);
+    }
   };
 
   const selectedCartItems = cartItems.filter((item) => selectedItems.includes(item.cart_item_id));
@@ -386,78 +505,177 @@ const CartPage = () => {
           <div className="checkout-popup">
             <div className="popup-content">
               <button className="close-popup-btn" onClick={() => setShowCheckoutForm(false)}>×</button>
-              <div className="address-section">
-                <h3>Delivery Address</h3>
-                <form>
-                  <div className="form-group">
-                    <input
-                      type="text"
-                      name="addressLine1"
-                      value={address.addressLine1}
-                      onChange={handleAddressChange}
-                      placeholder="Address Line 1"
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <input
-                      type="text"
-                      name="addressLine2"
-                      value={address.addressLine2}
-                      onChange={handleAddressChange}
-                      placeholder="Address Line 2"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <input
-                      type="text"
-                      name="city"
-                      value={address.city}
-                      onChange={handleAddressChange}
-                      placeholder="City"
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <input
-                      type="text"
-                      name="province"
-                      value={address.province}
-                      onChange={handleAddressChange}
-                      placeholder="Province"
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <input
-                      type="text"
-                      name="postalCode"
-                      value={address.postalCode}
-                      onChange={handleAddressChange}
-                      placeholder="Postal Code"
-                      required
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    className="save-address-btn"
-                    onClick={handleSaveAddress}
-                  >
-                    {isAddressSaved ? "Update Address" : "Save Address"}
-                  </button>
-                </form>
+
+              {/* Step Indicator */}
+              <div className="step-indicator">
+                <div className={`step ${checkoutStep === 1 ? 'active' : ''}`}>1. Address</div>
+                <div className={`step ${checkoutStep === 2 ? 'active' : ''}`}>2. Payment</div>
+                <div className={`step ${checkoutStep === 3 ? 'active' : ''}`}>3. Success</div>
               </div>
-              <div className="payment-section">
-                <h3>Payment Details</h3>
-                <p>Payment process will go here (e.g., card details, etc.).</p>
-              </div>
+
+              {checkoutStep === 1 && (
+                <div className="address-section">
+                  <h3>Delivery Address</h3>
+                  <form>
+                    <div className="form-group">
+                      <input
+                        type="text"
+                        name="addressLine1"
+                        value={address.addressLine1}
+                        onChange={handleAddressChange}
+                        placeholder="Address Line 1"
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <input
+                        type="text"
+                        name="addressLine2"
+                        value={address.addressLine2}
+                        onChange={handleAddressChange}
+                        placeholder="Address Line 2"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <input
+                        type="text"
+                        name="city"
+                        value={address.city}
+                        onChange={handleAddressChange}
+                        placeholder="City"
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <input
+                        type="text"
+                        name="province"
+                        value={address.province}
+                        onChange={handleAddressChange}
+                        placeholder="Province"
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <input
+                        type="text"
+                        name="postalCode"
+                        value={address.postalCode}
+                        onChange={handleAddressChange}
+                        placeholder="Postal Code"
+                        required
+                      />
+                    </div>
+                 <div className="button-row">
+  <button
+    type="button"
+    className="action-btn save-address-btn"
+    onClick={handleSaveAddress}
+  >
+    {isAddressSaved ? "Update Address" : "Save Address"}
+  </button>
+  <button
+    type="button"
+    className="action-btn next-btn"
+    onClick={handleNextStep}
+  >
+    <FiArrowRight />
+  </button>
+</div>
+                  </form>
+                </div>
+              )}
+
+              {checkoutStep === 2 && (
+                <div className="payment-section">
+                  <h3>Enter Your Payment Information</h3>
+                  <div className="payment-methods">
+                    <div className="payment-option">PayPal</div>
+                    <div className="payment-option">MasterCard</div>
+                    <div className="payment-option">Visa</div>
+                  </div>
+                  <form>
+               
+                    <div className="form-group">
+                      <input
+                        type="text"
+                        name="cardHolder"
+                        value={paymentDetails.cardHolder}
+                        onChange={handlePaymentChange}
+                        placeholder="Card Holder"
+                        required
+                      />
+                      {paymentErrors.cardHolder && <span className="error">{paymentErrors.cardHolder}</span>}
+                    </div>
+                   <div className="form-group">
+  <input
+    type="text"
+    name="cardNumber"
+    value={paymentDetails.cardNumber}
+    onChange={handlePaymentChange}
+    placeholder="XXXX XXXX XXXX XXXX"
+    maxLength="19" // Includes spaces for formatting
+    required
+  />
+  {paymentErrors.cardNumber && <span className="error">{paymentErrors.cardNumber}</span>}
+</div>
+                    <div className="form-group">
+                      <input
+                        type="text"
+                        name="expiryDate"
+                        value={paymentDetails.expiryDate}
+                        onChange={handlePaymentChange}
+                        placeholder="MM/YY"
+                        maxLength="5"
+                        required
+                      />
+                      {paymentErrors.expiryDate && <span className="error">{paymentErrors.expiryDate}</span>}
+                    </div>
+                    <div className="form-group">
+                      <input
+                        type="text"
+                        name="cvv"
+                        value={paymentDetails.cvv}
+                        onChange={handlePaymentChange}
+                        placeholder="CVV"
+                        maxLength="4"
+                        required
+                      />
+                      {paymentErrors.cvv && <span className="error">{paymentErrors.cvv}</span>}
+                    </div>
+                    <div className="button-group">
+                      <button
+                        type="button"
+                        className="action-btn back-btn"
+                        onClick={handleBackStep}
+                      >
+                        <FiArrowLeft />
+                      </button>
+                      <button
+                        type="button"
+                        className="action-btn confirm-payment-btn"
+                        onClick={handleConfirmPayment}
+                      >
+                        Confirm Payment
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {checkoutStep === 3 && (
+                <div className="success-section">
+                  <h3>Payment Successful!</h3>
+                  <p>Your payment has been processed successfully.</p>
+                  <button className="action-btn place-order-btn" onClick={handlePlaceOrder}>Place Order</button>
+                </div>
+              )}
             </div>
-            <button className="place-order-btn" onClick={handlePlaceOrder}>Place Order</button>
           </div>
         )}
       </div>
     </div>
   );
-};
+}
 
 export default CartPage;

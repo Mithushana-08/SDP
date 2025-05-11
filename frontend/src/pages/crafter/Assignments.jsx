@@ -1,43 +1,83 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import CrafterSidebar from "../../components/Admin/craftersidebar";
 import AdminNavbar from "../../components/Admin/adminnavbar";
 import "./Assignments.css";
-import "../../components/styles/table.css"; // Import the common table styles
+import "../../components/styles/table.css";
 import "../../components/styles/search-container.css";
-import { FiSearch } from 'react-icons/fi';
+import { FiSearch } from "react-icons/fi";
+import axios from "axios";
 
 const Assignments = () => {
     const [searchTerm, setSearchTerm] = useState("");
+    const [assignments, setAssignments] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const assignments = [
-        {
-            orderItemId: 501,
-            orderId: 1001,
-            productName: "Flower Keytag",
-            customizationDetails: "Text: Happy B'day",
-            status: "Pending",
-        },
-        {
-            orderItemId: 502,
-            orderId: 1002,
-            productName: "Wooden Spoon",
-            customizationDetails: "Engraving: Initials",
-            status: "On Work",
-        },
-        // Add more assignments as needed
-    ];
+    // Fetch assigned orders on component mount
+    useEffect(() => {
+        axios
+            .get("http://localhost:5000/api/crafter/assigned-orders", {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            })
+            .then((response) => {
+                console.log("Frontend received assignments:", response.data);
+                setAssignments(response.data);
+                setLoading(false);
+            })
+            .catch((error) => {
+                console.error("Error fetching assigned orders:", error);
+                setLoading(false);
+            });
+    }, []);
 
+    // Handle search input change
     const handleSearchChange = (event) => {
         setSearchTerm(event.target.value);
     };
 
+    // Filter assignments based on search term
     const filteredAssignments = assignments.filter((assignment) => {
         return (
-            assignment.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            assignment.customizationDetails.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            assignment.status.toLowerCase().includes(searchTerm.toLowerCase())
+            (assignment.product_name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (assignment.customization_details || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (assignment.status || "").toLowerCase().includes(searchTerm.toLowerCase())
         );
     });
+
+    // Handle status change in dropdown
+    const handleStatusChange = (e, itemId) => {
+        const newStatus = e.target.value;
+
+        // Update the status in the local state
+        setAssignments((prevAssignments) =>
+            prevAssignments.map((assignment) =>
+                assignment.item_id === itemId
+                    ? { ...assignment, status: newStatus }
+                    : assignment
+            )
+        );
+
+        // Update the status in the database
+        updateStatusInDatabase(itemId, newStatus);
+    };
+
+    // Update status in the database
+    const updateStatusInDatabase = (itemId, status) => {
+        axios
+            .put("http://localhost:5000/api/crafter/update-status", {
+                item_id: itemId,
+                status: status,
+            })
+            .then((response) => {
+                console.log("Status updated successfully:", response.data);
+                alert("Status updated successfully!");
+            })
+            .catch((error) => {
+                console.error("Error updating status:", error);
+                alert("Failed to update status. Please try again.");
+            });
+    };
 
     return (
         <div className="assignments-page">
@@ -59,30 +99,44 @@ const Assignments = () => {
                             </div>
                         </div>
                     </div>
-                    <table className="table assignments-table">
-                        <thead>
-                            <tr>
-                                <th>Order Item ID</th>
-                                <th>Order ID</th>
-                                <th>Product Name</th>
-                                <th>Customization Details</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredAssignments.map((assignment) => (
-                                <tr key={assignment.orderItemId}>
-                                    <td>{assignment.orderItemId}</td>
-                                    <td>{assignment.orderId}</td>
-                                    <td>{assignment.productName}</td>
-                                    <td>{assignment.customizationDetails}</td>
-                                    <td>{assignment.status}</td>
-                                    <td>🔄 Update Status</td>
+                    {loading ? (
+                        <p>Loading assignments...</p>
+                    ) : (
+                        <table className="table assignments-table">
+                            <thead>
+                                <tr>
+                                    <th>Order Item ID</th>
+                                    <th>Order ID</th>
+                                    <th>Product Name</th>
+                                    <th>Customization Details</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {filteredAssignments.map((assignment) => (
+                                    <tr key={assignment.item_id}>
+                                        <td>{assignment.item_id}</td>
+                                        <td>{assignment.order_id}</td>
+                                        <td>{assignment.product_name}</td>
+                                        <td>{assignment.customization_details}</td>
+                                        <td>{assignment.status}</td> {/* Display the current status */}
+                                        <td>
+                                            <select
+                                                value={assignment.status}
+                                                onChange={(e) => handleStatusChange(e, assignment.item_id)}
+                                                className="status-dropdown"
+                                            >
+                                                <option value="Pending">Pending</option>
+                                                <option value="Confirmed">Confirmed</option>
+                                                <option value="Completed">Completed</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
                 </div>
             </div>
         </div>
