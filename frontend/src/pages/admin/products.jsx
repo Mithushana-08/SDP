@@ -97,9 +97,7 @@ const Products = () => {
                                     <td>{product.crafter_name}</td>
                                     <td>{product.status}</td>
                                     <td>
-                                        <button className="edit-button" onClick={() => handleEditCategory(product)}>
-                                            <FiEdit />
-                                        </button>
+                                        
                                         <button className="delete-button" onClick={() => handleDeleteCategory(product.product_id)}>
                                             <FiTrash2 />
                                         </button>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FiEdit, FiTrash2, FiSearch, FiEye } from 'react-icons/fi'; // Added FiEye for the view icon
+import { FiEdit, FiTrash2, FiSearch, FiEye } from 'react-icons/fi';
 import AdminSidebar from "../../components/Admin/adminsidebar";
 import AdminNavbar from "../../components/Admin/adminnavbar";
 import './product.css';
@@ -10,11 +10,13 @@ const Product = () => {
     const [products, setProducts] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false); // State for edit modal
-    const [isViewModalOpen, setIsViewModalOpen] = useState(false); // State for the view modal
-    const [customizationDetails, setCustomizationDetails] = useState([]); // State for customization details
-    const [selectedProduct, setSelectedProduct] = useState(null); // State for the selected product
-    const [productToEdit, setProductToEdit] = useState(null); // State for the product to edit
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [isImageModalOpen, setIsImageModalOpen] = useState(false); // New state for image modal
+    const [selectedImage, setSelectedImage] = useState(''); // Store the selected image URL
+    const [customizationDetails, setCustomizationDetails] = useState([]);
+    const [selectedProduct, setSelectedProduct] = useState(null);
+    const [productToEdit, setProductToEdit] = useState(null);
 
     useEffect(() => {
         fetch('http://localhost:5000/api/productmaster')
@@ -67,6 +69,11 @@ const Product = () => {
         setIsEditModalOpen(true);
     };
 
+    const handleImageClick = (imageUrl) => {
+        setSelectedImage(imageUrl);
+        setIsImageModalOpen(true);
+    };
+
     const filteredProducts = products.filter(product =>
         product.product_name && product.product_name.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -106,37 +113,39 @@ const Product = () => {
                             </tr>
                         </thead>
                         <tbody>
-                        {filteredProducts.map(product => (
-                            <tr key={product.product_id}>
-                                <td>{product.product_id}</td>
-                                <td>{product.product_name}</td>
-                                <td>{product.category_name}</td>
-                                <td>Rs.{product.base_price.toFixed(2)}</td>
-                                <td>{product.customizable}</td>
-                                <td>{product.description}</td>
-                                <td>{product.status}</td>
-                                <td>{product.stock_qty || 0}</td>
-                                <td>
-                                    <img
-                                        src={product.image.startsWith('/uploads') ? `http://localhost:5000${product.image}` : `http://localhost:5000/uploads/${product.image}`}
-                                        alt={product.product_name}
-                                        width="50"
-                                        onError={(e) => {
-                                            if (e.target.src !== 'http://localhost:5000/uploads/placeholder.png') {
-                                                e.target.src = 'http://localhost:5000/uploads/placeholder.png';
-                                            }
-                                        }}
-                                    />
-                                </td>
-                                <td>
-                                    <button className="edit-button" onClick={() => handleEdit(product)}><FiEdit /></button>
-                                    <button className="delete-button" onClick={() => handleDelete(product.product_id)}><FiTrash2 /></button>
-                                    <button className="view-button" onClick={() => handleViewCustomizations(product.product_id)}>
-                                        <FiEye />
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
+                            {filteredProducts.map(product => (
+                                <tr key={product.product_id}>
+                                    <td>{product.product_id}</td>
+                                    <td>{product.product_name}</td>
+                                    <td>{product.category_name}</td>
+                                    <td>Rs.{product.base_price.toFixed(2)}</td>
+                                    <td>{product.customizable}</td>
+                                    <td>{product.description}</td>
+                                    <td>{product.status}</td>
+                                    <td>{product.stock_qty || 0}</td>
+                                    <td>
+                                        <img
+                                            src={product.image.startsWith('/uploads') ? `http://localhost:5000${product.image}` : `http://localhost:5000/uploads/${product.image}`}
+                                            alt={product.product_name}
+                                            width="50"
+                                            onClick={() => handleImageClick(product.image.startsWith('/uploads') ? `http://localhost:5000${product.image}` : `http://localhost:5000/uploads/${product.image}`)}
+                                            style={{ cursor: 'pointer' }}
+                                            onError={(e) => {
+                                                if (e.target.src !== 'http://localhost:5000/uploads/placeholder.png') {
+                                                    e.target.src = 'http://localhost:5000/uploads/placeholder.png';
+                                                }
+                                            }}
+                                        />
+                                    </td>
+                                    <td>
+                                        <button className="edit-button" onClick={() => handleEdit(product)}><FiEdit /></button>
+                                        <button className="delete-button" onClick={() => handleDelete(product.product_id)}><FiTrash2 /></button>
+                                        <button className="edit-button" onClick={() => handleViewCustomizations(product.product_id)}>
+                                            <FiEye />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                     {isModalOpen && <AddProductModal setProducts={setProducts} onClose={() => setIsModalOpen(false)} />}
@@ -144,13 +153,13 @@ const Product = () => {
                         <AddProductModal
                             setProducts={setProducts}
                             onClose={() => setIsEditModalOpen(false)}
-                            productToEdit={productToEdit} // Pass product to edit
+                            productToEdit={productToEdit}
                         />
                     )}
                     {isViewModalOpen && (
                         <div className="overlay">
                             <div className="modal-content">
-                                <span className="close" onClick={() => setIsViewModalOpen(false)}>&times;</span>
+                                <span className="close" onClick={() => setIsViewModalOpen(false)}>×</span>
                                 <h2>Customization Details</h2>
                                 {customizationDetails.length > 0 ? (
                                     <table className="table">
@@ -185,6 +194,23 @@ const Product = () => {
                             </div>
                         </div>
                     )}
+                    {isImageModalOpen && (
+                        <div className="overlay">
+                            <div className="modal-content image-modal">
+                                <span className="close" onClick={() => setIsImageModalOpen(false)}>×</span>
+                                <img
+                                    src={selectedImage}
+                                    alt="Enlarged Product"
+                                    style={{ maxWidth: '300px', maxHeight: '300px', objectFit: 'contain' }}
+                                    onError={(e) => {
+                                        if (e.target.src !== 'http://localhost:5000/uploads/placeholder.png') {
+                                            e.target.src = 'http://localhost:5000/uploads/placeholder.png';
+                                        }
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -206,6 +232,7 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
+        // Fetch categories
         fetch('http://localhost:5000/api/productmaster/categories')
             .then((response) => response.json())
             .then((data) => {
@@ -217,14 +244,31 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
                 setIsLoading(false);
             });
 
+        // If editing a product, fetch its customizations and populate the form
         if (productToEdit) {
-            setProductData({
-                ...productToEdit,
-                category_id: productToEdit.category_id || '',
-                customizable: productToEdit.customizable || false,
-                customizations: productToEdit.customizations || [],
-                image: null, // Reset image field
-            });
+            const fetchCustomizations = async () => {
+                try {
+                    const response = await fetch(`http://localhost:5000/api/productmaster/customizations/${productToEdit.product_id}`);
+                    const customizationsData = await response.json();
+                    setProductData({
+                        product_name: productToEdit.product_name || '',
+                        category_id: productToEdit.category_id || '',
+                        base_price: productToEdit.base_price || '',
+                        customizable: productToEdit.customizable === 'yes' || productToEdit.customizable === true,
+                        customizations: customizationsData.map(cust => ({
+                            customization_id: cust.customization_id,
+                            type: cust.customization_type,
+                            description: cust.description || '',
+                            sizes: cust.size_type ? [{ size_type: cust.size_type, height: cust.height, width: cust.width, depth: cust.depth }] : [],
+                        })) || [],
+                        description: productToEdit.description || '',
+                        image: null,
+                    });
+                } catch (error) {
+                    console.error('Error fetching customizations:', error);
+                }
+            };
+            fetchCustomizations();
         }
     }, [productToEdit]);
 
@@ -244,7 +288,7 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
             ...productData,
             customizations: [
                 ...productData.customizations,
-                { type: '', sizes: [{ size_type: '', height: '', width: '', depth: '' }] },
+                { type: '', description: '', sizes: [] },
             ],
         });
     };
@@ -286,7 +330,7 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
         for (let key in productData) {
             if (key === 'customizations') {
                 formData.append(key, JSON.stringify(productData[key]));
-            } else if (productData[key] !== '') {
+            } else if (productData[key] !== '' && productData[key] !== null) {
                 formData.append(key, productData[key]);
             }
         }
@@ -308,7 +352,7 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
                 setProducts((prevProducts) =>
                     productToEdit
                         ? prevProducts.map((product) =>
-                              product.product_id === updatedProduct.product_id ? updatedProduct : product
+                              product.product_id === productToEdit.product_id ? { ...product, ...updatedProduct } : product
                           )
                         : [...prevProducts, updatedProduct]
                 );
@@ -324,9 +368,7 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
     return (
         <div className="overlay">
             <div className="modal-content">
-                <span className="close" onClick={onClose}>
-                    &times;
-                </span>
+                <span className="close" onClick={onClose}>×</span>
                 <form onSubmit={handleSubmit} className="add-product-form" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
                     <h2>{productToEdit ? 'Edit Product' : 'Add Product'}</h2>
                     <input
@@ -411,7 +453,7 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
                                             className="remove-button"
                                             onClick={() => handleRemoveCustomization(index)}
                                         >
-                                            &times;
+                                            ×
                                         </button>
                                         {customization.type === 'size' && (
                                             <>
@@ -451,7 +493,7 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
                                                                 className="remove-button"
                                                                 onClick={() => handleRemoveSize(index, sizeIndex)}
                                                             >
-                                                                &times;
+                                                                ×
                                                             </button>
                                                             <label>
                                                                 Height:

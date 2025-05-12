@@ -24,17 +24,20 @@ const getProducts = (req, res) => {
             pm.description,
             pm.image,
             CASE
-                WHEN i.stock_qty > 10 THEN 'In Stock'
-                WHEN i.stock_qty > 0 THEN 'Low Stock'
+                WHEN SUM(COALESCE(i.stock_qty, 0)) > 10 THEN 'In Stock'
+                WHEN SUM(COALESCE(i.stock_qty, 0)) > 0 THEN 'Low Stock'
                 ELSE 'Out of Stock'
             END AS status,
-            COALESCE(i.stock_qty, 0) AS stock_qty
+            SUM(COALESCE(i.stock_qty, 0)) AS stock_qty
         FROM 
             product_master pm
         JOIN 
             Categories c ON pm.category_id = c.CategoryID
         LEFT JOIN 
             inventory i ON pm.product_id = i.product_id
+        GROUP BY 
+            pm.product_id, pm.product_name, c.CategoryName, c.CategoryID, 
+            pm.base_price, pm.customizable, pm.description, pm.image
     `;
 
     db.query(query, (error, results) => {
@@ -213,49 +216,86 @@ const editProduct = async (req, res) => {
         if (customizable === 'yes' && customizations) {
             const customizationsArray = JSON.parse(customizations);
 
-            // Delete existing customizations for the product
-            const deleteCustomizationsQuery = `DELETE FROM product_customizations WHERE product_id = ?`;
-            await new Promise((resolve, reject) => {
-                db.query(deleteCustomizationsQuery, [productId], (error, results) => {
+            // Fetch existing customizations
+            const fetchCustomizationsQuery = `SELECT customization_id FROM product_customizations WHERE product_id = ?`;
+            const existingCustomizations = await new Promise((resolve, reject) => {
+                db.query(fetchCustomizationsQuery, [productId], (error, results) => {
                     if (error) reject(error);
-                    resolve(results);
+                    resolve(results.map(c => c.customization_id));
                 });
             });
 
-            // Insert new customizations
-            for (const customization of customizationsArray) {
-                const customizationQuery = `
-                    INSERT INTO product_customizations (product_id, customization_type, description)
-                    VALUES (?, ?, ?)
-                `;
+            const incomingCustomizationIds = customizationsArray.map(c => c.customization_id).filter(id => id);
 
+            // Delete removed customizations
+            const customizationsToDelete = existingCustomizations.filter(id => !incomingCustomizationIds.includes(id));
+            if (customizationsToDelete.length > 0) {
+                const deleteCustomizationsQuery = `DELETE FROM product_customizations WHERE customization_id IN (?)`;
                 await new Promise((resolve, reject) => {
-                    db.query(customizationQuery, [productId, customization.type, ''], (error, results) => {
+                    db.query(deleteCustomizationsQuery, [customizationsToDelete], (error, results) => {
                         if (error) reject(error);
                         resolve(results);
                     });
                 });
+            }
 
-                // If customization type is 'size', handle size customizations
-                if (customization.type === 'size' && customization.sizes) {
-                    for (const size of customization.sizes) {
-                        const sizeQuery = `
-                            INSERT INTO size_customizations (product_id, size_type, height, width, depth)
-                            VALUES (?, ?, ?, ?, ?)
-                        `;
-
-                        await new Promise((resolve, reject) => {
-                            db.query(sizeQuery, [
-                                productId,
-                                size.size_type,
-                                size.height,
-                                size.width,
-                                size.depth
-                            ], (error, results) => {
-                                if (error) reject(error);
-                                resolve(results);
-                            });
+            // Update or insert customizations
+            for (const customization of customizationsArray) {
+                if (customization.customization_id) {
+                    // Update existing customization
+                    const updateCustomizationQuery = `
+                        UPDATE product_customizations 
+                        SET customization_type = ?, description = ? 
+                        WHERE customization_id = ?
+                    `;
+                    await new Promise((resolve, reject) => {
+                        db.query(updateCustomizationQuery, [
+                            customization.type,
+                            customization.description || '',
+                            customization.customization_id
+                        ], (error, results) => {
+                            if (error) reject(error);
+                            resolve(results);
                         });
+                    });
+                } else {
+                    // Insert new customization
+                    const insertCustomizationQuery = `
+                        INSERT INTO product_customizations (product_id, customization_type, description)
+                        VALUES (?, ?, ?)
+                    `;
+                    const customizationId = await new Promise((resolve, reject) => {
+                        db.query(insertCustomizationQuery, [
+                            productId,
+                            customization.type,
+                            customization.description || ''
+                        ], (error, results) => {
+                            if (error) reject(error);
+                            resolve(results.insertId);
+                        });
+                    });
+
+                    // Handle size customizations if applicable
+                    if (customization.type === 'size' && customization.sizes) {
+                        for (const size of customization.sizes) {
+                            const sizeQuery = `
+                                INSERT INTO size_customizations (product_id, customization_id, size_type, height, width, depth)
+                                VALUES (?, ?, ?, ?, ?, ?)
+                            `;
+                            await new Promise((resolve, reject) => {
+                                db.query(sizeQuery, [
+                                    productId,
+                                    customizationId,
+                                    size.size_type,
+                                    size.height,
+                                    size.width,
+                                    size.depth
+                                ], (error, results) => {
+                                    if (error) reject(error);
+                                    resolve(results);
+                                });
+                            });
+                        }
                     }
                 }
             }
@@ -280,8 +320,6 @@ const editProduct = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
-
-
 
 const deleteProduct = (req, res) => {
     const productId = req.params.id;
@@ -314,35 +352,36 @@ const getCategories = (req, res) => {
 
 const getProductsByCategory = (req, res) => {
     const { category_id } = req.query;
-  
+
     if (!category_id) {
-      return res.status(400).json({ message: 'category_id is required' });
+        return res.status(400).json({ message: 'category_id is required' });
     }
-  
+
     const query = `
-       SELECT 
+        SELECT 
             p.product_id, 
             p.product_name, 
             p.base_price, 
             p.image,
-            COALESCE(i.stock_qty, 0) AS stock_qty
+            SUM(COALESCE(i.stock_qty, 0)) AS stock_qty
         FROM 
             product_master p
         LEFT JOIN 
             inventory i ON p.product_id = i.product_id
         WHERE 
             p.category_id = ?
+        GROUP BY 
+            p.product_id, p.product_name, p.base_price, p.image
     `;
-  
-    db.query(query, [category_id], (err, results) => {
-      if (err) {
-        console.error('Error fetching products:', err);
-        return res.status(500).json({ message: 'Internal server error', error: err.message });
-      }
-      res.json(results);
-    });
-  };
 
+    db.query(query, [category_id], (err, results) => {
+        if (err) {
+            console.error('Error fetching products:', err);
+            return res.status(500).json({ message: 'Internal server error', error: err.message });
+        }
+        res.json(results);
+    });
+};
   
 
   const getCustomizationDetails = async (req, res) => {

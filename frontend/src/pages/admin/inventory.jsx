@@ -14,10 +14,12 @@ const Inventory = () => {
         CategoryID: '',
         CategoryName: '',
         Description: '',
-        CategoryImage: null // Updated to match the backend field name
+        CategoryImage: null
     });
     const [showForm, setShowForm] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [isImageModalOpen, setIsImageModalOpen] = useState(false); // New state for image modal
+    const [selectedImage, setSelectedImage] = useState(''); // Store the selected image URL
     const [searchTerm, setSearchTerm] = useState('');
 
     // Fetch categories from API
@@ -55,11 +57,11 @@ const Inventory = () => {
     // Add new category
     const handleAddCategory = async (e) => {
         e.preventDefault();
-        const { CategoryID, CategoryImage, ...categoryData } = newCategory; // Exclude CategoryID
+        const { CategoryID, CategoryImage, ...categoryData } = newCategory;
 
         const formData = new FormData();
         Object.keys(categoryData).forEach((key) => formData.append(key, categoryData[key]));
-        if (CategoryImage) formData.append("CategoryImage", CategoryImage); // Match the backend field name
+        if (CategoryImage) formData.append("CategoryImage", CategoryImage);
 
         try {
             const response = await fetch("http://localhost:5000/api/categories", {
@@ -69,7 +71,7 @@ const Inventory = () => {
 
             if (!response.ok) throw new Error("Failed to add category");
 
-            await fetchCategories(); // Refresh data after adding
+            await fetchCategories();
             setNewCategory({ CategoryID: "", CategoryName: "", Description: "", CategoryImage: null });
             setShowForm(false);
         } catch (error) {
@@ -80,11 +82,11 @@ const Inventory = () => {
     // Update category
     const handleUpdateCategory = async (e) => {
         e.preventDefault();
-        const { CategoryID, CategoryImage, ...categoryData } = newCategory; // Exclude CategoryID
+        const { CategoryID, CategoryImage, ...categoryData } = newCategory;
 
         const formData = new FormData();
         Object.keys(categoryData).forEach((key) => formData.append(key, categoryData[key]));
-        if (CategoryImage) formData.append("CategoryImage", CategoryImage); // Match the backend field name
+        if (CategoryImage) formData.append("CategoryImage", CategoryImage);
 
         try {
             const response = await fetch(`http://localhost:5000/api/categories/${newCategory.CategoryID}`, {
@@ -94,7 +96,7 @@ const Inventory = () => {
 
             if (!response.ok) throw new Error("Failed to update category");
 
-            await fetchCategories(); // Refresh data after updating
+            await fetchCategories();
             setNewCategory({ CategoryID: "", CategoryName: "", Description: "", CategoryImage: null });
             setShowForm(false);
             setIsEditing(false);
@@ -110,7 +112,7 @@ const Inventory = () => {
                 method: "DELETE",
             });
 
-            await fetchCategories(); // Refresh data after deletion
+            await fetchCategories();
         } catch (error) {
             console.error("Error deleting category:", error);
         }
@@ -133,6 +135,12 @@ const Inventory = () => {
         setNewCategory(category);
         setIsEditing(true);
         setShowForm(true);
+    };
+
+    // Handle image click to show larger version
+    const handleImageClick = (imageUrl) => {
+        setSelectedImage(imageUrl);
+        setIsImageModalOpen(true);
     };
 
     // Filter categories based on search
@@ -185,7 +193,7 @@ const Inventory = () => {
                                     />
                                     <input
                                         type="file"
-                                        name="CategoryImage" // Match the backend field name
+                                        name="CategoryImage"
                                         accept="image/*"
                                         onChange={handleInputChange}
                                     />
@@ -227,6 +235,12 @@ const Inventory = () => {
                                             }
                                             alt={category.CategoryName}
                                             width="50"
+                                            onClick={() => handleImageClick(
+                                                category.CategoryImage?.startsWith("/uploads")
+                                                    ? `http://localhost:5000${category.CategoryImage}`
+                                                    : `http://localhost:5000/uploads/${category.CategoryImage}`
+                                            )}
+                                            style={{ cursor: 'pointer' }}
                                             onError={(e) => {
                                                 if (e.target.src !== "http://localhost:5000/uploads/placeholder.png") {
                                                     e.target.src = "http://localhost:5000/uploads/placeholder.png";
@@ -242,6 +256,24 @@ const Inventory = () => {
                             ))}
                         </tbody>
                     </table>
+
+                    {isImageModalOpen && (
+                        <div className="overlay">
+                            <div className="modal-content image-modal">
+                                <span className="close" onClick={() => setIsImageModalOpen(false)}>×</span>
+                                <img
+                                    src={selectedImage}
+                                    alt="Enlarged Category"
+                                    style={{ maxWidth: '300px', maxHeight: '300px', objectFit: 'contain' }}
+                                    onError={(e) => {
+                                        if (e.target.src !== "http://localhost:5000/uploads/placeholder.png") {
+                                            e.target.src = "http://localhost:5000/uploads/placeholder.png";
+                                        }
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

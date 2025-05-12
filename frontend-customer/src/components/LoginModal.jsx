@@ -6,11 +6,11 @@ import Log from '../assets/wood.webp';
 
 const LoginModal = ({ onClose }) => {
   const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-    fullName: '',
+    first_name: '',
+    last_name: '',
     email: '',
     phone: '',
+    password: '',
     confirmPassword: '',
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -30,10 +30,32 @@ const LoginModal = ({ onClose }) => {
 
     if (isRegistering) {
       // Validate account info
-      if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword) {
+      if (!formData.first_name || !formData.last_name || !formData.email || !formData.password || !formData.confirmPassword) {
         setError('Please fill in all required fields');
         return;
       }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        setError('Please enter a valid email address');
+        return;
+      }
+
+      // Validate phone number (10 digits)
+      const phoneRegex = /^\d{10}$/;
+      if (formData.phone && !phoneRegex.test(formData.phone)) {
+        setError('Please enter a valid 10-digit phone number');
+        return;
+      }
+
+      // Validate password length
+      if (formData.password.length < 6) {
+        setError('Password must be at least 6 characters long');
+        return;
+      }
+
+      // Validate password match
       if (formData.password !== formData.confirmPassword) {
         setError('Passwords do not match');
         return;
@@ -46,7 +68,8 @@ const LoginModal = ({ onClose }) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            username: formData.fullName,
+            first_name: formData.first_name,
+            last_name: formData.last_name,
             email: formData.email,
             phone: formData.phone,
             password: formData.password,
@@ -76,7 +99,7 @@ const LoginModal = ({ onClose }) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            email: formData.username,
+            email: formData.email,
             password: formData.password,
           }),
         });
@@ -137,10 +160,19 @@ const LoginModal = ({ onClose }) => {
                 {/* Account Info */}
                 <input
                   type="text"
-                  name="fullName"
-                  value={formData.fullName}
+                  name="first_name"
+                  value={formData.first_name}
                   onChange={handleChange}
-                  placeholder="Full Name"
+                  placeholder="First Name"
+                  className="form-input"
+                  required
+                />
+                <input
+                  type="text"
+                  name="last_name"
+                  value={formData.last_name}
+                  onChange={handleChange}
+                  placeholder="Last Name"
                   className="form-input"
                   required
                 />
@@ -189,11 +221,11 @@ const LoginModal = ({ onClose }) => {
                 <div className="input-group">
                   <UserCircle className="input-icon" size={20} />
                   <input
-                    type="text"
-                    name="username"
-                    value={formData.username}
+                    type="email"
+                    name="email"
+                    value={formData.email}
                     onChange={handleChange}
-                    placeholder="Username"
+                    placeholder="Email"
                     className="form-input"
                     required
                   />

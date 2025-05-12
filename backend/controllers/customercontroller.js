@@ -1,7 +1,36 @@
 const db = require("../config/db");
 
 const getCustomers = (req, res) => {
-    const query = 'SELECT username, email, phone FROM Customer ORDER BY customer_id';
+    const query = `
+        SELECT 
+            c.customer_id,
+            c.username,
+            c.email,
+            c.phone,
+            a.address_line1,
+            a.address_line2,
+            a.city,
+            a.province,
+            a.postal_code
+        FROM Customer c
+        LEFT JOIN (
+            SELECT 
+                Customer_id, 
+                address_line1, 
+                address_line2, 
+                city, 
+                province, 
+                postal_code
+            FROM addresses
+            WHERE Address_id IN (
+                SELECT MAX(Address_id) 
+                FROM addresses 
+                GROUP BY Customer_id
+            )
+        ) a ON c.customer_id = a.Customer_id
+        ORDER BY c.customer_id
+    `;
+
     db.query(query, (err, results) => {
         if (err) {
             console.error('Error fetching customer data:', err);
@@ -164,6 +193,8 @@ const updateAddress = (req, res) => {
 const deleteCustomer = (req, res) => {
     const customer_id = req.params.customer_id; // Extract Customer_id from the request parameters
 
+    console.log("Deleting customer with ID:", customer_id); // Debugging log
+
     if (!customer_id) {
         return res.status(400).json({ error: "Customer ID is required" });
     }
@@ -187,7 +218,6 @@ const deleteCustomer = (req, res) => {
         res.status(200).json({ message: "Customer deleted successfully" });
     });
 };
-
 module.exports = {
     getCustomers,
     saveAddress,

@@ -244,3 +244,38 @@ h2 {
   font-size: 14px;
   color: #666;
 }
+
+.order-details-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
+.order-details-popup h3 {
+  margin-bottom: 10px;
+}
+
+.order-details-popup ul {
+  list-style: none;
+  padding: 0;
+}
+
+.order-details-popup li {
+  margin-bottom: 5px;
+}
+
+.order-details-popup button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  background: #d4a373;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}

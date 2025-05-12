@@ -51,9 +51,13 @@ const getCustomerProfile = (req, res) => {
 };
 
 // Update customer profile details
+const { updateAddress } = require('./customercontroller'); // Import updateAddress function
+
 const updateCustomerProfile = (req, res) => {
     const customerId = req.user.customer_id; // Extract customer_id from the authenticated user
     const { first_name, last_name, email, phone, address_line1, address_line2, city, province, postal_code } = req.body;
+
+    console.log("Request body:", req.body); // Debugging: Log the incoming data
 
     // Query to update customer details
     const updateCustomerQuery = `
@@ -62,34 +66,89 @@ const updateCustomerProfile = (req, res) => {
         WHERE Customer_id = ?
     `;
 
-    // Query to update or insert address
-    const upsertAddressQuery = `
-        INSERT INTO addresses (Customer_id, address_line1, address_line2, city, province, postal_code)
-        VALUES (?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-        address_line1 = VALUES(address_line1),
-        address_line2 = VALUES(address_line2),
-        city = VALUES(city),
-        province = VALUES(province),
-        postal_code = VALUES(postal_code)
-    `;
-
-    // Execute the queries
+    // Execute the customer update query
     db.query(updateCustomerQuery, [first_name, last_name, email, phone, first_name, last_name, customerId], (err) => {
         if (err) {
             console.error("Error updating customer details:", err);
             return res.status(500).json({ error: "Failed to update customer details" });
         }
 
-        db.query(upsertAddressQuery, [customerId, address_line1, address_line2, city, province, postal_code], (err) => {
-            if (err) {
-                console.error("Error updating address details:", err);
-                return res.status(500).json({ error: "Failed to update address details" });
-            }
+        // Map property names to match what updateAddress expects
+        const addressData = {
+            addressLine1: address_line1,
+            addressLine2: address_line2,
+            city,
+            province,
+            postalCode: postal_code,
+        };
 
-            res.status(200).json({ message: "Profile updated successfully" });
-        });
+        // Call the updateAddress function to update or insert the address
+        updateAddress({ body: addressData, user: { customer_id: customerId } }, res); // Pass req-like object to updateAddress
     });
 };
-module.exports = { getCustomerProfile, updateCustomerProfile };
+// Fetch all orders for a customer
+const getOrdersByCustomer = (req, res) => {
+    const customerId = req.user.customer_id; // Extract customer_id from the authenticated user
+
+    // Query to fetch all orders for the customer
+    const ordersQuery = `
+        SELECT o.order_id, o.order_date, o.status, SUM(oi.quantity * oi.price) AS total_amount
+        FROM orders o
+        JOIN order_items oi ON o.order_id = oi.order_id
+        WHERE o.customer_id = ?
+        GROUP BY o.order_id, o.order_date, o.status
+        ORDER BY o.order_date DESC
+    `;
+
+    db.query(ordersQuery, [customerId], (err, orders) => {
+        if (err) {
+            console.error("Error fetching orders:", err);
+            return res.status(500).json({ error: "Failed to fetch orders" });
+        }
+
+        res.status(200).json({ orders });
+    });
+};
+
+// Fetch details of a specific order
+const getOrderDetails = (req, res) => {
+    const { orderId } = req.params;
+
+    // Query to fetch order details
+    const orderDetailsQuery = `
+        SELECT o.order_id, o.order_date, o.status, oi.product_id, p.product_name, oi.quantity, oi.price
+        FROM orders o
+        JOIN order_items oi ON o.order_id = oi.order_id
+        JOIN product_master p ON oi.product_id = p.product_id
+        WHERE o.order_id = ?
+    `;
+
+    db.query(orderDetailsQuery, [orderId], (err, orderDetails) => {
+        if (err) {
+            console.error("Error fetching order details:", err);
+            return res.status(500).json({ error: "Failed to fetch order details" });
+        }
+
+        if (orderDetails.length === 0) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+
+        // Group order details by order
+        const order = {
+            orderId: orderDetails[0].order_id,
+            orderDate: orderDetails[0].order_date,
+            status: orderDetails[0].status,
+            items: orderDetails.map((item) => ({
+                productId: item.product_id,
+                productName: item.product_name,
+                quantity: item.quantity,
+                price: item.price,
+            })),
+        };
+
+        res.status(200).json({ order });
+    });
+};
+
+module.exports = { getCustomerProfile, updateCustomerProfile, getOrdersByCustomer, getOrderDetails };
 

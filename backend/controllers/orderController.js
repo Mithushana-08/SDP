@@ -73,60 +73,21 @@ const proceedToCheckout = (req, res) => {
                     VALUES ?
                 `;
 
-                db.query(insertOrderItemsQuery, [orderItems], (err, result) => {
+                db.query(insertOrderItemsQuery, [orderItems], (err) => {
                     if (err) {
                         console.error("Error adding items to order:", err);
                         return res.status(500).json({ error: "Failed to add items to order" });
                     }
 
-                    // Retrieve the generated item_ids for the inserted order_items
-                    const fetchItemIdsQuery = `
-                        SELECT item_id, product_id FROM order_items
-                        WHERE order_id = ?
-                    `;
-
-                    db.query(fetchItemIdsQuery, [orderId], (err, itemIds) => {
-                        if (err || itemIds.length === 0) {
-                            console.error("Error fetching item IDs:", err);
-                            return res.status(500).json({ error: "Failed to fetch item IDs" });
+                    // Reduce stock for each product in the cart
+                    reduceStockSequentially(cartItems, (err) => {
+                        if (err) {
+                            console.error("Error reducing stock:", err);
+                            return res.status(500).json({ error: "Failed to reduce stock" });
                         }
 
-                        // Map cart_item_id to the corresponding item_id
-                        const itemIdMap = {};
-                        itemIds.forEach(item => {
-                            itemIdMap[item.product_id] = item.item_id;
-                        });
-
-                        // Insert customizations into customization_details table
-                        const customizations = cartItems
-                            .filter(item => item.customization_type)
-                            .map(item => [
-                                itemIdMap[item.product_id], // Map product_id to item_id
-                                item.customization_type,
-                                item.customization_value,
-                                item.uploaded_image,
-                                item.size_type
-                            ]);
-
-                        if (customizations.length > 0) {
-                            const insertCustomizationsQuery = `
-                                INSERT INTO customization_details (item_id, customization_type, customization_value, uploaded_image, size_type)
-                                VALUES ?
-                            `;
-
-                            db.query(insertCustomizationsQuery, [customizations], (err) => {
-                                if (err) {
-                                    console.error("Error adding customizations:", err);
-                                    return res.status(500).json({ error: "Failed to add customizations" });
-                                }
-
-                                // Clear the cart after successful checkout
-                                clearCart(customerId, res);
-                            });
-                        } else {
-                            // Clear the cart if no customizations exist
-                            clearCart(customerId, res);
-                        }
+                        // Clear the cart after successful checkout
+                        clearCart(customerId, res);
                     });
                 });
             });
@@ -134,6 +95,67 @@ const proceedToCheckout = (req, res) => {
     });
 };
 
+// Function to reduce stock sequentially for each product
+const reduceStockSequentially = (cartItems, callback) => {
+    const reduceStockForItem = (index) => {
+        if (index >= cartItems.length) {
+            return callback(null); // All items processed
+        }
+
+        const item = cartItems[index];
+        const { product_id, quantity } = item;
+
+        // Fetch inventory records for the product, sorted by stock_qty
+        const fetchInventoryQuery = `
+            SELECT crafter_id, stock_qty
+            FROM inventory
+            WHERE product_id = ? AND stock_qty > 0
+            ORDER BY stock_qty DESC
+        `;
+
+        db.query(fetchInventoryQuery, [product_id], (err, inventoryRecords) => {
+            if (err || inventoryRecords.length === 0) {
+                return callback(new Error(`Insufficient stock for product ID: ${product_id}`));
+            }
+
+            let remainingQuantity = quantity;
+
+            const reduceStockForCrafter = (crafterIndex) => {
+                if (crafterIndex >= inventoryRecords.length || remainingQuantity <= 0) {
+                    if (remainingQuantity > 0) {
+                        return callback(new Error(`Insufficient stock for product ID: ${product_id}`));
+                    }
+                    return reduceStockForItem(index + 1); // Move to the next product
+                }
+
+                const { crafter_id, stock_qty } = inventoryRecords[crafterIndex];
+                const quantityToReduce = Math.min(stock_qty, remainingQuantity);
+
+                // Reduce stock for the current crafter
+                const updateInventoryQuery = `
+                    UPDATE inventory
+                    SET stock_qty = stock_qty - ?
+                    WHERE product_id = ? AND crafter_id = ? AND stock_qty >= ?
+                `;
+
+                db.query(updateInventoryQuery, [quantityToReduce, product_id, crafter_id, quantityToReduce], (err, result) => {
+                    if (err || result.affectedRows === 0) {
+                        return callback(new Error(`Failed to reduce stock for product ID: ${product_id}`));
+                    }
+
+                    remainingQuantity -= quantityToReduce;
+                    reduceStockForCrafter(crafterIndex + 1); // Move to the next crafter
+                });
+            };
+
+            reduceStockForCrafter(0); // Start with the first crafter
+        });
+    };
+
+    reduceStockForItem(0); // Start processing the first product
+};
+
+// Function to clear the cart
 const clearCart = (customerId, res) => {
     const clearCartQuery = `
         DELETE cc, ci, c
@@ -149,7 +171,7 @@ const clearCart = (customerId, res) => {
             return res.status(500).json({ error: "Failed to clear cart, items, and customizations" });
         }
 
-        res.status(200).json({ message: "Cart cleared successfully, including all items and customizations" });
+        res.status(200).json({ message: "Order placed successfully and cart cleared." });
     });
 };
 

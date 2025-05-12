@@ -258,51 +258,56 @@ const [paymentDetails, setPaymentDetails] = useState({
   };
 
   const handlePlaceOrder = () => {
-    if (!isAddressSaved) {
-      alert("Please save your address before placing the order.");
-      return;
-    }
+  if (!isAddressSaved) {
+    alert("Please save your address before placing the order.");
+    return;
+  }
 
-    if (!address.addressLine1 || !address.city || !address.province || !address.postalCode) {
-      alert("Your saved address is incomplete. Please update your address.");
-      return;
-    }
+  if (!address.addressLine1 || !address.city || !address.province || !address.postalCode) {
+    alert("Your saved address is incomplete. Please update your address.");
+    return;
+  }
 
-    if (checkoutStep !== 3) {
-      alert("Please complete the payment process before placing the order.");
-      return;
-    }
+  if (checkoutStep !== 3) {
+    alert("Please complete the payment process before placing the order.");
+    return;
+  }
 
-    const shippingAddress = `${address.addressLine1}, ${address.addressLine2 || ""}, ${address.city}, ${address.province}, ${address.postalCode}`;
-    const fullCardNumber = `${paymentDetails.cardNumber1}${paymentDetails.cardNumber2}${paymentDetails.cardNumber3}${paymentDetails.cardNumber4}`;
+  const shippingAddress = `${address.addressLine1}, ${address.addressLine2 || ""}, ${address.city}, ${address.province}, ${address.postalCode}`;
 
-    fetch("http://localhost:5000/api/orders/checkout", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ shipping_address: shippingAddress, card_number: fullCardNumber }),
+  fetch("http://localhost:5000/api/orders/checkout", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ shipping_address: shippingAddress }),
+  })
+    .then((res) => {
+      if (!res.ok) {
+        return res.json().then((data) => {
+          throw new Error(data.error || "Failed to place order");
+        });
+      }
+      return res.json();
     })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to place order");
-        }
-        return res.json();
-      })
-      .then((data) => {
-        console.log("Order placed successfully:", data);
-        alert("Order placed successfully!");
-        setShowCheckoutForm(false);
-        setCartItems([]);
-        setSelectedItems([]);
-        setCheckoutStep(1);
-      })
-      .catch((err) => {
-        console.error("Error placing order:", err);
+    .then((data) => {
+      console.log("Order placed successfully:", data);
+      alert("Order placed successfully!");
+      setShowCheckoutForm(false);
+      setCartItems([]);
+      setSelectedItems([]);
+      setCheckoutStep(1);
+    })
+    .catch((err) => {
+      console.error("Error placing order:", err);
+      if (err.message.includes("Insufficient stock")) {
+        alert("Some items in your cart are out of stock. Please update your cart and try again.");
+      } else {
         alert("Failed to place order. Please try again.");
-      });
-  };
+      }
+    });
+};
 
  const handlePaymentChange = (e) => {
   const { name, value } = e.target;

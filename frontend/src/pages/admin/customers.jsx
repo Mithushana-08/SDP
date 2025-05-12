@@ -4,7 +4,7 @@ import AdminNavbar from "../../components/Admin/adminnavbar";
 import "./customers.css";
 import "../../components/styles/table.css";
 
-import { FiSearch, FiEdit, FiTrash2 } from "react-icons/fi";
+import { FiSearch, FiTrash2 } from "react-icons/fi";
 
 const Customers = () => {
     const [searchTerm, setSearchTerm] = useState("");
@@ -37,9 +37,43 @@ const Customers = () => {
         setSearchTerm(event.target.value);
     };
 
+    // Combine address fields into a single string
+    const formatAddress = (customer) => {
+        const { address_line1, address_line2, city, province, postal_code } = customer;
+        const addressParts = [address_line1, address_line2, city, province, postal_code].filter(Boolean); // Remove null/undefined
+        return addressParts.length > 0 ? addressParts.join(", ") : "N/A";
+    };
+
+    const handleDeleteCustomer = async (customer_id) => {
+        if (!window.confirm("Are you sure you want to delete this customer?")) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:5000/api/customers/customer/${encodeURIComponent(customer_id)}`, {
+                method: "DELETE",
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Failed to delete customer");
+            }
+
+            // Remove the deleted customer from the state
+            setCustomers((prevCustomers) =>
+                prevCustomers.filter((customer) => customer.customer_id !== customer_id)
+            );
+
+            alert("Customer deleted successfully");
+        } catch (err) {
+            console.error("Error deleting customer:", err);
+            alert(err.message || "Failed to delete customer");
+        }
+    };
+
     const filteredCustomers = Array.isArray(customers)
         ? customers.filter((customer) =>
-              (customer.name || "").toLowerCase().includes(searchTerm.toLowerCase())
+              (customer.username || "").toLowerCase().includes(searchTerm.toLowerCase())
           )
         : [];
 
@@ -83,16 +117,16 @@ const Customers = () => {
                             </thead>
                             <tbody>
                                 {filteredCustomers.map((customer) => (
-                                    <tr key={customer.id}>
-                                        <td>{customer.username}</td>
-                                        <td>{customer.email}</td>
-                                        <td>{customer.phone}</td>
-                                        <td>{customer.address || "N/A"}</td>
+                                    <tr key={customer.customer_id}>
+                                        <td>{customer.username || "N/A"}</td>
+                                        <td>{customer.email || "N/A"}</td>
+                                        <td>{customer.phone || "N/A"}</td>
+                                        <td>{formatAddress(customer)}</td> {/* Format and display the address */}
                                         <td>
-                                            <button className="edit-button">
-                                                <FiEdit />
-                                            </button>
-                                            <button className="delete-button">
+                                            <button
+                                                className="delete-button"
+                                                onClick={() => handleDeleteCustomer(customer.customer_id)}
+                                            >
                                                 <FiTrash2 />
                                             </button>
                                         </td>

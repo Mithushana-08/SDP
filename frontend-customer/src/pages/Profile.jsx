@@ -8,9 +8,11 @@ const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState('profile'); // Default to 'profile'
   const [user, setUser] = useState(null); // State to store user details
   const [orders, setOrders] = useState([]); // State to store order history
+  const [selectedOrder, setSelectedOrder] = useState(null); // State to store selected order details
   const [isEditing, setIsEditing] = useState(false); // State to toggle edit mode
   const [formData, setFormData] = useState({}); // State to store form input values
   const [error, setError] = useState(null); // State to store error messages
+  const [orderDetailsError, setOrderDetailsError] = useState(null); // State for order details fetch errors
 
   // Sync activeTab with URL
   useEffect(() => {
@@ -44,7 +46,6 @@ const ProfilePage = () => {
       };
       setUser(userData);
       console.log('Updated user state:', JSON.stringify(userData, null, 2));
-      setOrders(data.orders || []); // Include orders if available
       // Initialize form data with user data
       setFormData({
         first_name: userData.first_name || '',
@@ -63,9 +64,89 @@ const ProfilePage = () => {
     }
   };
 
+  // Fetch order history
+  const fetchOrders = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/customer/orders', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch orders');
+      }
+
+      const data = await response.json();
+      console.log('Orders fetch response:', JSON.stringify(data, null, 2));
+      // Normalize orders: rename order_id to orderId, ensure items and total_amount
+      const normalizedOrders = Array.isArray(data.orders)
+        ? data.orders.map((order) => ({
+            ...order,
+            orderId: order.order_id, // Rename order_id to orderId
+            items: Array.isArray(order.items) ? order.items : [],
+            total_amount: typeof order.total_amount === 'number' ? order.total_amount : 0,
+          }))
+        : [];
+      setOrders(normalizedOrders);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      setOrders([]); // Set to empty array on error
+    }
+  };
+
+  // Fetch details of a specific order
+  const fetchOrderDetails = async (orderId) => {
+    if (!orderId) {
+      setOrderDetailsError('Invalid order ID');
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/customer/orders/${orderId}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch order details');
+      }
+
+      const data = await response.json();
+      console.log('Order details response:', JSON.stringify(data, null, 2));
+      // Normalize selected order to ensure items and total_amount are valid
+      const normalizedOrder = {
+        ...data.order,
+        orderId: data.order.order_id || data.order.orderId, // Handle both cases
+        items: Array.isArray(data.order.items)
+          ? data.order.items.map((item, index) => ({
+              ...item,
+              productId: item.productId || `temp-id-${index}`, // Ensure productId exists
+            }))
+          : [],
+        total_amount: typeof data.order.total_amount === 'number' ? data.order.total_amount : 0,
+      };
+      setSelectedOrder(normalizedOrder);
+      setOrderDetailsError(null); // Clear any previous error
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+      setOrderDetailsError(error.message || 'Failed to fetch order details');
+    }
+  };
+
   useEffect(() => {
     fetchProfile();
   }, [navigate]);
+
+  useEffect(() => {
+    if (activeTab === 'orders') {
+      fetchOrders();
+    }
+  }, [activeTab]);
 
   const handleSignOut = () => {
     localStorage.removeItem('token'); // Clear token
@@ -311,12 +392,12 @@ const ProfilePage = () => {
               ) : (
                 <p>No shipping address available.</p>
               )}
-<button
-  className="update-profile-btn"
-  onClick={toggleEditMode}
->
-  Update Profile
-</button>
+              <button
+                className="update-profile-btn"
+                onClick={toggleEditMode}
+              >
+                Update Profile
+              </button>
               <button className="sign-out-btn" onClick={handleSignOut}>
                 <span className="icon">←</span> Sign Out
               </button>
@@ -328,33 +409,13 @@ const ProfilePage = () => {
       {activeTab === 'orders' && (
         <div className="orders-section">
           <h2>Order History</h2>
-          {true ? (
-            [
-              {
-                orderId: 'ORD-1234',
-                orderDate: '2023-04-15',
-                status: 'Delivered',
-                items: [
-                  { productId: '1', productName: 'Wooden Tray', quantity: 1, price: 45.59 },
-                  { productId: '2', productName: 'Coconut Bowl', quantity: 2, price: 29.99 },
-                ],
-                total: 105.57,
-              },
-              {
-                orderId: 'ORD-5678',
-                orderDate: '2023-04-20',
-                status: 'Processing',
-                items: [
-                  { productId: '3', productName: 'Bamboo Spoon Set', quantity: 3, price: 15.99 },
-                ],
-                total: 47.97,
-              },
-            ].map((order) => (
+          {orders.length > 0 ? (
+            orders.map((order) => (
               <div key={order.orderId} className="order-card">
                 <div className="order-header">
                   <div className="order-info">
                     <h3>Order #{order.orderId}</h3>
-                    <p>Placed on {new Date(order.orderDate).toLocaleDateString()}</p>
+                    <p>Placed on {new Date(order.orderDate || order.order_date).toLocaleDateString()}</p>
                   </div>
                   <span className={`status ${order.status.toLowerCase()}`}>
                     {order.status}
@@ -369,23 +430,81 @@ const ProfilePage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {order.items.map((item) => (
-                      <tr key={item.productId}>
-                        <td>{item.productName}</td>
-                        <td>{item.quantity}</td>
-                        <td>${item.price.toFixed(2)}</td>
+                    {Array.isArray(order.items) && order.items.length > 0 ? (
+                      order.items.map((item, index) => {
+                        console.log('Order item key:', item.productId || `item-${index}`);
+                        return (
+                          <tr key={item.productId || `item-${index}`}>
+                            <td>{item.productName || 'Unknown Product'}</td>
+                            <td>{item.quantity || 0}</td>
+                            <td>
+                              ${(typeof item.price === 'number' ? item.price : 0).toFixed(2)}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan="3">No items found for this order.</td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
                 <div className="order-footer">
-                  <strong className="order-total">Total: ${order.total.toFixed(2)}</strong>
-                  <button className="view-details-btn">View Details</button>
+                  <strong className="order-total">
+                    Total: $
+                    {(typeof order.total_amount === 'number' ? order.total_amount : 0).toFixed(2)}
+                  </strong>
+                  <button
+                    className="view-details-btn"
+                    onClick={() => fetchOrderDetails(order.orderId)}
+                  >
+                    View Details
+                  </button>
                 </div>
               </div>
             ))
           ) : (
             <p>No orders found.</p>
+          )}
+
+          {orderDetailsError && (
+            <div className="error-message">
+              <p>{orderDetailsError}</p>
+            </div>
+          )}
+
+          {selectedOrder && (
+            <div className="order-details-popup">
+              <h3>Order Details</h3>
+              <p>Order ID: {selectedOrder.orderId}</p>
+              <p>Status: {selectedOrder.status}</p>
+              <p>Placed on: {new Date(selectedOrder.orderDate || selectedOrder.order_date).toLocaleDateString()}</p>
+              <h4>Items:</h4>
+              <ul>
+                {Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0 ? (
+                  selectedOrder.items.map((item, index) => {
+                    console.log('Selected order item key:', item.productId || `item-${index}`);
+                    return (
+                      <li key={item.productId || `item-${index}`}>
+                        {item.productName || 'Unknown Product'} - {item.quantity || 0} x $
+                        {(typeof item.price === 'number' ? item.price : 0).toFixed(2)}
+                      </li>
+                    );
+                  })
+                ) : (
+                  <li key="no-items">No items found for this order.</li>
+                )}
+              </ul>
+              <p>
+                Total: $
+                {(typeof selectedOrder.total_amount === 'number'
+                  ? selectedOrder.total_amount
+                  : 0
+                ).toFixed(2)}
+              </p>
+              <button onClick={() => setSelectedOrder(null)}>Close</button>
+            </div>
           )}
         </div>
       )}
