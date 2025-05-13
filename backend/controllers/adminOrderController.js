@@ -96,34 +96,175 @@ const assignCrafter = (req, res) => {
     });
 };
 
-// Update the status of an order item
+
+
 const updateStatus = (req, res) => {
     const { orderId } = req.params;
     const { item_id, status } = req.body;
+    
+    console.log(`Updating status for order: ${orderId}, item: ${item_id}, new status: ${status}`);
 
     // Validate request body
     if (!item_id || !status) {
         return res.status(400).json({ error: "item_id and status are required" });
     }
 
-    const query = `
+    // Validate status value for order items
+    const validItemStatuses = ['Pending', 'Confirmed', 'Completed', 'Ready to Deliver'];
+    if (!validItemStatuses.includes(status)) {
+        return res.status(400).json({ error: "Invalid status value" });
+    }
+
+    // Update the order item status
+    const updateItemQuery = `
         UPDATE order_items
         SET status = ?
         WHERE item_id = ? AND order_id = ?
     `;
 
-    db.query(query, [status, item_id, orderId], (err, result) => {
+    console.log(`Executing query: ${updateItemQuery.replace(/\s+/g, ' ')}`);
+    console.log(`With parameters: [${status}, ${item_id}, ${orderId}]`);
+
+    db.query(updateItemQuery, [status, item_id, orderId], (err, result) => {
         if (err) {
             console.error("Error updating status:", err);
             return res.status(500).json({ error: "Failed to update status" });
         }
 
-        // Check if any rows were affected (i.e., the item was found and updated)
+        console.log("Update item query result:", result);
+
+        // Check if any rows were affected
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: "Order item not found" });
         }
 
-        res.status(200).json({ message: "Status updated successfully" });
+        // Fetch order details
+        const orderDetailsQuery = `
+            SELECT 
+                oi.item_id, oi.status,
+                CASE WHEN cd.customization_id IS NOT NULL THEN 1 ELSE 0 END AS is_customizable
+            FROM order_items oi
+            LEFT JOIN customization_details cd ON oi.item_id = cd.item_id
+            WHERE oi.order_id = ?
+        `;
+
+        console.log(`Fetching order details with query: ${orderDetailsQuery.replace(/\s+/g, ' ')}`);
+        console.log(`With orderId: ${orderId}`);
+
+        db.query(orderDetailsQuery, [orderId], (err, items) => {
+            if (err) {
+                console.error("Error fetching order items:", err);
+                return res.status(500).json({ error: "Failed to fetch order items" });
+            }
+
+            // Log the fetched items
+            console.log("Order items fetched:", JSON.stringify(items, null, 2));
+
+            // Extract customizable and non-customizable items
+            const customizableItems = items.filter(item => item.is_customizable === 1);
+            const nonCustomizableItems = items.filter(item => item.is_customizable === 0);
+            
+            // Check what types of items we have
+            const hasCustomizable = customizableItems.length > 0;
+            const hasNonCustomizable = nonCustomizableItems.length > 0;
+            
+            // Check status conditions
+            const allItemsConfirmed = items.every(item => 
+                ['Confirmed', 'Completed', 'Ready to Deliver'].includes(item.status));
+                
+            const allCustomizableCompleted = customizableItems.length > 0 && 
+                customizableItems.every(item => 
+                    ['Completed', 'Ready to Deliver'].includes(item.status));
+                    
+            const allNonCustomizableConfirmed = nonCustomizableItems.length > 0 && 
+                nonCustomizableItems.every(item => 
+                    ['Confirmed', 'Completed', 'Ready to Deliver'].includes(item.status));
+
+            // Debug logs
+            console.log("Order Analysis:");
+            console.log("hasCustomizable:", hasCustomizable);
+            console.log("hasNonCustomizable:", hasNonCustomizable);
+            console.log("allItemsConfirmed:", allItemsConfirmed);
+            console.log("allCustomizableCompleted:", allCustomizableCompleted);
+            console.log("allNonCustomizableConfirmed:", allNonCustomizableConfirmed);
+            console.log("customizableItems count:", customizableItems.length);
+            console.log("nonCustomizableItems count:", nonCustomizableItems.length);
+
+            let newOrderStatus = null;
+
+            // Determine the new order status - Map to correct database enum values
+            const mapStatusToDb = {
+                'Ready to Deliver': 'ready to deliver',
+                'Confirmed': 'confirmed',
+                'Pending': 'pending',
+                'Completed': 'completed'
+            };
+
+            if (hasCustomizable && hasNonCustomizable) {
+                // Case 1: Both customizable and non-customizable items
+                if (allCustomizableCompleted && allNonCustomizableConfirmed) {
+                    newOrderStatus = mapStatusToDb['Ready to Deliver'];
+                    console.log("Case 1: Setting to ready to deliver - all customizable completed & all non-customizable confirmed");
+                } else if (allItemsConfirmed) {
+                    newOrderStatus = mapStatusToDb['Confirmed'];
+                    console.log("Case 1: Setting to confirmed - all items at least confirmed");
+                }
+            } else if (hasCustomizable && !hasNonCustomizable) {
+                // Case 2: Only customizable items
+                if (allCustomizableCompleted) {
+                    newOrderStatus = mapStatusToDb['Ready to Deliver'];
+                    console.log("Case 2: Setting to ready to deliver - all customizable completed");
+                } else if (allItemsConfirmed) {
+                    newOrderStatus = mapStatusToDb['Confirmed'];
+                    console.log("Case 2: Setting to confirmed - all items at least confirmed");
+                }
+            } else if (!hasCustomizable && hasNonCustomizable) {
+                // Case 3: Only non-customizable items
+                if (allNonCustomizableConfirmed) {
+                    newOrderStatus = mapStatusToDb['Ready to Deliver'];
+                    console.log("Case 3: Setting to ready to deliver - all non-customizable confirmed");
+                } else if (allItemsConfirmed) {
+                    newOrderStatus = mapStatusToDb['Confirmed'];
+                    console.log("Case 3.1: Setting to confirmed - all items at least confirmed");
+                }
+            }
+
+            // Debug log for newOrderStatus
+            console.log("New Order Status:", newOrderStatus);
+
+            // Update order status if needed
+            if (newOrderStatus) {
+                const updateOrderQuery = `
+                    UPDATE orders
+                    SET status = ?
+                    WHERE order_id = ?
+                `;
+                console.log(`Updating order status with query: ${updateOrderQuery.replace(/\s+/g, ' ')}`);
+                console.log(`With parameters: [${newOrderStatus}, ${orderId}]`);
+                
+                db.query(updateOrderQuery, [newOrderStatus, orderId], (err, updateResult) => {
+                    if (err) {
+                        console.error("Error updating order status:", err);
+                        console.error("SQL error details:", err.sqlMessage || err.message);
+                        return res.status(500).json({ error: "Failed to update order status" });
+                    }
+                    
+                    // Log update result to see if rows were affected
+                    console.log("Update order status result:", updateResult);
+                    
+                    res.status(200).json({ 
+                        message: "Status updated successfully", 
+                        newOrderStatus,
+                        updateResult: updateResult
+                    });
+                });
+            } else {
+                console.log("No order status update needed");
+                res.status(200).json({ 
+                    message: "Item status updated successfully, order status unchanged" 
+                });
+            }
+        });
     });
 };
 

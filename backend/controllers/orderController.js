@@ -29,8 +29,69 @@ const proceedToCheckout = (req, res) => {
             return res.status(500).json({ error: "Failed to fetch cart details or cart is empty" });
         }
 
+        // Aggregate all customizations by cart_item_id from cartItems
+        const cartItemCustomizations = new Map();
+        cartItems.forEach(item => {
+            const key = item.cart_item_id;
+            if (!cartItemCustomizations.has(key)) {
+                cartItemCustomizations.set(key, {
+                    product_id: item.product_id,
+                    quantity: item.quantity,
+                    price: item.price,
+                    customization_type: null,
+                    customization_value: null,
+                    uploaded_image: null,
+                    size_type: null
+                });
+            }
+            const customization = cartItemCustomizations.get(key);
+            if (item.customization_value !== null && item.customization_value !== undefined) {
+                customization.customization_type = 'text';
+                customization.customization_value = item.customization_value;
+            }
+            if (item.uploaded_image) {
+                customization.uploaded_image = item.uploaded_image;
+            }
+            if (item.size_type) {
+                customization.size_type = item.size_type;
+            }
+        });
+// Filter duplicates, include both customizable and non-customizable items
+let filteredCartItems = [];
+const productIdMap = new Map(); // Map to track products and their customizable/non-customizable items
+
+for (const item of cartItems) {
+    const hasCustomizations = item.customization_type || item.customization_value || 
+                              item.uploaded_image || item.size_type;
+
+    if (!productIdMap.has(item.product_id)) {
+        // Add the first occurrence of the product
+        productIdMap.set(item.product_id, { customizable: null, nonCustomizable: null });
+    }
+
+    const productEntry = productIdMap.get(item.product_id);
+
+    if (hasCustomizations) {
+        // Prioritize customizable items
+        productEntry.customizable = item;
+    } else {
+        // Add non-customizable items if no customizable item exists
+        productEntry.nonCustomizable = item;
+    }
+}
+
+// Add both customizable and non-customizable items to filteredCartItems
+for (const { customizable, nonCustomizable } of productIdMap.values()) {
+    if (customizable) filteredCartItems.push(customizable);
+    if (nonCustomizable) filteredCartItems.push(nonCustomizable);
+}
+
+// Log filtered cart items for debugging
+console.log("Filtered cart items:", JSON.stringify(filteredCartItems, null, 2));
+
+
         // Calculate total amount
-        const totalAmount = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        const totalAmount = filteredCartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
         // Insert into orders table
         const insertOrderQuery = `
@@ -61,7 +122,7 @@ const proceedToCheckout = (req, res) => {
                 const orderId = orderResult[0].order_id;
 
                 // Insert items into order_items table
-                const orderItems = cartItems.map(item => [
+                const orderItems = filteredCartItems.map(item => [
                     orderId,
                     item.product_id,
                     item.quantity,
@@ -73,21 +134,96 @@ const proceedToCheckout = (req, res) => {
                     VALUES ?
                 `;
 
-                db.query(insertOrderItemsQuery, [orderItems], (err) => {
+                db.query(insertOrderItemsQuery, [orderItems], (err, result) => {
                     if (err) {
                         console.error("Error adding items to order:", err);
                         return res.status(500).json({ error: "Failed to add items to order" });
                     }
 
-                    // Reduce stock for each product in the cart
-                    reduceStockSequentially(cartItems, (err) => {
-                        if (err) {
-                            console.error("Error reducing stock:", err);
-                            return res.status(500).json({ error: "Failed to reduce stock" });
+                    // Retrieve the inserted order_item IDs
+                    const fetchOrderItemsQuery = `
+                        SELECT item_id, product_id
+                        FROM order_items
+                        WHERE order_id = ?
+                    `;
+
+                    db.query(fetchOrderItemsQuery, [orderId], (err, orderItemsResult) => {
+                        if (err || orderItemsResult.length === 0) {
+                            console.error("Error fetching order items:", err);
+                            return res.status(500).json({ error: "Failed to fetch order items" });
                         }
 
-                        // Clear the cart after successful checkout
-                        clearCart(customerId, res);
+                        // Map customizations to item_id
+                        const customizationDetails = [];
+                        const fetchLastCustomizationIdQuery = `
+                            SELECT customization_id
+                            FROM customization_details
+                            ORDER BY customization_id DESC
+                            LIMIT 1
+                        `;
+
+                        db.query(fetchLastCustomizationIdQuery, (err, lastIdResult) => {
+                            if (err) {
+                                console.error("Error fetching last customization ID:", err);
+                                return res.status(500).json({ error: "Failed to fetch last customization ID" });
+                            }
+
+                            let lastId = lastIdResult.length > 0 ? lastIdResult[0].customization_id : '#OC000';
+                            const nextIdNumber = parseInt(lastId.replace('#OC', '')) + 1;
+
+                            filteredCartItems.forEach(cartItem => {
+                                const orderItem = orderItemsResult.find(item => item.product_id === cartItem.product_id);
+                                if (!orderItem) return;
+
+                                const item_id = orderItem.item_id;
+                                const customization = cartItemCustomizations.get(cartItem.cart_item_id);
+                                if (customization && (customization.customization_type || customization.uploaded_image || customization.size_type)) {
+                                    const customization_id = `#OC${String(nextIdNumber + customizationDetails.length).padStart(3, '0')}`;
+                                    customizationDetails.push([
+                                        customization_id,
+                                        item_id,
+                                        customization.customization_type || 'text', // Default to 'text' if NULL
+                                        customization.customization_value || null, // Ensure NULL if not set
+                                        customization.uploaded_image,
+                                        customization.size_type
+                                    ]);
+                                }
+                            });
+
+                            if (customizationDetails.length > 0) {
+                                const insertCustomizationsQuery = `
+                                    INSERT INTO customization_details (customization_id, item_id, customization_type, customization_value, uploaded_image, size_type)
+                                    VALUES ?
+                                `;
+
+                                db.query(insertCustomizationsQuery, [customizationDetails], (err) => {
+                                    if (err) {
+                                        console.error("Error adding customizations to order:", err);
+                                        return res.status(500).json({ error: "Failed to add customizations to order" });
+                                    }
+
+                                    // Proceed with reducing stock and clearing the cart
+                                    reduceStockSequentially(filteredCartItems, (err) => {
+                                        if (err) {
+                                            console.error("Error reducing stock:", err);
+                                            return res.status(500).json({ error: "Failed to reduce stock" });
+                                        }
+
+                                        clearCart(customerId, res);
+                                    });
+                                });
+                            } else {
+                                // Proceed with reducing stock and clearing the cart if no customizations
+                                reduceStockSequentially(filteredCartItems, (err) => {
+                                    if (err) {
+                                        console.error("Error reducing stock:", err);
+                                        return res.status(500).json({ error: "Failed to reduce stock" });
+                                    }
+
+                                    clearCart(customerId, res);
+                                });
+                            }
+                        });
                     });
                 });
             });

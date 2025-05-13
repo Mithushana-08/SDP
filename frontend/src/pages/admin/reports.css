@@ -13,22 +13,24 @@
 .content{
     padding: 20px;
 }
-.reports-page {
-    display: flex;
-    min-height: 100vh;
+
+
+
+.report-header {
+    text-align: center;
+    margin-bottom: 20px;
 }
 
-.main-content {
-    flex: 1;
-    padding: 20px;
-    background-color: #f5f5f5;
+.report-header h1 {
+    font-size: 24px;
+    color: #751e03;
+    margin: 0;
 }
 
-.content {
-    padding: 20px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.report-header p {
+    font-size: 14px;
+    color: #f79568;
+    margin: 5px 0;
 }
 
 .report-controls {
@@ -106,7 +108,7 @@
 }
 
 .table1 th,
-.table td {
+.table1 td {
     padding: 12px;
     text-align: left;
     border-bottom: 1px solid #ddd;
@@ -146,6 +148,33 @@
 
 .chart {
     height: 300px;
+}
+
+.summary-section {
+    margin-bottom: 30px;
+}
+
+.summary-section h3 {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.summary-section table {
+    width: 50%;
+    border-collapse: collapse;
+}
+
+.summary-section td {
+    padding: 8px;
+    border: 1px solid #ddd;
+}
+
+.report-footer {
+    margin-top: 20px;
+    font-size: 12px;
+    color: #666;
+    text-align: right;
 }
 
 @media (max-width: 768px) {

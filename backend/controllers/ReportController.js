@@ -3,19 +3,16 @@ const db = require('../config/db');
 const getInventoryReport = (req, res) => {
     const { startDate, endDate } = req.query;
 
-    // Validate date inputs
     if (!startDate || !endDate) {
         return res.status(400).json({ error: 'Start date and end date are required' });
     }
 
-    // Validate date format
     const start = new Date(startDate);
     const end = new Date(endDate);
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
         return res.status(400).json({ error: 'Invalid date format' });
     }
 
-    // Ensure endDate is not before startDate
     if (end < start) {
         return res.status(400).json({ error: 'End date cannot be before start date' });
     }
@@ -42,7 +39,6 @@ const getInventoryReport = (req, res) => {
             pm.created_at DESC
     `;
 
-    // Add one day to endDate to include records from the entire end date
     const endDateWithTime = new Date(end);
     endDateWithTime.setDate(endDateWithTime.getDate() + 1);
 
@@ -52,7 +48,6 @@ const getInventoryReport = (req, res) => {
             return res.status(500).json({ error: 'Database query error' });
         }
 
-        // Format results to match frontend expectations
         const inventoryData = results.map(row => ({
             product_id: row.product_id,
             product_name: row.product_name,
