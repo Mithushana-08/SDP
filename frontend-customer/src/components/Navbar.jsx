@@ -23,7 +23,18 @@ const Navbar = () => {
   };
 
   const handleProfileClick = () => {
-    navigate('/profile'); // Navigate to the cart page
+    navigate('/profile'); // Navigate to the profile page
+  };
+
+  const handleScrollToSection = (sectionId) => {
+    // Navigate to the home page and scroll to the section
+    navigate('/', { replace: false }); // Navigate to the home page
+    setTimeout(() => {
+      const section = document.getElementById(sectionId);
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth' }); // Smooth scrolling
+      }
+    }, 100); // Delay to ensure the page has loaded
   };
 
   return (
@@ -48,15 +59,13 @@ const Navbar = () => {
             <Link to="/" onClick={() => handleScrollToSection('about')}>About</Link>
           </li>
           <li>
-            <Link to="/" onClick={() => handleScrollToSection('contact')}>Contact</Link>
+            <Link to="/" onClick={() => handleScrollToSection('contact-image')}>Contact</Link>
           </li>
-          
         </ul>
         <div className="navbar-icons">
           <button className="login-button" onClick={toggleLoginModal}>Login</button>
-         
-          <FiShoppingCart className="icon" onClick={handleCartClick} /> {/* Add onClick handler */}
-          <FiUser className="icon" onClick={handleProfileClick}/>{/* Add onClick handler */}
+          <FiShoppingCart className="icon" onClick={handleCartClick} />
+          <FiUser className="icon" onClick={handleProfileClick} />
         </div>
         <div className="menu-toggle" onClick={toggleMenu}>
           <span className="bar"></span>

@@ -438,7 +438,7 @@ const ProfilePage = () => {
                             <td>{item.productName || 'Unknown Product'}</td>
                             <td>{item.quantity || 0}</td>
                             <td>
-                              ${(typeof item.price === 'number' ? item.price : 0).toFixed(2)}
+                              Rs{(typeof item.price === 'number' ? item.price : 0).toFixed(2)}
                             </td>
                           </tr>
                         );
@@ -452,7 +452,7 @@ const ProfilePage = () => {
                 </table>
                 <div className="order-footer">
                   <strong className="order-total">
-                    Total: $
+                    Total: Rs
                     {(typeof order.total_amount === 'number' ? order.total_amount : 0).toFixed(2)}
                   </strong>
                   <button
@@ -487,7 +487,7 @@ const ProfilePage = () => {
                     console.log('Selected order item key:', item.productId || `item-${index}`);
                     return (
                       <li key={item.productId || `item-${index}`}>
-                        {item.productName || 'Unknown Product'} - {item.quantity || 0} x $
+                        {item.productName || 'Unknown Product'} - {item.quantity || 0} x Rs
                         {(typeof item.price === 'number' ? item.price : 0).toFixed(2)}
                       </li>
                     );
@@ -497,7 +497,7 @@ const ProfilePage = () => {
                 )}
               </ul>
               <p>
-                Total: $
+                Total: Rs
                 {(typeof selectedOrder.total_amount === 'number'
                   ? selectedOrder.total_amount
                   : 0

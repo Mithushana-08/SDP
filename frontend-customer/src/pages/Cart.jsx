@@ -196,7 +196,7 @@ const [paymentDetails, setPaymentDetails] = useState({
   };
 
   const handleContinueShopping = () => {
-    navigate('/');
+    navigate('/products/C_01');
   };
 
   const handleCheckout = () => {
