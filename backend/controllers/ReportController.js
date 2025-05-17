@@ -1,3 +1,4 @@
+
 const db = require('../config/db');
 
 // Get Inventory Report
@@ -239,5 +240,141 @@ const getOrdersReport = async (req, res) => {
     }
 };
 
-// Export both functions
-module.exports = { getInventoryReport, getOrdersReport };
+// Get list of crafters
+const getCrafters = async (req, res) => {
+    try {
+        const query = `
+            SELECT id, username
+            FROM users
+            WHERE role = 'crafter'
+            ORDER BY username
+        `;
+
+        db.query(query, (err, results) => {
+            if (err) {
+                console.error('Error fetching crafters:', err);
+                return res.status(500).json({ error: 'Database query error' });
+            }
+
+            const crafters = results.map(row => ({
+                id: row.id,
+                username: row.username
+            }));
+
+            res.status(200).json(crafters);
+        });
+    } catch (error) {
+        console.error('Error in getCrafters:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+// Get Crafter Performance Report
+const getCrafterPerformanceReport = async (req, res) => {
+    try {
+        const { startDate, endDate, crafterId } = req.query;
+
+        // Initialize query and parameters
+        let query = `
+            SELECT 
+                u.id AS crafter_id,
+                u.username AS crafter_name,
+                pm.product_id,
+                pm.product_name,
+                c.CategoryName AS category_name,
+                COUNT(w.work_id) AS total_uploads,
+                SUM(CASE WHEN w.status = 'approved' THEN 1 ELSE 0 END) AS approved_uploads,
+                SUM(CASE WHEN w.status = 'rejected' THEN 1 ELSE 0 END) AS rejected_uploads,
+                SUM(CASE WHEN w.status = 'pending' THEN 1 ELSE 0 END) AS pending_uploads,
+                (SUM(CASE WHEN w.status = 'approved' THEN 1 ELSE 0 END) / NULLIF(COUNT(w.work_id), 0) * 100) AS approval_rate,
+                COALESCE(SUM(oi.quantity), 0) AS order_assignments
+            FROM 
+                users u
+            LEFT JOIN 
+                work_upload w ON u.id = w.crafter_id
+            LEFT JOIN 
+                product_master pm ON w.product_id = pm.product_id
+            LEFT JOIN 
+                Categories c ON pm.category_id = c.CategoryID
+            LEFT JOIN 
+                order_items oi ON w.product_id = oi.product_id AND oi.crafter_id = u.id
+            WHERE 
+                u.role = 'crafter'
+        `;
+        const params = [];
+
+        // Add filters
+        if (crafterId && crafterId !== 'all') {
+            query += ` AND u.id = ?`;
+            params.push(crafterId);
+        }
+
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                return res.status(400).json({ error: 'Invalid date format' });
+            }
+            if (end < start) {
+                return res.status(400).json({ error: 'End date cannot be before start date' });
+            }
+            const endDateWithTime = new Date(end);
+            endDateWithTime.setDate(endDateWithTime.getDate() + 1);
+            query += ` AND w.created_at BETWEEN ? AND ?`;
+            params.push(startDate, endDateWithTime.toISOString().split('T')[0]);
+        }
+
+        query += `
+            GROUP BY 
+                u.id, u.username, pm.product_id, pm.product_name, c.CategoryName
+            ORDER BY 
+                u.username, pm.product_name
+        `;
+
+        // Execute query
+        const [results] = await new Promise((resolve, reject) => {
+            db.query(query, params, (err, results) => {
+                if (err) reject(err);
+                else resolve([results]);
+            });
+        });
+
+        // Calculate summary metrics
+        const totalCrafters = [...new Set(results.map(row => row.crafter_id))].length;
+        const totalUploads = results.reduce((sum, row) => sum + parseInt(row.total_uploads), 0);
+        const totalApproved = results.reduce((sum, row) => sum + parseInt(row.approved_uploads), 0);
+        const approvalRate = totalUploads > 0 ? (totalApproved / totalUploads) * 100 : 0;
+        const totalAssignments = results.reduce((sum, row) => sum + parseInt(row.order_assignments), 0);
+
+        // Format response
+        const reportData = {
+            crafters: results.map(row => ({
+                crafter_id: row.crafter_id,
+                crafter_name: row.crafter_name,
+                product_id: row.product_id,
+                product_name: row.product_name,
+                category_name: row.category_name || 'Uncategorized',
+                total_uploads: parseInt(row.total_uploads) || 0,
+                approved_uploads: parseInt(row.approved_uploads) || 0,
+                rejected_uploads: parseInt(row.rejected_uploads) || 0,
+                pending_uploads: parseInt(row.pending_uploads) || 0,
+                approval_rate: parseFloat(row.approval_rate) || 0,
+                order_assignments: parseInt(row.order_assignments) || 0
+            })),
+            summary: {
+                totalCrafters,
+                totalUploads,
+                approvalRate,
+                totalAssignments
+            }
+        };
+
+        res.status(200).json(reportData);
+    } catch (error) {
+        console.error('Error in getCrafterPerformanceReport:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+// Export all functions
+module.exports = { getInventoryReport, getOrdersReport, getCrafters, getCrafterPerformanceReport };

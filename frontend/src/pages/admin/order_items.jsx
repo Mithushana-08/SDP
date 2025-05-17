@@ -25,47 +25,15 @@ const Items = () => {
         .get(`http://localhost:5000/api/admin/orders/${orderId}`)
         .then((response) => {
           const rawItems = response.data;
-          console.log("Original order items:", rawItems);
+          console.log("Order items:", rawItems);
 
-          const groupedMap = new Map();
+          // No need for grouping since backend returns one record per item
+          const processedItems = rawItems.map((item) => ({
+            ...item,
+            total_price: (item.price * item.quantity).toFixed(2),
+          }));
 
-          rawItems.forEach((item) => {
-            const customizationKey =
-              item.customizable_count > 0
-                ? JSON.stringify({
-                    type: item.customization_type || null,
-                    value: item.customization_value || null,
-                    image: item.uploaded_image || null,
-                    size: item.size_type || null,
-                  })
-                : "no_customization";
-
-            const itemKey = `${item.product_id}_${customizationKey}`;
-
-            if (groupedMap.has(itemKey)) {
-              const existingItem = groupedMap.get(itemKey);
-              existingItem.quantity += item.quantity;
-              existingItem.total_price = (
-                existingItem.price * existingItem.quantity
-              ).toFixed(2);
-              if (item.crafter_id) {
-                existingItem.crafter_id = item.crafter_id;
-                existingItem.crafter_username = item.crafter_username;
-              }
-              groupedMap.set(itemKey, existingItem);
-            } else {
-              const newItem = {
-                ...item,
-                total_price: (item.price * item.quantity).toFixed(2),
-              };
-              groupedMap.set(itemKey, newItem);
-            }
-          });
-
-          const groupedItems = Array.from(groupedMap.values());
-          console.log("Grouped order items:", groupedItems);
-
-          setOrderItems(groupedItems);
+          setOrderItems(processedItems);
           setLoading(false);
         })
         .catch((error) => {
@@ -89,11 +57,12 @@ const Items = () => {
   };
 
   const handleViewCustomization = (item) => {
+    const { customizations } = item;
     const customizationDetails = `
-      Customization Type: ${item.customization_type || "N/A"}
-      Customization Value: ${item.customization_value || "N/A"}
-      Uploaded Image: ${item.uploaded_image || "N/A"}
-      Size Type: ${item.size_type || "N/A"}
+      Customization Type: ${customizations.type || "N/A"}
+      Customization Value: ${customizations.value || "N/A"}
+      Size: ${customizations.size || "N/A"}
+      Uploaded Image: ${customizations.image || "N/A"}
     `;
     alert(customizationDetails); // Replace with a modal for better UI
   };
@@ -126,14 +95,12 @@ const Items = () => {
   };
 
   const handleConfirm = (itemId) => {
-    // Update the status in the frontend
     setOrderItems((prevItems) =>
       prevItems.map((item) =>
         item.item_id === itemId ? { ...item, status: "Confirmed" } : item
       )
     );
 
-    // Update the backend
     axios
       .post(`http://localhost:5000/api/admin/orders/${orderId}/update-status`, {
         item_id: itemId,
@@ -144,7 +111,6 @@ const Items = () => {
       })
       .catch((error) => {
         console.error("Error updating status:", error);
-        // Revert the frontend change if the backend fails
         setOrderItems((prevItems) =>
           prevItems.map((item) =>
             item.item_id === itemId ? { ...item, status: item.status } : item
@@ -205,7 +171,7 @@ const Items = () => {
                     <td>{item.product_name}</td>
                     <td>{item.category_name}</td>
                     <td>
-                      {item.customizable_count > 0 ? (
+                      {item.is_customizable ? (
                         <>
                           Yes{" "}
                           <button
@@ -223,7 +189,7 @@ const Items = () => {
                     <td>{item.price}</td>
                     <td>{item.total_price}</td>
                     <td>
-                      {item.customizable_count > 0 ? (
+                      {item.is_customizable ? (
                         <select
                           value={item.crafter_id || ""}
                           onChange={(e) =>
@@ -248,7 +214,7 @@ const Items = () => {
                       {item.status}
                     </td>
                     <td>
-                      {item.customizable_count === 0 && item.status !== "Confirmed" ? (
+                      {!item.is_customizable && item.status !== "Confirmed" ? (
                         <button
                           className="confirm-button"
                           onClick={() => handleConfirm(item.item_id)}

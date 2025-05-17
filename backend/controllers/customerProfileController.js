@@ -13,7 +13,7 @@ const getCustomerProfile = (req, res) => {
 
     // Query to fetch the latest saved address
     const addressQuery = `
-        SELECT address_line1, address_line2, city, province, postal_code
+        SELECT address_line1, address_line2, city, district, postal_code
         FROM addresses
         WHERE Customer_id = ?
         ORDER BY created_at DESC
@@ -55,7 +55,7 @@ const { updateAddress } = require('./customercontroller'); // Import updateAddre
 
 const updateCustomerProfile = (req, res) => {
     const customerId = req.user.customer_id; // Extract customer_id from the authenticated user
-    const { first_name, last_name, email, phone, address_line1, address_line2, city, province, postal_code } = req.body;
+    const { first_name, last_name, email, phone, address_line1, address_line2, city, district, postal_code } = req.body;
 
     console.log("Request body:", req.body); // Debugging: Log the incoming data
 
@@ -78,7 +78,7 @@ const updateCustomerProfile = (req, res) => {
             addressLine1: address_line1,
             addressLine2: address_line2,
             city,
-            province,
+            district,
             postalCode: postal_code,
         };
 

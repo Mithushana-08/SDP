@@ -14,7 +14,7 @@ const generateToken = (user) => {
             sessionId: crypto.randomUUID(),  // Unique session ID
         },
         secretKey,                    // Secret key for signing the token
-        { expiresIn: "1h" }           // Token expiry time
+        { expiresIn: "5h" }           // Token expiry time
     );
 };
 

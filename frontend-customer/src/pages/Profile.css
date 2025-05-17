@@ -1,8 +1,8 @@
-/* ProfilePage.css */
+/* Original styles */
 .profile-page {
   margin-top: 90px;
   width: 100%;
-  padding: 20px 40px; /* Add padding on the sides */
+  padding: 20px 40px;
   box-sizing: border-box;
 }
 
@@ -16,7 +16,7 @@ h1 {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
-  justify-content: center; /* Center the tabs horizontally */
+  justify-content: center;
 }
 
 .tab {
@@ -82,10 +82,10 @@ h2 {
   background: #f9f9f9;
   border: 1px solid #e0e0e0;
   border-radius: 5px;
-  color: #333; /* Match the text color in the image */
+  color: #333;
 }
 
-.info-item input {
+.info-item input, .info-item select {
   font-size: 16px;
   padding: 10px;
   border: 1px solid #e0e0e0;
@@ -131,6 +131,14 @@ h2 {
 .form-actions {
   display: flex;
   gap: 10px;
+}
+
+select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
 }
 
 .cancel-btn {
@@ -278,4 +286,173 @@ h2 {
   border: none;
   border-radius: 5px;
   cursor: pointer;
+}
+
+/* Styles for react-select */
+.info-item .district-select {
+  width: 100%;
+}
+
+.info-item .react-select__control {
+  font-size: 16px;
+  padding: 2px;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  background: #f9f9f9;
+  color: #333;
+  min-height: 40px; /* Match input height */
+}
+
+.info-item .react-select__control--is-focused {
+  border-color: #d2b48c;
+  box-shadow: 0 0 5px rgba(210, 180, 140, 0.3);
+}
+
+.info-item .react-select__value-container {
+  padding: 2px 8px;
+}
+
+.info-item .react-select__placeholder {
+  color: #666;
+}
+
+.info-item .react-select__menu {
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  background: #fff;
+}
+
+.info-item .react-select__option {
+  font-size: 16px;
+  padding: 10px;
+  color: #333;
+}
+
+.info-item .react-select__option--is-focused {
+  background: #f5f5f5;
+}
+
+.info-item .react-select__option--is-selected {
+  background: #d2b48c;
+  color: #fff;
+}
+
+.info-item .react-select__single-value {
+  color: #333;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .profile-page {
+    padding: 15px 20px; /* Reduce padding on mobile */
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr; /* Single column on mobile */
+    gap: 15px;
+  }
+
+  .tabs {
+    flex-direction: column; /* Stack tabs vertically */
+    align-items: center;
+  }
+
+  .tab {
+    width: 100%;
+    max-width: 300px; /* Limit tab width */
+    justify-content: center;
+  }
+
+  h2 {
+    font-size: 18px;
+  }
+
+  .info-item input, 
+  .info-item .react-select__control {
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  .update-profile-btn, 
+  .cancel-btn {
+    font-size: 14px;
+    padding: 8px 16px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .order-items th, 
+  .order-items td {
+    font-size: 12px;
+    padding: 8px;
+  }
+
+  .order-details-popup {
+    width: 90%;
+    max-width: 400px;
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-page {
+    padding: 10px 15px;
+  }
+
+  h2 {
+    font-size: 16px;
+  }
+
+  .info-item label {
+    font-size: 12px;
+  }
+
+  .info-item p, 
+  .info-item input, 
+  .info-item .react-select__control {
+    font-size: 12px;
+    padding: 6px;
+  }
+
+  .update-profile-btn, 
+  .cancel-btn {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .order-header h3 {
+    font-size: 16px;
+  }
+
+  .order-header p {
+    font-size: 12px;
+  }
+
+  .order-total {
+    font-size: 14px;
+  }
+
+  .view-details-btn {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .info-grid {
+    grid-template-columns: repeat(2, 1fr); /* Keep 2 columns on tablets */
+    gap: 15px;
+  }
+
+  .profile-page {
+    padding: 20px 30px;
+  }
+
+  .info-item input, 
+  .info-item .react-select__control {
+    font-size: 15px;
+  }
 }

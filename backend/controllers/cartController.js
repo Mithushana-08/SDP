@@ -13,6 +13,20 @@ const addToCart = (req, res) => {
         return res.status(400).json({ error: "Product ID, quantity, and price are required" });
     }
 
+    // Normalize customizations to an array, default to empty if not provided
+    const normalizedCustomizations = Array.isArray(customizations) ? customizations : [];
+
+    // Sort customizations by customization_type for consistent comparison
+    const sortedCustomizations = normalizedCustomizations
+        .map((c, index) => ({
+            customization_type: c.customization_type || `type${index}`,
+            customization_value: c.customization_value || null,
+            uploaded_image: c.uploaded_image || null,
+            size_type: c.size_type || null,
+        }))
+        .sort((a, b) => a.customization_type.localeCompare(b.customization_type));
+
+    // Ensure a cart exists (trigger generates cart_id)
     const cartQuery = `
         INSERT INTO cart (Customer_id)
         VALUES (?)
@@ -25,6 +39,7 @@ const addToCart = (req, res) => {
             return res.status(500).json({ error: "Failed to create cart" });
         }
 
+        // Fetch cart_id
         const cartIdQuery = `SELECT cart_id FROM cart WHERE Customer_id = ?`;
         db.query(cartIdQuery, [customerId], (err, cartIdResult) => {
             if (err || cartIdResult.length === 0) {
@@ -34,59 +49,154 @@ const addToCart = (req, res) => {
 
             const cart_id = cartIdResult[0].cart_id;
 
-            const cartItemQuery = `
-                INSERT INTO cart_items (cart_id, product_id, quantity, price)
-                VALUES (?, ?, ?, ?)
+            // Find cart items with same product_id
+            const findItemsQuery = `
+                SELECT ci.cart_item_id, ci.quantity
+                FROM cart_items ci
+                WHERE ci.cart_id = ? AND ci.product_id = ?
             `;
 
-            db.query(cartItemQuery, [cart_id, product_id, quantity, price], (err) => {
+            db.query(findItemsQuery, [cart_id, product_id], (err, items) => {
                 if (err) {
-                    console.error("Error adding item to cart:", err);
-                    return res.status(500).json({ error: "Failed to add item to cart" });
+                    console.error("Error fetching cart items:", err);
+                    return res.status(500).json({ error: "Failed to fetch cart items" });
                 }
 
-                // Fetch the generated cart_item_id
-                const cartItemIdQuery = `
-                    SELECT cart_item_id FROM cart_items
-                    WHERE cart_id = ? AND product_id = ?
-                    ORDER BY cart_item_id DESC LIMIT 1
-                `;
+                // Expected customizations as a sorted JSON string for comparison
+                const expectedCustomizationJson = JSON.stringify(sortedCustomizations.map(c => ({
+                    type: c.customization_type,
+                    value: c.customization_value,
+                    image: c.uploaded_image,
+                    size: c.size_type,
+                })));
 
-                db.query(cartItemIdQuery, [cart_id, product_id], (err, cartItemResult) => {
-                    if (err || cartItemResult.length === 0) {
-                        console.error("Error fetching cart_item_id:", err);
-                        return res.status(500).json({ error: "Failed to fetch cart item ID" });
+                let matchingItem = null;
+
+                // Check each item for matching customizations
+                const checkCustomizations = (index) => {
+                    if (index >= items.length) {
+                        // No matching item found, proceed to insert
+                        insertNewItem();
+                        return;
                     }
 
-                    const cart_item_id = cartItemResult[0].cart_item_id;
-                    console.log("Generated cart_item_id:", cart_item_id);
+                    const item = items[index];
+                    const customizationQuery = `
+                        SELECT customization_type, customization_value, uploaded_image, size_type
+                        FROM cart_customizations
+                        WHERE cart_item_id = ?
+                        ORDER BY customization_type
+                    `;
 
-                    if (customizations && customizations.length > 0) {
-                        const customizationQuery = `
-                            INSERT INTO cart_customizations (cart_item_id, customization_type, customization_value, uploaded_image, size_type)
-                            VALUES ?
-                        `;
+                    db.query(customizationQuery, [item.cart_item_id], (err, dbCustomizations) => {
+                        if (err) {
+                            console.error("Error fetching customizations:", err);
+                            return res.status(500).json({ error: "Failed to fetch customizations" });
+                        }
 
-                        const customizationValues = customizations.map((customization) => [
-                            cart_item_id,
-                            customization.customization_type,
-                            customization.customization_value || null,
-                            customization.uploaded_image || null,
-                            customization.size_type || null,
-                        ]);
+                        // Convert db customizations to match expected format
+                        const dbCustomizationJson = JSON.stringify(dbCustomizations.map(c => ({
+                            type: c.customization_type,
+                            value: c.customization_value,
+                            image: c.uploaded_image,
+                            size: c.size_type,
+                        })));
 
-                        db.query(customizationQuery, [customizationValues], (err) => {
-                            if (err) {
-                                console.error("Error adding customizations:", err);
-                                return res.status(500).json({ error: "Failed to add customizations" });
-                            }
+                        // Compare customizations
+                        if (
+                            dbCustomizationJson === expectedCustomizationJson &&
+                            dbCustomizations.length === sortedCustomizations.length
+                        ) {
+                            matchingItem = item;
+                            updateItemQuantity();
+                        } else {
+                            // Check next item
+                            checkCustomizations(index + 1);
+                        }
+                    });
+                };
 
-                            res.status(200).json({ message: "Item added to cart with customizations" });
-                        });
-                    } else {
-                        res.status(200).json({ message: "Item added to cart" });
-                    }
-                });
+                const updateItemQuantity = () => {
+                    const newQuantity = matchingItem.quantity + quantity;
+                    const updateQuantityQuery = `
+                        UPDATE cart_items
+                        SET quantity = ?
+                        WHERE cart_item_id = ?
+                    `;
+
+                    db.query(updateQuantityQuery, [newQuantity, matchingItem.cart_item_id], (err) => {
+                        if (err) {
+                            console.error("Error updating item quantity:", err);
+                            return res.status(500).json({ error: "Failed to update item quantity" });
+                        }
+
+                        res.status(200).json({ message: "Item quantity updated in cart" });
+                    });
+                };
+
+                const insertNewItem = () => {
+                    const cartItemQuery = `
+                        INSERT INTO cart_items (cart_id, product_id, quantity, price)
+                        VALUES (?, ?, ?, ?)
+                    `;
+
+                    db.query(cartItemQuery, [cart_id, product_id, quantity, price], (err) => {
+                        if (err) {
+                            console.error("Error adding item to cart:", err);
+                            return res.status(500).json({ error: "Failed to add item to cart" });
+                        }
+
+                        if (sortedCustomizations.length > 0) {
+                            // Fetch the latest cart_item_id
+                            const cartItemIdQuery = `
+                                SELECT cart_item_id FROM cart_items
+                                WHERE cart_id = ? AND product_id = ? AND quantity = ? AND price = ?
+                                ORDER BY cart_item_id DESC LIMIT 1
+                            `;
+
+                            db.query(cartItemIdQuery, [cart_id, product_id, quantity, price], (err, cartItemResult) => {
+                                if (err || cartItemResult.length === 0) {
+                                    console.error("Error fetching cart_item_id:", err);
+                                    return res.status(500).json({ error: "Failed to fetch cart item ID" });
+                                }
+
+                                const cart_item_id = cartItemResult[0].cart_item_id;
+
+                                const customizationQuery = `
+                                    INSERT INTO cart_customizations (cart_item_id, customization_type, customization_value, uploaded_image, size_type)
+                                    VALUES ?
+                                `;
+
+                                const customizationValues = sortedCustomizations.map((customization) => [
+                                    cart_item_id,
+                                    customization.customization_type,
+                                    customization.customization_value,
+                                    customization.uploaded_image,
+                                    customization.size_type,
+                                ]);
+
+                                db.query(customizationQuery, [customizationValues], (err) => {
+                                    if (err) {
+                                        console.error("Error adding customizations:", err);
+                                        return res.status(500).json({ error: "Failed to add customizations" });
+                                    }
+
+                                    res.status(200).json({ message: "Item added to cart with customizations" });
+                                });
+                            });
+                        } else {
+                            res.status(200).json({ message: "Item added to cart" });
+                        }
+                    });
+                };
+
+                if (items.length === 0) {
+                    // No items exist, insert new
+                    insertNewItem();
+                } else {
+                    // Check for matching customizations
+                    checkCustomizations(0);
+                }
             });
         });
     });
@@ -170,16 +280,15 @@ GROUP BY
         res.status(200).json(itemsWithCustomizations);
       });
     });
-  };
+};
   
-  const removeCartItem = (req, res) => {
-    const cartItemId = req.params.id; // Get the cart item ID from the request parameters
+const removeCartItem = (req, res) => {
+    const cartItemId = req.params.id;
 
     if (!cartItemId) {
         return res.status(400).json({ error: "Cart item ID is required" });
     }
 
-    // First, delete customizations associated with the cart item
     const deleteCustomizationsQuery = `
         DELETE FROM cart_customizations
         WHERE cart_item_id = ?
@@ -191,7 +300,6 @@ GROUP BY
             return res.status(500).json({ error: "Failed to remove customizations" });
         }
 
-        // Then, delete the cart item
         const deleteCartItemQuery = `
             DELETE FROM cart_items
             WHERE cart_item_id = ?
@@ -207,7 +315,6 @@ GROUP BY
                 return res.status(404).json({ error: "Cart item not found" });
             }
 
-            // Finally, check if the cart is empty and delete the cart if it is
             const checkCartQuery = `
                 SELECT COUNT(*) AS itemCount
                 FROM cart_items
@@ -243,4 +350,5 @@ GROUP BY
         });
     });
 };
+
 module.exports = { addToCart, getCartItems, removeCartItem };

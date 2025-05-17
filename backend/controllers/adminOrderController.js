@@ -4,16 +4,24 @@ const db = require("../config/db");
 const getOrdersWithDetails = (req, res) => {
     const query = `
         SELECT 
-            o.order_id, o.order_date, o.total_amount, o.status, o.shipping_address,
-            c.username AS customer_name, c.phone AS customer_phone,
-            COUNT(oi.item_id) AS product_count,
-            SUM(CASE WHEN cd.customization_id IS NOT NULL THEN 1 ELSE 0 END) AS customizable_count
-        FROM orders o
-        JOIN customer c ON o.customer_id = c.customer_id
-        LEFT JOIN order_items oi ON o.order_id = oi.order_id
-        LEFT JOIN customization_details cd ON oi.item_id = cd.item_id
-        GROUP BY o.order_id
-        ORDER BY o.order_date DESC;
+    o.order_id, 
+    o.order_date, 
+    o.total_amount, 
+    o.status, 
+    o.shipping_address,
+    c.username AS customer_name, 
+    c.phone AS customer_phone,
+    COUNT(DISTINCT oi.item_id) AS product_count,
+    (SELECT COUNT(DISTINCT oi2.item_id) 
+     FROM order_items oi2 
+     LEFT JOIN customization_details cd2 ON oi2.item_id = cd2.item_id 
+     WHERE oi2.order_id = o.order_id AND cd2.customization_id IS NOT NULL) AS customizable_count
+FROM orders o
+JOIN customer c ON o.customer_id = c.customer_id
+LEFT JOIN order_items oi ON o.order_id = oi.order_id
+LEFT JOIN customization_details cd ON oi.item_id = cd.item_id
+GROUP BY o.order_id, o.order_date, o.total_amount, o.status, o.shipping_address, c.username, c.phone
+ORDER BY o.order_date DESC;
     `;
 
     db.query(query, (err, results) => {
@@ -25,39 +33,79 @@ const getOrdersWithDetails = (req, res) => {
     });
 };
 
-// Fetch details of a specific order
 const getOrderDetails = (req, res) => {
     const { orderId } = req.params;
 
-    const query = `
-       SELECT 
-    oi.item_id, oi.product_id, oi.quantity, oi.price, oi.total_price, p.product_name, oi.status,
-    c.CategoryName AS category_name, cd.customization_type, cd.customization_value, cd.uploaded_image, cd.size_type,
-    oi.crafter_id, -- Added
-    u.username AS crafter_username,
-    SUM(CASE WHEN cd.customization_id IS NOT NULL THEN 1 ELSE 0 END) AS customizable_count
-FROM order_items oi
-JOIN product_master p ON oi.product_id = p.product_id
-JOIN Categories c ON p.category_id = c.CategoryID
-LEFT JOIN customization_details cd ON oi.item_id = cd.item_id
-LEFT JOIN users u ON oi.crafter_id = u.id
-WHERE oi.order_id = ?
-GROUP BY 
-    oi.item_id, oi.product_id, oi.quantity, oi.price, oi.total_price, 
-    p.product_name, c.CategoryName, 
-    cd.customization_type, cd.customization_value, cd.uploaded_image, cd.size_type,
-    oi.crafter_id, -- Added
-    u.username;
+    if (!orderId) {
+        return res.status(400).json({ error: "Order ID is required" });
+    }
 
-    
-`
+    const query = `
+        SELECT 
+            oi.item_id, 
+            oi.product_id, 
+            oi.quantity, 
+            oi.price, 
+            oi.total_price, 
+            p.product_name, 
+            oi.status,
+            c.CategoryName AS category_name, 
+            oi.crafter_id,
+            u.username AS crafter_username,
+            (SELECT COUNT(*) > 0 FROM customization_details cd2 WHERE cd2.item_id = oi.item_id) AS is_customizable,
+            COALESCE(
+                (SELECT JSON_OBJECT(
+                    'type', 'text',
+                    'value', MAX(CASE WHEN cd3.customization_type = 'text' THEN cd3.customization_value ELSE NULL END),
+                    'size', MAX(CASE WHEN cd3.customization_type = 'size' THEN cd3.size_type ELSE NULL END),
+                    'image', MAX(CASE WHEN cd3.customization_type = 'image' THEN cd3.uploaded_image ELSE NULL END)
+                )
+                FROM customization_details cd3
+                WHERE cd3.item_id = oi.item_id AND cd3.customization_type IN ('text', 'size', 'image')),
+                JSON_OBJECT('type', NULL, 'value', NULL, 'size', NULL, 'image', NULL)
+            ) AS customizations
+        FROM 
+            order_items oi
+        JOIN 
+            product_master p ON oi.product_id = p.product_id
+        JOIN 
+            Categories c ON p.category_id = c.CategoryID
+        LEFT JOIN 
+            users u ON oi.crafter_id = u.id
+        WHERE 
+            oi.order_id = ?
+        GROUP BY 
+            oi.item_id, oi.product_id, oi.quantity, oi.price, oi.total_price,
+            p.product_name, c.CategoryName, oi.status, oi.crafter_id, u.username
+    `;
 
     db.query(query, [orderId], (err, results) => {
         if (err) {
             console.error("Error fetching order details:", err);
             return res.status(500).json({ error: "Failed to fetch order details" });
         }
-        res.json(results);
+
+        if (results.length === 0) {
+            return res.status(404).json({ error: "No order items found for the specified order ID" });
+        }
+
+        // Process the results to parse customizations
+        const processedResults = results.map(item => ({
+            item_id: item.item_id,
+            product_id: item.product_id,
+            quantity: item.quantity,
+            price: item.price,
+            total_price: item.total_price,
+            product_name: item.product_name,
+            status: item.status,
+            category_name: item.category_name,
+            crafter_id: item.crafter_id,
+            crafter_username: item.crafter_username,
+            is_customizable: item.is_customizable,
+            customizations: item.customizations ? JSON.parse(item.customizations) : { type: null, value: null, size: null, image: null }
+        }));
+
+        res.json(processedResults);
     });
 };
 

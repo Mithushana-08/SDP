@@ -1,27 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import Select from 'react-select';
 import './Profile.css';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState('profile'); // Default to 'profile'
-  const [user, setUser] = useState(null); // State to store user details
-  const [orders, setOrders] = useState([]); // State to store order history
-  const [selectedOrder, setSelectedOrder] = useState(null); // State to store selected order details
-  const [isEditing, setIsEditing] = useState(false); // State to toggle edit mode
-  const [formData, setFormData] = useState({}); // State to store form input values
-  const [error, setError] = useState(null); // State to store error messages
-  const [orderDetailsError, setOrderDetailsError] = useState(null); // State for order details fetch errors
+  const [activeTab, setActiveTab] = useState('profile');
+  const [user, setUser] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({});
+  const [error, setError] = useState(null);
+  const [orderDetailsError, setOrderDetailsError] = useState(null);
 
-  // Sync activeTab with URL
+  const sriLankanDistricts = [
+    'Ampara', 'Anuradhapura', 'Badulla', 'Batticaloa', 'Colombo',
+    'Galle', 'Gampaha', 'Hambantota', 'Jaffna', 'Kalutara',
+    'Kandy', 'Kegalle', 'Kilinochchi', 'Kurunegala', 'Mannar',
+    'Matale', 'Matara', 'Monaragala', 'Mullaitivu', 'Nuwara Eliya',
+    'Polonnaruwa', 'Puttalam', 'Ratnapura', 'Trincomalee', 'Vavuniya'
+  ].map(district => ({ value: district, label: district }));
+
   useEffect(() => {
     const path = location.pathname.split('/').pop();
     if (path === 'orders') setActiveTab('orders');
     else setActiveTab('profile');
   }, [location]);
 
-  // Fetch customer profile details
   const fetchProfile = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -42,11 +49,10 @@ const ProfilePage = () => {
       console.log('Profile fetch response:', JSON.stringify(data, null, 2));
       const userData = {
         ...data.customer,
-        address: data.address || null, // Include address if available
+        address: data.address || null,
       };
       setUser(userData);
       console.log('Updated user state:', JSON.stringify(userData, null, 2));
-      // Initialize form data with user data
       setFormData({
         first_name: userData.first_name || '',
         last_name: userData.last_name || '',
@@ -55,16 +61,15 @@ const ProfilePage = () => {
         address_line1: userData.address?.address_line1 || '',
         address_line2: userData.address?.address_line2 || '',
         city: userData.address?.city || '',
-        province: userData.address?.province || '',
+        district: userData.address?.district || '',
         postal_code: userData.address?.postal_code || '',
       });
     } catch (error) {
       console.error('Error fetching profile:', error);
-      navigate('/login'); // Redirect to login if token is invalid
+      navigate('/login');
     }
   };
 
-  // Fetch order history
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -81,11 +86,10 @@ const ProfilePage = () => {
 
       const data = await response.json();
       console.log('Orders fetch response:', JSON.stringify(data, null, 2));
-      // Normalize orders: rename order_id to orderId, ensure items and total_amount
       const normalizedOrders = Array.isArray(data.orders)
         ? data.orders.map((order) => ({
             ...order,
-            orderId: order.order_id, // Rename order_id to orderId
+            orderId: order.order_id,
             items: Array.isArray(order.items) ? order.items : [],
             total_amount: typeof order.total_amount === 'number' ? order.total_amount : 0,
           }))
@@ -93,11 +97,10 @@ const ProfilePage = () => {
       setOrders(normalizedOrders);
     } catch (error) {
       console.error('Error fetching orders:', error);
-      setOrders([]); // Set to empty array on error
+      setOrders([]);
     }
   };
 
-  // Fetch details of a specific order
   const fetchOrderDetails = async (orderId) => {
     if (!orderId) {
       setOrderDetailsError('Invalid order ID');
@@ -118,20 +121,19 @@ const ProfilePage = () => {
 
       const data = await response.json();
       console.log('Order details response:', JSON.stringify(data, null, 2));
-      // Normalize selected order to ensure items and total_amount are valid
       const normalizedOrder = {
         ...data.order,
-        orderId: data.order.order_id || data.order.orderId, // Handle both cases
+        orderId: data.order.order_id || data.order.orderId,
         items: Array.isArray(data.order.items)
           ? data.order.items.map((item, index) => ({
               ...item,
-              productId: item.productId || `temp-id-${index}`, // Ensure productId exists
+              productId: item.productId || `temp-id-${index}`,
             }))
           : [],
         total_amount: typeof data.order.total_amount === 'number' ? data.order.total_amount : 0,
       };
       setSelectedOrder(normalizedOrder);
-      setOrderDetailsError(null); // Clear any previous error
+      setOrderDetailsError(null);
     } catch (error) {
       console.error('Error fetching order details:', error);
       setOrderDetailsError(error.message || 'Failed to fetch order details');
@@ -149,7 +151,7 @@ const ProfilePage = () => {
   }, [activeTab]);
 
   const handleSignOut = () => {
-    localStorage.removeItem('token'); // Clear token
+    localStorage.removeItem('token');
     navigate('/login');
   };
 
@@ -161,6 +163,13 @@ const ProfilePage = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleDistrictChange = (selectedOption) => {
+    setFormData((prev) => ({
+      ...prev,
+      district: selectedOption ? selectedOption.value : '',
+    }));
   };
 
   const handleUpdateProfile = async (e) => {
@@ -186,7 +195,6 @@ const ProfilePage = () => {
 
       const data = await response.json();
       console.log('Profile update response:', JSON.stringify(data, null, 2));
-      // Refresh profile data from server to ensure UI reflects latest data
       await fetchProfile();
       setIsEditing(false);
       setError(null);
@@ -200,6 +208,9 @@ const ProfilePage = () => {
     setIsEditing((prev) => !prev);
     setError(null);
   };
+
+  console.log('Rendering district dropdown, formData.district:', formData.district);
+  console.log('sriLankanDistricts:', sriLankanDistricts);
 
   return (
     <div className="profile-page">
@@ -230,7 +241,7 @@ const ProfilePage = () => {
                     type="text"
                     id="first_name"
                     name="first_name"
-                    value={formData.first_name}
+                    value={formData.first_name || ''}
                     onChange={handleInputChange}
                     required
                   />
@@ -241,7 +252,7 @@ const ProfilePage = () => {
                     type="text"
                     id="last_name"
                     name="last_name"
-                    value={formData.last_name}
+                    value={formData.last_name || ''}
                     onChange={handleInputChange}
                     required
                   />
@@ -252,7 +263,7 @@ const ProfilePage = () => {
                     type="email"
                     id="email"
                     name="email"
-                    value={formData.email}
+                    value={formData.email || ''}
                     onChange={handleInputChange}
                     required
                   />
@@ -263,7 +274,7 @@ const ProfilePage = () => {
                     type="tel"
                     id="phone"
                     name="phone"
-                    value={formData.phone}
+                    value={formData.phone || ''}
                     onChange={handleInputChange}
                     required
                   />
@@ -278,7 +289,7 @@ const ProfilePage = () => {
                     type="text"
                     id="address_line1"
                     name="address_line1"
-                    value={formData.address_line1}
+                    value={formData.address_line1 || ''}
                     onChange={handleInputChange}
                     required
                   />
@@ -289,7 +300,7 @@ const ProfilePage = () => {
                     type="text"
                     id="address_line2"
                     name="address_line2"
-                    value={formData.address_line2}
+                    value={formData.address_line2 || ''}
                     onChange={handleInputChange}
                   />
                 </div>
@@ -299,19 +310,24 @@ const ProfilePage = () => {
                     type="text"
                     id="city"
                     name="city"
-                    value={formData.city}
+                    value={formData.city || ''}
                     onChange={handleInputChange}
                     required
                   />
                 </div>
                 <div className="info-item">
-                  <label htmlFor="province">Province</label>
-                  <input
-                    type="text"
-                    id="province"
-                    name="province"
-                    value={formData.province}
-                    onChange={handleInputChange}
+                  <label htmlFor="district">District</label>
+                  <Select
+                    id="district"
+                    name="district"
+                    options={sriLankanDistricts}
+                    value={sriLankanDistricts.find(option => option.value === formData.district) || null}
+                    onChange={handleDistrictChange}
+                    placeholder="Select District"
+                    isClearable
+                    isSearchable
+                    className="district-select"
+                    classNamePrefix="react-select"
                     required
                   />
                 </div>
@@ -321,7 +337,7 @@ const ProfilePage = () => {
                     type="text"
                     id="postal_code"
                     name="postal_code"
-                    value={formData.postal_code}
+                    value={formData.postal_code || ''}
                     onChange={handleInputChange}
                     required
                   />
@@ -381,8 +397,8 @@ const ProfilePage = () => {
                     <p>{user.address.city}</p>
                   </div>
                   <div className="info-item">
-                    <label>Province</label>
-                    <p>{user.address.province}</p>
+                    <label>District</label>
+                    <p>{user.address.district || 'Not set'}</p>
                   </div>
                   <div className="info-item">
                     <label>Postal Code</label>
