@@ -47,4 +47,24 @@ const loginUser = (req, res) => {
     });
 };
 
-module.exports = { loginUser };
+const logoutUser = (req, res) => {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+        return res.status(400).json({ message: "No token provided" });
+    }
+
+    // Calculate token expiry (5 hours from now)
+    const expiry = new Date(Date.now() + 5 * 60 * 60 * 1000);
+
+    // Add token to blacklist
+    const sql = "INSERT INTO token_blacklist (token, expiry) VALUES (?, ?)";
+    db.query(sql, [token, expiry], (err) => {
+        if (err) {
+            console.error("Error blacklisting token:", err);
+            return res.status(500).json({ message: "Database error", error: err.message });
+        }
+        res.json({ message: "Logout successful" });
+    });
+};
+
+module.exports = { loginUser , logoutUser };

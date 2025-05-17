@@ -16,6 +16,7 @@ import Profile from "./pages/admin/Profile"; // Import the Profile page
 import CrafterDashboard from "./pages/crafter/cdashboard";
 import Assignments from "./pages/crafter/Assignments";
 import Uploads from "./pages/crafter/Uploads";
+import CrafterSettings from "./pages/crafter/settings";
 
 const App = () => {
   return (
@@ -37,6 +38,7 @@ const App = () => {
         <Route path="/crafter/cdashboard" element={<CrafterDashboard />} />
         <Route path="/crafter/Assignments" element={<Assignments />} /> 
         <Route path="/crafter/Uploads" element={<Uploads />} />
+        <Route path="/crafter/settings" element={<CrafterSettings />} /> {/* Crafter Profile route */}
       </Routes>
     </Router>
   );

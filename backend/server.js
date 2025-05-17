@@ -19,6 +19,7 @@ const customerProfileRoutes = require('./routes/CustomerProfileRoutes');
 const crafterRoutes = require("./routes/crafterassignmentsRoutes");
 const ReportRoutes = require('./routes/ReportRoutes'); // Import the report routes
 const dashboardRoutes = require("./routes/dashboardRoutes"); // Import the dashboard routes
+const crafterDashboardRoutes = require("./routes/cdashboardRoutes"); // Import the crafter dashboard routes
 // Mount the admin order routes
 
 
@@ -47,6 +48,7 @@ app.use('/api/customer', customerProfileRoutes);
 app.use("/api/crafter", crafterRoutes);
 app.use('/api/reports', ReportRoutes); 
 app.use('/api/dashboard', dashboardRoutes); // Add dashboard routes
+app.use('/api/crafter-dashboard', crafterDashboardRoutes); // Add crafter dashboard routes
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).send("Something broke!");

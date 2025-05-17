@@ -1,75 +1,70 @@
-/* Navbar Container */
 .admin-navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px 20px;
-    background-color:  #f5f7f7cd;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.189); 
+    background: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.navbar-left {
+    display: flex;
+    align-items: center;
+}
 
-/* Right Section */
+.welcome-message {
+    font-size: 16px;
+    font-weight: 700;
+    color: #522206;
+}
+
 .navbar-right {
     display: flex;
     align-items: center;
     gap: 15px;
 }
 
-/* Icon Buttons */
 .icon-btn {
     background: none;
     border: none;
-    cursor: pointer;
     font-size: 20px;
-    color: var(--text-color);
+    cursor: pointer;
+    color: #555;
 }
 
 .icon-btn:hover {
-    opacity: 0.7;
+    color: #000;
 }
 
-/* Auth Buttons */
-.auth-btn {
+.auth-btn.logout-btn {
     display: flex;
     align-items: center;
-    gap: 5px;
-    background: var(--primary-color);
+    gap: 8px;
+    padding: 8px 16px;
+    background: #dc3545;
     color: white;
-    padding: 5px 10px;
-    border-radius: 5px;
     border: none;
+    border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
 }
 
-.auth-btn:hover {
-    background: var(--primary-hover);
+.auth-btn.logout-btn:hover {
+    background: #c82333;
 }
 
-.logout-btn {
-    background: var(--danger-color);
+/* Dark mode styles */
+.dark-mode .admin-navbar {
+    background: #333;
 }
 
-.logout-btn:hover {
-    background: var(--danger-hover);
+.dark-mode .welcome-message {
+    color: #ddd;
 }
 
-/* Dark Mode */
-.dark-mode {
-    --bg-color: #222;
-    --text-color: #fff;
-    --primary-color: #444;
-    --primary-hover: #666;
-    --danger-color: #d9534f;
-    --danger-hover: #c9302c;
+.dark-mode .icon-btn {
+    color: #bbb;
 }
 
-/* Light Mode */
-:root {
-    --bg-color: #fff;
-    --text-color: #333;
-   
-    --danger-color: #dc3545;
-    --danger-hover: #c82333;
+.dark-mode .icon-btn:hover {
+    color: #fff;
 }

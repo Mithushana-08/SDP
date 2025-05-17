@@ -29,7 +29,7 @@ const CrafterSidebar = () => {
                         </NavLink>
                     </li>
                     <li>
-                        <NavLink to="/admin/profile" activeClassName="active">
+                        <NavLink to="/crafter/settings" activeClassName="active">
                             <FiSettings /> Settings
                         </NavLink>
                     </li>

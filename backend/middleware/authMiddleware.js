@@ -1,30 +1,33 @@
 const jwt = require("jsonwebtoken");
-require("dotenv").config(); // To load environment variables
-
+const db = require("../config/db");
 const secretKey = process.env.JWT_SECRET_KEY;
 
-// Middleware to authenticate the user using JWT
 const authenticateUser = (req, res, next) => {
-    const authHeader = req.headers.authorization;
-
-    // If no token is provided, return an error
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return res.status(401).json({ message: "Authorization token is required" });
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+        return res.status(401).json({ message: "No token provided" });
     }
 
-    // Extract token from Authorization header
-    const token = authHeader.split(" ")[1];
-
-    // Verify the token using the secret key
-    jwt.verify(token, secretKey, (err, decoded) => {
+    // Check if token is blacklisted
+    const sql = "SELECT token FROM token_blacklist WHERE token = ?";
+    db.query(sql, [token], (err, results) => {
         if (err) {
-            return res.status(403).json({ message: "Invalid or expired token" });
+            console.error("Error checking blacklist:", err);
+            return res.status(500).json({ message: "Database error" });
         }
 
-        // Attach user info to the request object (decoded from the token)
-        req.user = decoded;
+        if (results.length > 0) {
+            return res.status(401).json({ message: "Token is invalid" });
+        }
 
-        next(); // Proceed to the next middleware or route handler
+        // Verify token
+        jwt.verify(token, secretKey, (err, decoded) => {
+            if (err) {
+                return res.status(401).json({ message: "Invalid token" });
+            }
+            req.user = decoded;
+            next();
+        });
     });
 };
 
