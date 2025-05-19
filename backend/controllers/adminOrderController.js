@@ -352,7 +352,33 @@ const updateOrderStatus = (req, res) => {
                 console.error("Error updating order status:", err2);
                 return res.status(500).json({ error: "Failed to update order status" });
             }
-            res.status(200).json({ message: "Order status updated", newStatus: status });
+            // If cancelled, update inventory for each order item (one crafter per product)
+            if (status === 'cancelled') {
+                db.query('SELECT product_id, crafter_id, quantity FROM order_items WHERE order_id = ?', [orderId], (err3, items) => {
+                    if (err3) {
+                        console.error("Error fetching order items for inventory update:", err3);
+                        return res.status(500).json({ error: "Order cancelled, but failed to update inventory." });
+                    }
+                    let updateCount = 0;
+                    if (items.length === 0) {
+                        return res.status(200).json({ message: "Order status updated", newStatus: status });
+                    }
+                    items.forEach(item => {
+                        db.query('UPDATE inventory SET stock_qty = stock_qty + ? WHERE product_id = ? AND crafter_id = ?', [item.quantity, item.product_id, item.crafter_id], (err4) => {
+                            updateCount++;
+                            if (err4) {
+                                console.error(`Error updating inventory for product ${item.product_id}, crafter ${item.crafter_id}:`, err4);
+                            }
+                            // Respond after all updates attempted
+                            if (updateCount === items.length) {
+                                return res.status(200).json({ message: "Order status updated and inventory restored", newStatus: status });
+                            }
+                        });
+                    });
+                });
+            } else {
+                res.status(200).json({ message: "Order status updated", newStatus: status });
+            }
         });
     });
 };

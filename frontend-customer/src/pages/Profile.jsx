@@ -580,6 +580,50 @@ const ProfilePage = () => {
                   : 0
                 ).toFixed(2)}
               </p>
+              {selectedOrder.status === 'sent' && (
+                <button
+                  className="delivered-btn"
+                  onClick={async () => {
+                    const Swal = (await import('sweetalert2')).default;
+                    const result = await Swal.fire({
+                      title: 'Are you sure you want to update status as delivered? Once updated, you cannot change or get a refund if not delivered.',
+                      icon: 'warning',
+                      showCancelButton: true,
+                      confirmButtonText: 'Yes, mark as delivered',
+                      cancelButtonText: 'Cancel',
+                    });
+                    if (result.isConfirmed) {
+                      try {
+                        const token = localStorage.getItem('token');
+                        const response = await fetch(`http://localhost:5000/api/customer/orders/${selectedOrder.orderId}/mark-delivered`, {
+                          method: 'POST',
+                          headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                          },
+                        });
+                        if (!response.ok) throw new Error('Failed to update order status');
+                        await Swal.fire({
+                          icon: 'success',
+                          title: 'Order marked as delivered!',
+                          showConfirmButton: false,
+                          timer: 1500,
+                        });
+                        setSelectedOrder({ ...selectedOrder, status: 'delivered' });
+                        fetchOrders();
+                      } catch (err) {
+                        await Swal.fire({
+                          icon: 'error',
+                          title: 'Failed to update order status',
+                          text: err.message || 'Please try again.',
+                        });
+                      }
+                    }
+                  }}
+                >
+                  Mark as Delivered
+                </button>
+              )}
               <button onClick={() => setSelectedOrder(null)}>Close</button>
             </div>
           )}

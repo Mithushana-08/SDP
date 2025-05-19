@@ -177,5 +177,22 @@ const getOrderDetails = (req, res) => {
     });
 };
 
-module.exports = { getCustomerProfile, updateCustomerProfile, getOrdersByCustomer, getOrderDetails };
+// Mark order as delivered (customer action, only if status is 'sent')
+const markOrderAsDelivered = (req, res) => {
+    const customerId = req.user.customer_id;
+    const { orderId } = req.params;
+    if (!orderId) return res.status(400).json({ error: 'Order ID required' });
+    // Only allow if current status is 'sent'
+    db.query('SELECT status FROM orders WHERE order_id = ? AND customer_id = ?', [orderId, customerId], (err, results) => {
+        if (err) return res.status(500).json({ error: 'Failed to fetch order' });
+        if (!results.length) return res.status(404).json({ error: 'Order not found' });
+        if (results[0].status !== 'sent') return res.status(400).json({ error: 'Order can only be marked as delivered after it is sent' });
+        db.query('UPDATE orders SET status = ? WHERE order_id = ?', ['delivered', orderId], (err2, result) => {
+            if (err2) return res.status(500).json({ error: 'Failed to update order status' });
+            res.status(200).json({ message: 'Order marked as delivered' });
+        });
+    });
+};
+
+module.exports = { getCustomerProfile, updateCustomerProfile, getOrdersByCustomer, getOrderDetails, markOrderAsDelivered };
 

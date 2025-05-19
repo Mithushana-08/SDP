@@ -3,6 +3,7 @@ import Navbar from "../components/Navbar";
 import "./Cart.css";
 import { FiTrash2, FiShoppingCart, FiArrowLeft, FiArrowRight } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 
 const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
@@ -213,9 +214,15 @@ const [paymentDetails, setPaymentDetails] = useState({
   };
 
   const handleSaveAddress = () => {
-    if (!address.addressLine1 || !address.city || !address.province || !address.postalCode) {
-      alert("Please fill in all required fields.");
-      return;
+    const allEmpty = !address.addressLine1 && !address.city && !address.province && !address.postalCode && !address.district;
+    if (allEmpty) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Empty Address',
+        text: 'You are saving an empty address. Please fill in your address details later.',
+        confirmButtonText: 'OK'
+      });
+      // Still allow saving
     }
 
     const endpoint = isAddressSaved
@@ -240,7 +247,11 @@ const [paymentDetails, setPaymentDetails] = useState({
       })
       .then((data) => {
         setIsAddressSaved(true);
-        alert(isAddressSaved ? "Address updated successfully!" : "Address saved successfully!");
+        Swal.fire({
+          icon: 'success',
+          title: isAddressSaved ? 'Address updated successfully!' : 'Address saved successfully!',
+          confirmButtonText: 'OK'
+        });
         if (data.address) {
           setAddress({
             addressLine1: data.address.address_line1 || "",
@@ -248,12 +259,18 @@ const [paymentDetails, setPaymentDetails] = useState({
             city: data.address.city || "",
             province: data.address.province || "",
             postalCode: data.address.postal_code || "",
+            district: data.address.district || "",
           });
         }
       })
       .catch((err) => {
         console.error("Error saving address:", err);
-        alert("Failed to save address. Please try again.");
+        Swal.fire({
+          icon: 'error',
+          title: 'Failed to save address',
+          text: 'Please try again.',
+          confirmButtonText: 'OK'
+        });
       });
   };
 
@@ -263,7 +280,7 @@ const [paymentDetails, setPaymentDetails] = useState({
     return;
   }
 
-  if (!address.addressLine1 || !address.city || !address.province || !address.postalCode) {
+  if (!address.addressLine1 || !address.city || !address.district || !address.postalCode) {
     alert("Your saved address is incomplete. Please update your address.");
     return;
   }
@@ -293,7 +310,11 @@ const [paymentDetails, setPaymentDetails] = useState({
     })
     .then((data) => {
       console.log("Order placed successfully:", data);
-      alert("Order placed successfully!");
+      Swal.fire({
+        icon: 'success',
+        title: 'Order placed successfully!',
+        confirmButtonText: 'OK'
+      });
       setShowCheckoutForm(false);
       setCartItems([]);
       setSelectedItems([]);
@@ -414,10 +435,78 @@ const validatePaymentDetails = () => {
     }
   };
 
+  const districtCityMap = {
+    Ampara: ["Ampara Town", "Akkaraipattu", "Kalmunai", "Sammanthurai"],
+    Anuradhapura: ["Anuradhapura Town", "Kekirawa", "Medawachchiya"],
+    Badulla: ["Badulla Town", "Bandarawela", "Hali-Ela"],
+    Batticaloa: ["Batticaloa Town", "Eravur", "Kattankudy"],
+    Colombo: ["Colombo 1", "Colombo 2", "Colombo 3", "Dehiwala", "Moratuwa"],
+    Galle: ["Galle Town", "Ambalangoda", "Hikkaduwa"],
+    Gampaha: ["Gampaha Town", "Negombo", "Katunayake"],
+    Hambantota: ["Hambantota Town", "Tangalle", "Tissamaharama"],
+    Jaffna: ["Jaffna Town", "Nallur", "Chavakachcheri"],
+    Kalutara: ["Kalutara Town", "Panadura", "Beruwala"],
+    Kandy: ["Kandy Town", "Peradeniya", "Gampola"],
+    Kegalle: ["Kegalle Town", "Mawanella", "Rambukkana"],
+    Kilinochchi: ["Kilinochchi Town"],
+    Kurunegala: ["Kurunegala Town", "Kuliyapitiya", "Pannala"],
+    Mannar: ["Mannar Town"],
+    Matale: ["Matale Town", "Dambulla", "Galewela"],
+    Matara: ["Matara Town", "Weligama", "Hakmana"],
+    Monaragala: ["Monaragala Town", "Wellawaya", "Bibile"],
+    Mullaitivu: ["Mullaitivu Town"],
+    "Nuwara Eliya": ["Nuwara Eliya Town", "Hatton", "Talawakele"],
+    Polonnaruwa: ["Polonnaruwa Town", "Hingurakgoda"],
+    Puttalam: ["Puttalam Town", "Chilaw", "Wennappuwa"],
+    Ratnapura: ["Ratnapura Town", "Balangoda", "Embilipitiya"],
+    Trincomalee: ["Trincomalee Town", "Kinniya", "Kantale"],
+    Vavuniya: ["Vavuniya Town"]
+  };
+
   const selectedCartItems = cartItems.filter((item) => selectedItems.includes(item.cart_item_id));
   const subtotal = selectedCartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const shipping = 0;
   const total = subtotal + shipping;
+
+  // Add to Cart handler with SweetAlert
+const handleAddToCart = async (item) => {
+  if (!token) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Login Required',
+      text: 'Please log in to add items to your cart.',
+      confirmButtonText: 'OK'
+    });
+    return;
+  }
+  try {
+    const response = await fetch('http://localhost:5000/api/cart/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(item),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to add item to cart');
+    }
+    Swal.fire({
+      icon: 'success',
+      title: 'Added to Cart',
+      text: 'Item added to cart successfully!',
+      confirmButtonText: 'OK'
+    });
+    // Optionally refresh cart items here
+  } catch (err) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Failed to add item to cart. Please try again.',
+      confirmButtonText: 'OK'
+    });
+  }
+};
 
   if (loading) {
     return <div>Loading...</div>;
@@ -549,17 +638,23 @@ const validatePaymentDetails = () => {
                         onChange={handleAddressChange}
                         placeholder="City"
                         required
+                        className="styled-input"
                       />
                     </div>
                     <div className="form-group">
-                      <input
-                        type="text"
-                        name="province"
-                        value={address.province}
+                      <select
+                        name="district"
+                        value={address.district || ""}
                         onChange={handleAddressChange}
-                        placeholder="Province"
                         required
-                      />
+                        className="styled-select"
+                      >
+                        <option value="">Select District</option>
+                        {/* Sri Lankan districts */}
+                        {Object.keys(districtCityMap).map((district) => (
+                          <option key={district} value={district}>{district}</option>
+                        ))}
+                      </select>
                     </div>
                     <div className="form-group">
                       <input

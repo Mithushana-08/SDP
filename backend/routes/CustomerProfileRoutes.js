@@ -5,6 +5,7 @@ const {
     updateCustomerProfile,
     getOrdersByCustomer,
     getOrderDetails,
+    markOrderAsDelivered
 } = require('../controllers/customerProfileController');
 const authenticateCustomer = require('../middleware/customerAuthMiddleware');
 
@@ -19,5 +20,8 @@ router.get('/orders', authenticateCustomer, getOrdersByCustomer);
 
 // Route to fetch details of a specific order
 router.get('/orders/:orderId', authenticateCustomer, getOrderDetails);
+
+// Mark order as delivered (customer action)
+router.post('/orders/:orderId/mark-delivered', authenticateCustomer, markOrderAsDelivered);
 
 module.exports = router;

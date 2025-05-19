@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ShoppingCart } from "lucide-react";
 import Navbar from '../components/Navbar';
 import './Products_customer.css';
+import Swal from 'sweetalert2';
 
 const ProductsPage = () => {
   const { categoryId } = useParams(); // Get categoryId from the URL
@@ -185,7 +186,12 @@ const ProductsPage = () => {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      alert("You must be logged in to add items to the cart.");
+      Swal.fire({
+        icon: 'warning',
+        title: 'Login Required',
+        text: 'You must be logged in to add items to the cart.',
+        confirmButtonText: 'OK'
+      });
       return;
     }
 
@@ -212,12 +218,26 @@ const ProductsPage = () => {
       })
       .then((data) => {
         console.log("Item added to cart:", data);
-        alert("Item added to cart successfully!");
-        closeProductModal(); // Close the modal after successful addition
+        Swal.fire({
+          icon: 'success',
+          title: 'Added to Cart',
+          text: 'Item added to cart successfully!',
+          showConfirmButton: false,
+          timer: 1200,
+          timerProgressBar: true,
+          position: 'top-end',
+          toast: true
+        });
+        closeProductModal();
       })
       .catch((error) => {
         console.error("Error adding item to cart:", error);
-        alert("Failed to add item to cart. Please login to add items to cart.");
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Failed to add item to cart. Please login to add items to cart.',
+          confirmButtonText: 'OK'
+        });
       });
   };
 
