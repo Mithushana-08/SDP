@@ -28,7 +28,7 @@ const getAllUploads = (req, res) => {
 const getAllUploadsForAdmin = (req, res) => {
   const query = `
     SELECT w.work_id, p.product_name, w.quantity, w.status, p.base_price AS price, 
-           u.username AS crafter, c.CategoryName 
+           u.username AS crafter, c.CategoryName , w.created_at
     FROM work_upload w
     JOIN product_master p ON w.product_id = p.product_id
     JOIN Categories c ON w.category_id = c.CategoryID

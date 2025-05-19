@@ -47,20 +47,3 @@
     border-radius: 10px;
 }
 
-.search-container {
-    display: flex;
-    align-items: center;
-    position: relative;
-}
-
-.search-icon {
-    position: absolute;
-    left: 10px;
-    color: #888;
-}
-
-.search-bar {
-    padding-left: 30px; /* Add padding to make space for the search icon */
-    flex-grow: 1;
-    max-width: 300px;
-}

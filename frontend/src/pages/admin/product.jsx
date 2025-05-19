@@ -5,6 +5,8 @@ import AdminNavbar from "../../components/Admin/adminnavbar";
 import './product.css';
 import '../../components/styles/buttons.css';
 import '../../components/styles/search-container.css';
+import Swal from "sweetalert2";
+import 'sweetalert2/dist/sweetalert2.min.css';
 
 const Product = () => {
     const [products, setProducts] = useState([]);
@@ -18,6 +20,7 @@ const Product = () => {
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [productToEdit, setProductToEdit] = useState(null);
 
+    // Fetch products (active by default)
     useEffect(() => {
         fetch('http://localhost:5000/api/productmaster')
             .then(response => response.json())
@@ -29,6 +32,137 @@ const Product = () => {
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
+    };
+
+    // SweetAlert2-based soft delete (terminate)
+    const handleTerminate = async (productId) => {
+        const swalWithBootstrapButtons = Swal.mixin({
+            customClass: {
+                confirmButton: "btn btn-success",
+                cancelButton: "btn btn-danger"
+            },
+            buttonsStyling: false
+        });
+        swalWithBootstrapButtons.fire({
+            title: "Are you sure?",
+            text: "Do you want to terminate this product?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Yes, terminate!",
+            cancelButtonText: "No, cancel!",
+            reverseButtons: true
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const response = await fetch(`http://localhost:5000/api/productmaster/terminate/${productId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    if (response.ok) {
+                        setProducts(prevProducts => prevProducts.map(product =>
+                            product.product_id === productId ? { ...product, product_status: 'terminated' } : product
+                        ));
+                        swalWithBootstrapButtons.fire({
+                            title: "Terminated!",
+                            text: "Product has been set to terminated.",
+                            icon: "success",
+                            customClass: { confirmButton: "btn btn-success" },
+                            buttonsStyling: false
+                        });
+                    } else {
+                        swalWithBootstrapButtons.fire({
+                            title: "Error!",
+                            text: "Failed to terminate product.",
+                            icon: "error",
+                            customClass: { confirmButton: "btn btn-danger" },
+                            buttonsStyling: false
+                        });
+                    }
+                } catch (error) {
+                    swalWithBootstrapButtons.fire({
+                        title: "Error!",
+                        text: "Failed to terminate product.",
+                        icon: "error",
+                        customClass: { confirmButton: "btn btn-danger" },
+                        buttonsStyling: false
+                    });
+                }
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                swalWithBootstrapButtons.fire({
+                    title: "Cancelled",
+                    text: "Product is still active.",
+                    icon: "error",
+                    customClass: { confirmButton: "btn btn-danger" },
+                    buttonsStyling: false
+                });
+            }
+        });
+    };
+
+    // Reactivate product
+    const handleReactivate = async (productId) => {
+        const swalWithBootstrapButtons = Swal.mixin({
+            customClass: {
+                confirmButton: "btn btn-success",
+                cancelButton: "btn btn-danger"
+            },
+            buttonsStyling: false
+        });
+        swalWithBootstrapButtons.fire({
+            title: "Are you sure?",
+            text: "Do you want to reactivate this product?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Yes, activate!",
+            cancelButtonText: "No, cancel!",
+            reverseButtons: true
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const response = await fetch(`http://localhost:5000/api/productmaster/terminate/${productId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ product_status: 'active' })
+                    });
+                    if (response.ok) {
+                        setProducts(prevProducts => prevProducts.map(product =>
+                            product.product_id === productId ? { ...product, product_status: 'active' } : product
+                        ));
+                        swalWithBootstrapButtons.fire({
+                            title: "Activated!",
+                            text: "Product has been set to active.",
+                            icon: "success",
+                            customClass: { confirmButton: "btn btn-success" },
+                            buttonsStyling: false
+                        });
+                    } else {
+                        swalWithBootstrapButtons.fire({
+                            title: "Error!",
+                            text: "Failed to activate product.",
+                            icon: "error",
+                            customClass: { confirmButton: "btn btn-danger" },
+                            buttonsStyling: false
+                        });
+                    }
+                } catch (error) {
+                    swalWithBootstrapButtons.fire({
+                        title: "Error!",
+                        text: "Failed to activate product.",
+                        icon: "error",
+                        customClass: { confirmButton: "btn btn-danger" },
+                        buttonsStyling: false
+                    });
+                }
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                swalWithBootstrapButtons.fire({
+                    title: "Cancelled",
+                    text: "Product is still terminated.",
+                    icon: "error",
+                    customClass: { confirmButton: "btn btn-danger" },
+                    buttonsStyling: false
+                });
+            }
+        });
     };
 
     const handleDelete = async (productId) => {
@@ -121,8 +255,22 @@ const Product = () => {
                                     <td>Rs.{product.base_price.toFixed(2)}</td>
                                     <td>{product.customizable}</td>
                                     <td>{product.description}</td>
-                                    <td>{product.status}</td>
-                                    <td>{product.stock_qty || 0}</td>
+                                    <td>
+                                      <span className={
+                                        product.product_status === 'terminated' ? 'status-terminated' : 'status-active'
+                                      }>
+                                        {product.product_status === 'terminated' ? 'Terminated' : 'Active'}
+                                      </span>
+                                      <br />
+                                      <span className={
+                                        product.stock_qty > 10 ? 'stock-in' : product.stock_qty > 0 && product.stock_qty <= 10 ? 'stock-low' : 'stock-out'
+                                      }>
+                                        {product.stock_qty > 10 ? 'In Stock' : product.stock_qty > 0 && product.stock_qty <= 10 ? 'Low Stock' : 'Out of Stock'}
+                                      </span>
+                                    </td>
+                                    <td>
+                                      {product.stock_qty || 0}
+                                    </td>
                                     <td>
                                         <img
                                             src={product.image.startsWith('/uploads') ? `http://localhost:5000${product.image}` : `http://localhost:5000/uploads/${product.image}`}
@@ -138,11 +286,19 @@ const Product = () => {
                                         />
                                     </td>
                                     <td>
-                                        <button className="edit-button" onClick={() => handleEdit(product)}><FiEdit /></button>
-                                        <button className="delete-button" onClick={() => handleDelete(product.product_id)}><FiTrash2 /></button>
-                                        <button className="edit-button" onClick={() => handleViewCustomizations(product.product_id)}>
-                                            <FiEye />
-                                        </button>
+                                        {product.product_status !== 'terminated' && product.product_status !== 'Terminated' ? (
+                                            <div className="action-buttons">
+                                                <button className="edit-button" onClick={() => handleEdit(product)}><FiEdit /></button>
+                                                <button className="delete-button" onClick={() => handleTerminate(product.product_id)}><FiTrash2 /></button>
+                                                <button className="edit-button" onClick={() => handleViewCustomizations(product.product_id)}>
+                                                    <FiEye />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button className="reactivate-button btn-success" onClick={() => handleReactivate(product.product_id)} title="Reactivate Product">
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0114.13-3.36L23 10M1 14l5.36 5.36A9 9 0 0020.49 15"></path></svg>
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))}
@@ -201,7 +357,7 @@ const Product = () => {
                                 <img
                                     src={selectedImage}
                                     alt="Enlarged Product"
-                                    style={{ maxWidth: '300px', maxHeight: '300px', objectFit: 'contain' }}
+                                    className="enlarged-product-image"
                                     onError={(e) => {
                                         if (e.target.src !== 'http://localhost:5000/uploads/placeholder.png') {
                                             e.target.src = 'http://localhost:5000/uploads/placeholder.png';
@@ -367,10 +523,10 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
 
     return (
         <div className="overlay">
-            <div className="modal-content">
-                <span className="close" onClick={onClose}>×</span>
-                <form onSubmit={handleSubmit} className="add-product-form" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
-                    <h2>{productToEdit ? 'Edit Product' : 'Add Product'}</h2>
+            <div className="modal-content add-edit-modal">
+                <span className="close modal-close" onClick={onClose}>×</span>
+                <form onSubmit={handleSubmit} className="add-product-form">
+                    <h2 className="modal-title">{productToEdit ? 'Edit Product' : 'Add Product'}</h2>
                     <input
                         type="text"
                         name="product_name"
@@ -378,6 +534,7 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
                         value={productData.product_name}
                         onChange={handleChange}
                         required
+                        className="input-field"
                     />
                     <input
                         type="number"
@@ -386,12 +543,14 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
                         value={productData.base_price}
                         onChange={handleChange}
                         required
+                        className="input-field"
                     />
                     <select
                         name="category_id"
                         onChange={handleChange}
                         value={productData.category_id}
                         required
+                        className="input-field"
                     >
                         <option value="">Select Category</option>
                         {isLoading ? (
@@ -413,6 +572,7 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
                             name="customizable"
                             checked={productData.customizable}
                             onChange={handleChange}
+                            className="checkbox-field"
                         />
                     </label>
                     {productData.customizable && (
@@ -421,15 +581,15 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
                                 type="button"
                                 onClick={handleAddCustomization}
                                 disabled={productData.customizations.length >= 3}
+                                className="add-customization-btn"
                             >
                                 Add Customization
                             </button>
                             {productData.customizations.map((customization, index) => {
                                 const selectedTypes = productData.customizations.map(c => c.type);
-
                                 return (
                                     <div key={index} className="customization-section">
-                                        <label>
+                                        <label className="customization-type-label">
                                             Customization Type:
                                             <select
                                                 value={customization.type}
@@ -437,6 +597,7 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
                                                     handleCustomizationChange(index, 'type', e.target.value)
                                                 }
                                                 required
+                                                className="input-field customization-type-select"
                                             >
                                                 <option value="">Select Type</option>
                                                 {['text', 'photo', 'size']
@@ -450,7 +611,7 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
                                         </label>
                                         <button
                                             type="button"
-                                            className="remove-button"
+                                            className="remove-button customization-remove-btn"
                                             onClick={() => handleRemoveCustomization(index)}
                                         >
                                             ×
@@ -461,15 +622,15 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
                                                     type="button"
                                                     onClick={() => handleAddSize(index)}
                                                     disabled={customization.sizes.length >= 3}
+                                                    className="add-size-btn"
                                                 >
                                                     Add Size
                                                 </button>
                                                 {customization.sizes.map((size, sizeIndex) => {
                                                     const selectedSizeTypes = customization.sizes.map(s => s.size_type);
-
                                                     return (
                                                         <div key={sizeIndex} className="size-section">
-                                                            <label>
+                                                            <label className="size-type-label">
                                                                 Size Type:
                                                                 <select
                                                                     value={size.size_type}
@@ -477,6 +638,7 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
                                                                         handleSizeChange(index, sizeIndex, 'size_type', e.target.value)
                                                                     }
                                                                     required
+                                                                    className="input-field size-type-select"
                                                                 >
                                                                     <option value="">Select Size</option>
                                                                     {['small', 'medium', 'large']
@@ -490,12 +652,12 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
                                                             </label>
                                                             <button
                                                                 type="button"
-                                                                className="remove-button"
+                                                                className="remove-button size-remove-btn"
                                                                 onClick={() => handleRemoveSize(index, sizeIndex)}
                                                             >
                                                                 ×
                                                             </button>
-                                                            <label>
+                                                            <label className="size-label">
                                                                 Height:
                                                                 <input
                                                                     type="number"
@@ -505,9 +667,10 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
                                                                         handleSizeChange(index, sizeIndex, 'height', e.target.value)
                                                                     }
                                                                     required
+                                                                    className="input-field size-input"
                                                                 />
                                                             </label>
-                                                            <label>
+                                                            <label className="size-label">
                                                                 Width:
                                                                 <input
                                                                     type="number"
@@ -517,9 +680,10 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
                                                                         handleSizeChange(index, sizeIndex, 'width', e.target.value)
                                                                     }
                                                                     required
+                                                                    className="input-field size-input"
                                                                 />
                                                             </label>
-                                                            <label>
+                                                            <label className="size-label">
                                                                 Depth:
                                                                 <input
                                                                     type="number"
@@ -529,6 +693,7 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
                                                                         handleSizeChange(index, sizeIndex, 'depth', e.target.value)
                                                                     }
                                                                     required
+                                                                    className="input-field size-input"
                                                                 />
                                                             </label>
                                                         </div>
@@ -547,16 +712,18 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
                         value={productData.description}
                         onChange={handleChange}
                         required
+                        className="input-field textarea-field"
                     ></textarea>
                     <input
                         type="file"
                         name="image"
                         accept="image/*"
                         onChange={handleChange}
+                        className="input-field file-input"
                     />
                     <div className="form-buttons">
                         <button type="submit" className="btn-adding">
-                            <i className="fas fa-check"></i>
+                            <i className="fas fa-check"></i> {productToEdit ? '' : ''}
                         </button>
                         <button type="button" className="btn-close" onClick={onClose}>
                             <i className="fas fa-times"></i>

@@ -146,7 +146,7 @@ const Assignments = () => {
                                             <select
                                                 value={assignment.status}
                                                 onChange={(e) => handleStatusChange(e, assignment.item_id)}
-                                                className="status-dropdown"
+                                                className="styled-status-dropdown"
                                             >
                                                 <option value="Pending">Pending</option>
                                                 <option value="Confirmed">Confirmed</option>

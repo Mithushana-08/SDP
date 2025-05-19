@@ -81,8 +81,6 @@ const Products = () => {
                                 <th>Quantity</th>
                                 <th>Total Price</th>
                                 <th>Crafter Name</th>
-                                <th>Status</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -95,13 +93,6 @@ const Products = () => {
                                     <td>{product.stock_qty}</td>
                                     <td>Rs.{product.base_price && product.stock_qty ? (product.base_price * product.stock_qty).toFixed(2) : 'N/A'}</td>
                                     <td>{product.crafter_name}</td>
-                                    <td>{product.status}</td>
-                                    <td>
-                                        
-                                        <button className="delete-button" onClick={() => handleDeleteCategory(product.product_id)}>
-                                            <FiTrash2 />
-                                        </button>
-                                    </td>
                                 </tr>
                             ))}
                         </tbody>

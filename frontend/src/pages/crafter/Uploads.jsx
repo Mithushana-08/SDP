@@ -279,7 +279,7 @@ const Uploads = () => {
                                 <h2>{editMode ? "Edit Work Upload" : "Add Work Upload"}</h2>
                                 <form onSubmit={handleSubmit}>
                                     <label>Product</label>
-                                    <select onChange={handleProductSelect} value={formData.product_id} required>
+                                    <select className="styled-status-dropdown" onChange={handleProductSelect} value={formData.product_id} required>
                                         <option value="">Select Product</option>
                                         {isLoading ? (
                                             <option disabled>Loading products...</option>

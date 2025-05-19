@@ -8,7 +8,8 @@ const {
     upload, 
     getProductsByCategory, 
     getCustomizationDetails, 
-    editProduct // Import the editProduct method
+    editProduct, // Import the editProduct method
+    softDeleteProduct // Import the softDeleteProduct method
 } = require('../controllers/productmasterController'); // Import all required methods
 
 router.get('/', getProducts); // Route to fetch all products
@@ -18,5 +19,6 @@ router.delete('/:id', deleteProduct); // Route to delete a product by ID
 router.get('/categories', getCategories); // Route to fetch all categories
 router.get('/by-category', getProductsByCategory); // Route to fetch products by category
 router.get('/customizations/:productId', getCustomizationDetails); // Route to fetch customization details for a product
+router.put('/terminate/:id', softDeleteProduct); // Soft delete (terminate) product
 
 module.exports = router;

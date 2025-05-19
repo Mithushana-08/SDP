@@ -13,6 +13,9 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 const getProducts = (req, res) => {
+    // If ?all=true is passed, show all products, else only active
+    const showAll = req.query.all === 'true';
+    const whereClause = showAll ? '' : "WHERE pm.product_status = 'active'";
     const query = `
         SELECT 
             pm.product_id,
@@ -23,6 +26,7 @@ const getProducts = (req, res) => {
             pm.customizable,
             pm.description,
             pm.image,
+            pm.product_status,
             CASE
                 WHEN SUM(COALESCE(i.stock_qty, 0)) > 10 THEN 'In Stock'
                 WHEN SUM(COALESCE(i.stock_qty, 0)) > 0 THEN 'Low Stock'
@@ -35,9 +39,10 @@ const getProducts = (req, res) => {
             Categories c ON pm.category_id = c.CategoryID
         LEFT JOIN 
             inventory i ON pm.product_id = i.product_id
+        ${whereClause}
         GROUP BY 
             pm.product_id, pm.product_name, c.CategoryName, c.CategoryID, 
-            pm.base_price, pm.customizable, pm.description, pm.image
+            pm.base_price, pm.customizable, pm.description, pm.image, pm.product_status
     `;
 
     db.query(query, (error, results) => {
@@ -338,6 +343,37 @@ const deleteProduct = (req, res) => {
     });
 };
 
+const softDeleteProduct = (req, res) => {
+    const productId = req.params.id;
+    // If body contains product_status: 'active', reactivate
+    if (req.body && req.body.product_status === 'active') {
+        const query = `UPDATE product_master SET product_status = 'active', deleted_at = NULL WHERE product_id = ?`;
+        db.query(query, [productId], (error, results) => {
+            if (error) {
+                console.error('Error reactivating product:', error);
+                return res.status(500).json({ error: 'Internal Server Error' });
+            }
+            if (results.affectedRows === 0) {
+                return res.status(404).json({ message: 'Product not found' });
+            }
+            res.json({ message: 'Product reactivated successfully' });
+        });
+    } else {
+        // Default: terminate
+        const query = `UPDATE product_master SET product_status = 'terminated', deleted_at = NOW() WHERE product_id = ?`;
+        db.query(query, [productId], (error, results) => {
+            if (error) {
+                console.error('Error soft deleting product:', error);
+                return res.status(500).json({ error: 'Internal Server Error' });
+            }
+            if (results.affectedRows === 0) {
+                return res.status(404).json({ message: 'Product not found' });
+            }
+            res.json({ message: 'Product terminated (soft deleted) successfully' });
+        });
+    }
+};
+
 const getCategories = (req, res) => {
     const query = `SELECT CategoryID AS category_id, CategoryName AS category_name FROM Categories`;
 
@@ -422,4 +458,4 @@ const getProductsByCategory = (req, res) => {
 };
 
   
-module.exports = { getProducts, addProduct, deleteProduct, getCategories, getProductsByCategory, getCustomizationDetails, editProduct, upload };
+module.exports = { getProducts, addProduct, deleteProduct, getCategories, getProductsByCategory, getCustomizationDetails, editProduct, upload, softDeleteProduct };

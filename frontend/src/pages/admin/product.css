@@ -223,6 +223,46 @@
     font-size: 24px;
 }
 
+/* Product status colors */
+.status-active {
+  color: #016218;
+  font-weight: 600;
+}
+.status-terminated {
+  color: #840511;
+  font-weight: 600;
+}
+
+/* Stock status colors */
+.stock-in,
+.stock-low,
+.stock-out {
+  font-size:0.6rem;
+  /* slightly smaller font */
+}
+.stock-in {
+  color: #2ecc40;
+  background: #eafaf1;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-weight: 500;
+}
+.stock-low {
+  color: #e67e22;
+  background: #fff6e6;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-weight: 500;
+}
+.stock-out {
+  color: #dc3545;
+  background: #fdeaea;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-weight: 500;
+}
+
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .modal-content {
@@ -234,4 +274,17 @@
         flex-direction: column;
         gap: 10px;
     }
+
+    .table th,
+    .table td {
+        padding: 10px;
+        font-size: 14px;
+    }
+}
+
+.table th:nth-child(7),
+.table td:nth-child(7) {
+  min-width: 80px;
+  width: 100px;
+  max-width: 180px;
 }

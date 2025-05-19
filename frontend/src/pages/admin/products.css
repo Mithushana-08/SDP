@@ -7,18 +7,3 @@
 }
 
 
-.products-table .actions button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 16px;
-    margin: 0 5px;
-}
-
-.products-table .actions button i {
-    color: #007bff;
-}
-
-.products-table .actions button i:hover {
-    color: #0056b3;
-}
