@@ -1,12 +1,15 @@
+
 import React, { useState, useEffect } from "react";
 import axios from 'axios';
-import { FiEdit, FiTrash2, FiSearch, FiCheck, FiX } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiSearch, FiCheck, FiX, FiRefreshCw } from 'react-icons/fi';
 import AdminSidebar from "../../components/Admin/adminsidebar";
 import AdminNavbar from "../../components/Admin/adminnavbar";
 import "./roles.css";
 import "../../components/styles/table.css";
 import "../../components/styles/buttons.css";
 import "../../components/styles/search-container.css";
+import Swal from "sweetalert2";
+import 'sweetalert2/dist/sweetalert2.min.css';
 
 const Roles = () => {
     const [users, setUsers] = useState([]);
@@ -149,8 +152,26 @@ const Roles = () => {
             }
             closeModal();
             fetchUsers();
+            Swal.fire({
+                title: isEditMode ? "Updated!" : "Added!",
+                text: `User has been ${isEditMode ? "updated" : "added"} successfully.`,
+                icon: "success",
+                customClass: {
+                    confirmButton: "btn btn-success"
+                },
+                buttonsStyling: false
+            });
         } catch (err) {
             console.error("Error saving user:", err);
+            Swal.fire({
+                title: "Error!",
+                text: `Failed to ${isEditMode ? "update" : "add"} user.`,
+                icon: "error",
+                customClass: {
+                    confirmButton: "btn btn-danger"
+                },
+                buttonsStyling: false
+            });
         }
     };
 
@@ -161,10 +182,113 @@ const Roles = () => {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm("Are you sure?")) {
-            await axios.delete(`http://localhost:5000/api/user/users/${id}`);
-            fetchUsers();
-        }
+        const swalWithBootstrapButtons = Swal.mixin({
+            customClass: {
+                confirmButton: "btn btn-success",
+                cancelButton: "btn btn-danger"
+            },
+            buttonsStyling: false
+        });
+        swalWithBootstrapButtons.fire({
+            title: "Are you sure?",
+            text: "Do you want to terminate this user? (User will be set to non-active)",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Yes, terminate!",
+            cancelButtonText: "No, cancel!",
+            reverseButtons: true
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    await axios.put(`http://localhost:5000/api/user/users/${id}/status`, { status: 'non-active' });
+                    fetchUsers();
+                    swalWithBootstrapButtons.fire({
+                        title: "Terminated!",
+                        text: "User has been set to non-active.",
+                        icon: "success",
+                        customClass: {
+                            confirmButton: "btn btn-success"
+                        },
+                        buttonsStyling: false
+                    });
+                } catch (err) {
+                    swalWithBootstrapButtons.fire({
+                        title: "Error!",
+                        text: "Failed to terminate user.",
+                        icon: "error",
+                        customClass: {
+                            confirmButton: "btn btn-danger"
+                        },
+                        buttonsStyling: false
+                    });
+                }
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                swalWithBootstrapButtons.fire({
+                    title: "Cancelled",
+                    text: "User is still active.",
+                    icon: "error",
+                    customClass: {
+                        confirmButton: "btn btn-danger"
+                    },
+                    buttonsStyling: false
+                });
+            }
+        });
+    };
+
+    const handleReactivate = async (id) => {
+        const swalWithBootstrapButtons = Swal.mixin({
+            customClass: {
+                confirmButton: "btn btn-success",
+                cancelButton: "btn btn-danger"
+            },
+            buttonsStyling: false
+        });
+        swalWithBootstrapButtons.fire({
+            title: "Are you sure?",
+            text: "Do you want to activate this user?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Yes, activate!",
+            cancelButtonText: "No, cancel!",
+            reverseButtons: true
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    await axios.put(`http://localhost:5000/api/user/users/${id}/status`, { status: 'active' });
+                    fetchUsers();
+                    swalWithBootstrapButtons.fire({
+                        title: "Activated!",
+                        text: "User has been set to active.",
+                        icon: "success",
+                        customClass: {
+                            confirmButton: "btn btn-success"
+                        },
+                        buttonsStyling: false
+                    });
+                } catch (err) {
+                    swalWithBootstrapButtons.fire({
+                        title: "Error!",
+                        text: "Failed to activate user.",
+                        icon: "error",
+                        customClass: {
+                            confirmButton: "btn btn-danger"
+                        },
+                        buttonsStyling: false
+                    });
+                }
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                swalWithBootstrapButtons.fire({
+                    title: "Cancelled",
+                    text: "User is still non-active.",
+                    icon: "error",
+                    customClass: {
+                        confirmButton: "btn btn-danger"
+                    },
+                    buttonsStyling: false
+                });
+            }
+        });
     };
 
     const openAddModal = () => {
@@ -182,7 +306,6 @@ const Roles = () => {
         setCityError("");
     };
 
-    // Combine address fields for display
     const formatAddress = (user) => {
         const parts = [user.lane1];
         if (user.lane2) parts.push(user.lane2);
@@ -229,6 +352,7 @@ const Roles = () => {
                                 <th>Address</th>
                                 <th>Phone</th>
                                 <th>Role</th>
+                                <th>Status</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -241,9 +365,19 @@ const Roles = () => {
                                     <td>{formatAddress(user)}</td>
                                     <td>{user.phone}</td>
                                     <td>{user.role}</td>
+                                    <td>{user.status || 'active'}</td>
                                     <td>
-                                        <button className="edit-button" onClick={() => handleEdit(user)}><FiEdit /></button>
-                                        <button className="delete-button" onClick={() => handleDelete(user.id)}><FiTrash2 /></button>
+                                        {(!user.status || user.status === 'active') && (
+                                            <>
+                                                <button className="edit-button" onClick={() => handleEdit(user)}><FiEdit /></button>
+                                                <button className="delete-button" onClick={() => handleDelete(user.id)}><FiTrash2 /></button>
+                                            </>
+                                        )}
+                                        {user.status === 'non-active' && (
+                                            <button className="reactivate-button" onClick={() => handleReactivate(user.id)} title="Reactivate User">
+                                                <FiRefreshCw />
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))}
@@ -327,7 +461,7 @@ const Roles = () => {
                                         <option value="">Select Role</option>
                                         <option value="admin">Admin</option>
                                         <option value="crafter">Crafter</option>
-                                        <option value="delivery">Delivery</option>
+                                        
                                     </select>
                                     <div className="modal-buttons">
                                         <button type="submit"><FiCheck /> {isEditMode ? "Update" : "Add"}</button>

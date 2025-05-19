@@ -158,6 +158,9 @@ const loginUser = (req, res) => {
 
         if (results.length > 0) {
             const user = results[0];
+            if (user.status && user.status === 'non-active') {
+                return res.status(403).json({ message: "Your account is not active. Please contact admin." });
+            }
             const token = generateToken(user);
             res.json({ message: "Login successful", token, user });
         } else {

@@ -15,6 +15,9 @@ router.post('/users', userController.addUser);
 router.put('/users/:id', userController.updateUser);
 
 // Define the route for deleting a user
-router.delete('/users/:id', userController.deleteUser);
+// router.delete('/users/:id', userController.deleteUser); // No longer needed, use terminateUser
+
+// Soft delete (terminate) user by status
+router.put('/users/:id/status', userController.terminateUser);
 
 module.exports = router;

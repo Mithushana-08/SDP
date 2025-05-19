@@ -20,15 +20,60 @@
     box-shadow: 0 4px 10px rgba(255, 111, 97, 0.5);
 }
 
-.edit-button, .delete-button {
+.edit-button, .delete-button , .reactivate-button {
     background: none;
     border: none;
     cursor: pointer;
     color: #5c2c2b;
     font-size: 1.2rem;
     transition: color 0.3s ease;
+  
+    gap:2px;
 }
 
-.edit-button:hover, .delete-button:hover {
+.edit-button:hover, .delete-button:hover , .reactivate-button:hover {
     color: #ff6f61;
+}
+/* buttons.css */
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+}
+
+.swal2-confirm.btn.btn-success , 
+.swal2-confirm.btn.btn-danger {
+  background-color: #28a745; /* Green for OK/Confirm in "Terminated!" dialog */
+  color: white;
+  border: 1px solid #28a745;
+}
+
+.swal2-confirm.btn.btn-success:hover , 
+.swal2-confirm.btn.btn-danger {
+  background-color: #218838;
+  border-color: #1e7e34;
+}
+
+
+
+.swal2-cancel.btn.btn-danger {
+  background-color: #dc3545; /* Red for Cancel button in initial dialog */
+  color: white;
+  border: 1px solid #dc3545;
+}
+
+.swal2-cancel.btn.btn-danger:hover {
+  background-color: #c82333;
+  border-color: #bd2130;
+}
+
+/* Maintain gap between SweetAlert2 buttons */
+.swal2-actions {
+  display: flex;
+  gap: 16px; /* 16px gap between buttons */
+  justify-content: center;
 }
