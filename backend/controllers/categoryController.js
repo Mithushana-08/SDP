@@ -67,14 +67,26 @@ const updateCategory = (req, res) => {
 // Delete a category
 const deleteCategory = (req, res) => {
     const { CategoryID } = req.params;
-
-    const sql = "DELETE FROM Categories WHERE CategoryID = ?";
+     const sql = "UPDATE Categories SET deleted_at = NOW(), status = 'terminated' WHERE CategoryID = ?";
     db.query(sql, [CategoryID], (err, result) => {
         if (err) {
-            console.error("Error deleting category:", err);
+            console.error("Error soft deleting category:", err);
             return res.status(500).json({ error: "Database error" });
         }
-        res.status(200).json({ message: "Category deleted successfully" });
+        res.status(200).json({ message: "Category soft deleted successfully" });
+    });
+};
+
+// Reactivate a soft-deleted category
+const reactivateCategory = (req, res) => {
+    const { CategoryID } = req.params;
+    const sql = "UPDATE Categories SET deleted_at = NULL, status = 'active' WHERE CategoryID = ?";
+    db.query(sql, [CategoryID], (err, result) => {
+        if (err) {
+            console.error("Error reactivating category:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        res.status(200).json({ message: "Category reactivated successfully" });
     });
 };
 
@@ -83,5 +95,6 @@ module.exports = {
     addCategory,
     updateCategory,
     deleteCategory,
+    reactivateCategory,
     upload
 };

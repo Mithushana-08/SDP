@@ -29,6 +29,8 @@ const CrafterSettings = () => {
         newPassword: "",
         confirmPassword: "",
     });
+    const [profileImage, setProfileImage] = useState(null);
+    const [previewImage, setPreviewImage] = useState(null);
 
     useEffect(() => {
         const token = sessionStorage.getItem("token");
@@ -66,6 +68,19 @@ const CrafterSettings = () => {
 
         fetchUserProfile();
     }, []);
+
+    // Handle profile image change
+    const handleProfileImageChange = (e) => {
+        const file = e.target.files[0];
+        setProfileImage(file);
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => setPreviewImage(reader.result);
+            reader.readAsDataURL(file);
+        } else {
+            setPreviewImage(null);
+        }
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -118,20 +133,23 @@ const CrafterSettings = () => {
         if (!validateForm("personal")) return;
         const token = sessionStorage.getItem("token");
         try {
+            const form = new FormData();
+            form.append("username", `${formData.firstName} ${formData.lastName}`.trim());
+            form.append("email", formData.email);
+            form.append("phone", formData.phone);
+            if (profileImage) form.append("profileImage", profileImage);
+            if (user?.profile_image) form.append("existingImage", user.profile_image);
             const response = await axios.put(
                 "http://localhost:5000/api/profile/profile",
-                {
-                    username: `${formData.firstName} ${formData.lastName}`.trim(),
-                    email: formData.email,
-                    phone: formData.phone,
-                },
-                { headers: { Authorization: `Bearer ${token}` } }
+                form,
+                { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } }
             );
             setUser((prev) => ({
                 ...prev,
                 username: `${formData.firstName} ${formData.lastName}`.trim(),
                 email: formData.email,
                 phone: formData.phone,
+                profile_image: response.data.profileImage || prev.profile_image
             }));
             setIsEditingPersonal(false);
             alert("Personal information updated successfully!");
@@ -207,10 +225,15 @@ const CrafterSettings = () => {
                     <h1 className="page-title text-2xl">My Profile</h1>
                     <div className="profile-card border border-gray-300 rounded-lg">
                         <div className="profile-header">
-                            <img src="/path/to/profile-image.jpg" alt="Profile" className="profile-image" />
+                            <img src={previewImage || (user?.profile_image ? `http://localhost:5000${user.profile_image}` : "/path/to/profile-image.jpg")} alt="Profile" className="profile-image" />
                             <div>
                                 <h2 className="profile-name text-xl">{user.username}</h2>
                                 <p className="profile-role text-lg">{user.role}, {user.city || "Unknown"}</p>
+                                {isEditingPersonal && (
+                                    <div style={{ marginTop: 10 }}>
+                                        <input type="file" accept="image/*" onChange={handleProfileImageChange} />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -255,20 +278,7 @@ const CrafterSettings = () => {
                                     )}
                                     {passwordErrors.firstName && <span className="error-message text-base">{passwordErrors.firstName}</span>}
                                 </div>
-                                <div className="info-item">
-                                    <span className="info-label text-lg">Last Name</span>
-                                    {isEditingPersonal ? (
-                                        <input
-                                            type="text"
-                                            name="lastName"
-                                            value={formData.lastName}
-                                            onChange={handleInputChange}
-                                            className="text-lg"
-                                        />
-                                    ) : (
-                                        <span className="info-value text-lg">{user.username.split(" ").slice(1).join(" ") || "N/A"}</span>
-                                    )}
-                                </div>
+                               
                                 <div className="info-item">
                                     <span className="info-label text-lg">Email Address</span>
                                     {isEditingPersonal ? (
@@ -336,7 +346,7 @@ const CrafterSettings = () => {
                         <div className="card-content">
                             <div className="info-grid">
                                 <div className="info-item">
-                                    <span className="info-label text-lg">Country</span>
+                                    <span className="info-label text-lg">Lane 1</span>
                                     {isEditingAddress ? (
                                         <input
                                             type="text"
@@ -351,7 +361,22 @@ const CrafterSettings = () => {
                                     )}
                                     {passwordErrors.lane1 && <span className="error-message text-base">{passwordErrors.lane1}</span>}
                                 </div>
+                               
                                 <div className="info-item">
+                                    <span className="info-label text-lg">Lane 2</span>
+                                    {isEditingAddress ? (
+                                        <input
+                                            type="text"
+                                            name="lane2"
+                                            value={formData.lane2}
+                                            onChange={handleInputChange}
+                                            className="text-lg"
+                                        />
+                                    ) : (
+                                        <span className="info-value text-lg">{user.lane2 || "N/A"}</span>
+                                    )}
+                                </div>
+                                 <div className="info-item">
                                     <span className="info-label text-lg">City</span>
                                     {isEditingAddress ? (
                                         <input
@@ -366,20 +391,6 @@ const CrafterSettings = () => {
                                         <span className="info-value text-lg">{user.city || "N/A"}</span>
                                     )}
                                     {passwordErrors.city && <span className="error-message text-base">{passwordErrors.city}</span>}
-                                </div>
-                                <div className="info-item">
-                                    <span className="info-label text-lg">Postal Code</span>
-                                    {isEditingAddress ? (
-                                        <input
-                                            type="text"
-                                            name="lane2"
-                                            value={formData.lane2}
-                                            onChange={handleInputChange}
-                                            className="text-lg"
-                                        />
-                                    ) : (
-                                        <span className="info-value text-lg">{user.lane2 || "N/A"}</span>
-                                    )}
                                 </div>
                             </div>
                         </div>

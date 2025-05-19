@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import AdminSidebar from "../../components/Admin/adminsidebar";
 import AdminNavbar from "../../components/Admin/adminnavbar";
-import { FiEdit, FiTrash2, FiSearch } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiSearch, FiRefreshCw } from 'react-icons/fi';
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./inventory.css";
 import "../../components/styles/table.css";
 import "../../components/styles/buttons.css";
 import "../../components/styles/search-container.css";
+import Swal from 'sweetalert2';
 
 const Inventory = () => {
     const [categories, setCategories] = useState([]);
@@ -105,16 +106,69 @@ const Inventory = () => {
         }
     };
 
-    // Delete category
+    // Delete category (soft delete with SweetAlert2)
     const handleDeleteCategory = async (CategoryID) => {
-        try {
-            await fetch(`http://localhost:5000/api/categories/${CategoryID}`, {
-                method: "DELETE",
-            });
+        const swalWithBootstrapButtons = Swal.mixin({
+            customClass: {
+                confirmButton: "btn btn-success",
+                cancelButton: "btn btn-danger"
+            },
+            buttonsStyling: false
+        });
+        swalWithBootstrapButtons.fire({
+            title: "Are you sure?",
+            text: "This will terminate the category (soft delete).",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Yes, terminate it!",
+            cancelButtonText: "No, cancel!",
+            reverseButtons: true
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    await fetch(`http://localhost:5000/api/categories/${CategoryID}`, {
+                        method: "DELETE"
+                    });
+                    await fetchCategories();
+                    swalWithBootstrapButtons.fire({
+                        title: "Terminated!",
+                        text: "The category has been terminated.",
+                        icon: "success"
+                    });
+                } catch (error) {
+                    swalWithBootstrapButtons.fire({
+                        title: "Error!",
+                        text: "Failed to terminate category.",
+                        icon: "error"
+                    });
+                }
+            }
+        });
+    };
 
+    // Reactivate category
+    const handleReactivateCategory = async (CategoryID) => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/categories/${CategoryID}/reactivate`, {
+                method: "PATCH"
+            });
+            if (!response.ok) throw new Error("Failed to reactivate category");
             await fetchCategories();
+            Swal.fire({
+                title: "Reactivated!",
+                text: "The category has been reactivated.",
+                icon: "success",
+                customClass: { confirmButton: 'btn btn-success swal2-confirm' },
+                buttonsStyling: false,
+            });
         } catch (error) {
-            console.error("Error deleting category:", error);
+            Swal.fire({
+                title: "Error!",
+                text: "Failed to reactivate category.",
+                icon: "error",
+                customClass: { confirmButton: 'btn btn-danger swal2-confirm' },
+                buttonsStyling: false,
+            });
         }
     };
 
@@ -143,9 +197,9 @@ const Inventory = () => {
         setIsImageModalOpen(true);
     };
 
-    // Filter categories based on search
+    // Filter categories based on search (show all, including terminated)
     const filteredCategories = categories.filter(category =>
-        category.CategoryName.toLowerCase().includes(searchTerm.toLowerCase())
+        (category.CategoryName && category.CategoryName.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     return (
@@ -217,6 +271,7 @@ const Inventory = () => {
                                 <th>Category Name</th>
                                 <th>Description</th>
                                 <th>Image</th>
+                                <th>Status</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -248,9 +303,18 @@ const Inventory = () => {
                                             }}
                                         />
                                     </td>
+                                    <td>{category.status ? category.status.charAt(0).toUpperCase() + category.status.slice(1) : 'Active'}</td>
                                     <td>
-                                        <i className="edit-button" onClick={() => handleEditCategory(category)}><FiEdit /></i>
-                                        <i className="delete-button" onClick={() => handleDeleteCategory(category.CategoryID)}><FiTrash2 /></i>
+                                        {category.status === 'terminated' ? (
+                                            <button className="reactivate-button btn-success" onClick={() => handleReactivateCategory(category.CategoryID)} title="Reactivate">
+                                                <FiRefreshCw style={{ marginRight: 4, fontSize: '1.1em' }} />
+                                            </button>
+                                        ) : (
+                                            <>
+                                                <i className="edit-button" onClick={() => handleEditCategory(category)}><FiEdit /></i>
+                                                <i className="delete-button" onClick={() => handleDeleteCategory(category.CategoryID)}><FiTrash2 /></i>
+                                            </>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

@@ -1,11 +1,22 @@
 const db = require("../config/db");
+const multer = require('multer');
+const path = require('path');
+
+// Multer configuration for user profile image upload
+const userStorage = multer.diskStorage({
+    destination: './uploads/users/',
+    filename: (req, file, cb) => {
+        cb(null, 'profile-' + Date.now() + path.extname(file.originalname));
+    }
+});
+const userUpload = multer({ storage: userStorage });
 
 // Fetch user profile details
 const getUserProfile = (req, res) => {
     const userId = req.user.id;
 
     const query = `
-        SELECT id, username, role, phone, lane1, lane2, city, email
+        SELECT id, username, role, phone, lane1, lane2, city, email, profile_image
         FROM users
         WHERE id = ?
     `;
@@ -24,10 +35,11 @@ const getUserProfile = (req, res) => {
     });
 };
 
-// Update user profile details
+// Update user profile details (with image upload)
 const updateUserProfile = (req, res) => {
     const userId = req.user.id;
     const { username, phone, lane1, lane2, city, email } = req.body;
+    let profileImage = req.file ? `/uploads/users/${req.file.filename}` : req.body.existingImage;
 
     // Build dynamic query based on provided fields
     const fields = [];
@@ -57,6 +69,10 @@ const updateUserProfile = (req, res) => {
         fields.push("email = ?");
         values.push(email);
     }
+    if (profileImage) {
+        fields.push("profile_image = ?");
+        values.push(profileImage);
+    }
 
     if (fields.length === 0) {
         return res.status(400).json({ error: "At least one field must be provided for update." });
@@ -80,7 +96,7 @@ const updateUserProfile = (req, res) => {
             return res.status(404).json({ error: "User not found" });
         }
 
-        res.json({ message: "Profile updated successfully" });
+        res.json({ message: "Profile updated successfully", profileImage });
     });
 };
 
@@ -136,4 +152,4 @@ const updateUserPassword = (req, res) => {
     });
 };
 
-module.exports = { getUserProfile, updateUserProfile, updateUserPassword };
+module.exports = { getUserProfile, updateUserProfile, updateUserPassword, userUpload };
