@@ -5,7 +5,7 @@ import { FiEdit, FiTrash2, FiSearch } from "react-icons/fi";
 import "./Uploads.css";
 import "../../components/styles/table.css";
 import "../../components/styles/buttons.css";
-
+import Swal from "sweetalert2";
 
 const Uploads = () => {
     const [uploads, setUploads] = useState([]);
@@ -138,10 +138,31 @@ const Uploads = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("Form Data to be sent:", formData);
+        // SweetAlert confirmation before submit
+        const result = await Swal.fire({
+            title: editMode ? "Are you sure you want to update this upload?" : "Are you sure you want to add this upload?",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: "Yes",
+            cancelButtonText: "No"
+        });
+        if (!result.isConfirmed) return;
+
+        let finalFormData = { ...formData };
+        if (editMode) {
+            const uploadToEdit = uploads.find(u => u.work_id === selectedUploadId);
+            if (uploadToEdit) {
+                // If product_id or category_id is missing, fill from original upload
+                if (!finalFormData.product_id) finalFormData.product_id = uploadToEdit.product_id;
+                if (!finalFormData.product_name) finalFormData.product_name = uploadToEdit.product_name;
+                if (!finalFormData.category_id) finalFormData.category_id = uploadToEdit.category_id;
+                if (!finalFormData.CategoryName) finalFormData.CategoryName = uploadToEdit.CategoryName;
+                if (!finalFormData.customizable) finalFormData.customizable = uploadToEdit.customizable;
+                if (!finalFormData.base_price && finalFormData.base_price !== 0) finalFormData.base_price = uploadToEdit.base_price;
+            }
+        }
 
         const token = sessionStorage.getItem("token"); // Changed from localStorage
-
         if (!token) {
             console.error("No token found for submitting upload.");
             return;
@@ -156,7 +177,7 @@ const Uploads = () => {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${token}`
                     },
-                    body: JSON.stringify(formData),
+                    body: JSON.stringify(finalFormData),
                 });
             } else {
                 response = await fetch("http://localhost:5000/api/upload", {
@@ -165,19 +186,38 @@ const Uploads = () => {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${token}`
                     },
-                    body: JSON.stringify(formData),
+                    body: JSON.stringify(finalFormData),
                 });
             }
 
             if (!response.ok) throw new Error("Failed to save upload");
             setShowModal(false);
-            fetchUploads(formData.crafter_id);
+            fetchUploads(finalFormData.crafter_id);
+            Swal.fire({
+                icon: "success",
+                title: editMode ? "Upload updated successfully!" : "Upload added successfully!",
+                showConfirmButton: false,
+                timer: 1500
+            });
         } catch (error) {
             console.error("Error saving upload:", error);
+            Swal.fire({
+                icon: "error",
+                title: "Failed to save upload",
+                text: error.message || "An error occurred."
+            });
         }
     };
 
     const handleEdit = (upload) => {
+        if (upload.status === "approved" || upload.status === "rejected") {
+            Swal.fire({
+                icon: "warning",
+                title: "Can't update after approved or rejected",
+                showConfirmButton: true,
+            });
+            return;
+        }
         const uploadToEdit = uploads.find(u => u.work_id === upload.work_id);
         if (uploadToEdit) {
             setFormData({
@@ -197,6 +237,15 @@ const Uploads = () => {
     };
 
     const handleDelete = async (workId) => {
+        const uploadToDelete = uploads.find(u => u.work_id === workId);
+        if (uploadToDelete && (uploadToDelete.status === "approved" || uploadToDelete.status === "rejected")) {
+            Swal.fire({
+                icon: "warning",
+                title: "Can't delete after approved or rejected",
+                showConfirmButton: true,
+            });
+            return;
+        }
         const token = sessionStorage.getItem("token"); // Changed from localStorage
     
         if (!token) {
@@ -281,7 +330,12 @@ const Uploads = () => {
                                 <h2>{editMode ? "Edit Work Upload" : "Add Work Upload"}</h2>
                                 <form onSubmit={handleSubmit}>
                                     <label>Product</label>
-                                    <select className="styled-status-dropdown" onChange={handleProductSelect} value={formData.product_id} required>
+                                    <select
+                                        className="styled-status-dropdown"
+                                        onChange={handleProductSelect}
+                                        value={formData.product_id}
+                                        required={!editMode} // Only required in add mode
+                                    >
                                         <option value="">Select Product</option>
                                         {isLoading ? (
                                             <option disabled>Loading products...</option>

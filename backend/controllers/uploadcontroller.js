@@ -89,28 +89,40 @@ const addUpload = (req, res) => {
 };
 
 // Update an existing upload
-const updateUpload = (req, res) => {
+const updateUpload = async (req, res) => {
   const { product_id, category_id, quantity, crafter_id } = req.body;
   const { id } = req.params;
 
-  if (!product_id || !category_id || !quantity || !crafter_id) {
-    console.error("Missing required fields:", { product_id, category_id, quantity, crafter_id });
-    return res.status(400).json({ message: "All fields are required" });
-  }
-
-  const query = `
-    UPDATE work_upload
-    SET product_id = ?, category_id = ?, quantity = ?, crafter_id = ?
-    WHERE work_id = ?
-  `;
-
-  db.query(query, [product_id, category_id, quantity, crafter_id, id], (err, result) => {
+  // Fetch existing upload
+  db.query('SELECT * FROM work_upload WHERE work_id = ?', [id], (err, results) => {
     if (err) {
-      console.error("Error updating upload:", err);
-      return res.status(500).json({ message: "Internal server error", error: err.message });
+      console.error('Error fetching existing upload:', err);
+      return res.status(500).json({ message: 'Internal server error', error: err.message });
     }
-    console.log("Upload updated successfully:", result);
-    res.status(200).json({ message: "Upload updated successfully" });
+    if (!results || results.length === 0) {
+      return res.status(404).json({ message: 'Upload not found' });
+    }
+    const existing = results[0];
+    // Use existing values if not provided in req.body
+    const finalProductId = product_id || existing.product_id;
+    const finalCategoryId = category_id || existing.category_id;
+    const finalQuantity = quantity || existing.quantity;
+    const finalCrafterId = crafter_id || existing.crafter_id;
+
+    const query = `
+      UPDATE work_upload
+      SET product_id = ?, category_id = ?, quantity = ?, crafter_id = ?
+      WHERE work_id = ?
+    `;
+
+    db.query(query, [finalProductId, finalCategoryId, finalQuantity, finalCrafterId, id], (err, result) => {
+      if (err) {
+        console.error('Error updating upload:', err);
+        return res.status(500).json({ message: 'Internal server error', error: err.message });
+      }
+      console.log('Upload updated successfully:', result);
+      res.status(200).json({ message: 'Upload updated successfully' });
+    });
   });
 };
 
