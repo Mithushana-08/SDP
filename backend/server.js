@@ -20,6 +20,8 @@ const crafterRoutes = require("./routes/crafterassignmentsRoutes");
 const ReportRoutes = require('./routes/ReportRoutes'); // Import the report routes
 const dashboardRoutes = require("./routes/dashboardRoutes"); // Import the dashboard routes
 const crafterDashboardRoutes = require("./routes/cdashboardRoutes"); // Import the crafter dashboard routes
+const notificationRoutes = require("./routes/notificationRoutes"); // Import notification routes
+const crafterNotificationRoutes = require("./routes/crafterNotificationRoutes"); // Import crafter notification routes
 // Mount the admin order routes
 
 
@@ -49,6 +51,8 @@ app.use("/api/crafter", crafterRoutes);
 app.use('/api/reports', ReportRoutes); 
 app.use('/api/dashboard', dashboardRoutes); // Add dashboard routes
 app.use('/api/crafter-dashboard', crafterDashboardRoutes); // Add crafter dashboard routes
+app.use("/api/notifications", notificationRoutes); // Add notification routes
+app.use("/api/crafter", crafterNotificationRoutes); // Add crafter notification routes
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).send("Something broke!");

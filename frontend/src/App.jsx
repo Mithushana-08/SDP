@@ -17,6 +17,8 @@ import CrafterDashboard from "./pages/crafter/cdashboard";
 import Assignments from "./pages/crafter/Assignments";
 import Uploads from "./pages/crafter/Uploads";
 import CrafterSettings from "./pages/crafter/settings";
+import NotificationPage from "./pages/admin/notification"; // Import NotificationPage
+import CrafterNotificationPage from "./pages/crafter/cnotifications"; // Import CrafterNotificationPage
 
 const App = () => {
   return (
@@ -39,6 +41,8 @@ const App = () => {
         <Route path="/crafter/Assignments" element={<Assignments />} /> 
         <Route path="/crafter/Uploads" element={<Uploads />} />
         <Route path="/crafter/settings" element={<CrafterSettings />} /> {/* Crafter Profile route */}
+        <Route path="/admin/notifications" element={<NotificationPage />} /> {/* Notification page route */}
+        <Route path="/crafter/notifications" element={<CrafterNotificationPage />} /> {/* Crafter Notification page route */}
       </Routes>
     </Router>
   );
