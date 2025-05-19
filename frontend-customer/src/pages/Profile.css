@@ -201,10 +201,16 @@ select {
   color: #008000;
 }
 
-.status.shipped {
+.status.sent {
   background: #e0f0ff;
   color: #0056b3;
 }
+
+.status-canceled {
+  background: #d32f2f;
+}
+
+
 
 .order-items {
   width: 100%;
@@ -341,6 +347,45 @@ select {
   color: #333;
 }
 
+/* Status badges styles */
+.status-badge {
+  display: inline-block;
+  padding: 0.25em 0.75em;
+  border-radius: 16px;
+  font-size: 0.95em;
+  font-weight: 600;
+  color: #fff;
+  margin-left: 0.5em;
+  text-transform: capitalize;
+}
+
+.status-pending {
+  background: #f0ad4e;
+}
+
+.status-confirmed {
+  background: #4b76f7;
+}
+
+.status-ready,
+.status-readytodeliver,
+.status-ready-to-deliver {
+  background: #5bc0de;
+}
+
+.status-sent {
+  background: #5c8fb8;
+}
+
+.status-delivered {
+  background: #4caf50;
+}
+
+/* fallback for unknown status */
+.status-badge:not([class*="status-"]) {
+  background: #888;
+}
+
 /* Responsive styles */
 @media (max-width: 768px) {
   .profile-page {
@@ -367,13 +412,13 @@ select {
     font-size: 18px;
   }
 
-  .info-item input, 
+  .info-item input,
   .info-item .react-select__control {
     font-size: 14px;
     padding: 8px;
   }
 
-  .update-profile-btn, 
+  .update-profile-btn,
   .cancel-btn {
     font-size: 14px;
     padding: 8px 16px;
@@ -384,7 +429,7 @@ select {
     gap: 10px;
   }
 
-  .order-items th, 
+  .order-items th,
   .order-items td {
     font-size: 12px;
     padding: 8px;
@@ -410,14 +455,14 @@ select {
     font-size: 12px;
   }
 
-  .info-item p, 
-  .info-item input, 
+  .info-item p,
+  .info-item input,
   .info-item .react-select__control {
     font-size: 12px;
     padding: 6px;
   }
 
-  .update-profile-btn, 
+  .update-profile-btn,
   .cancel-btn {
     font-size: 12px;
     padding: 6px 12px;
@@ -451,7 +496,7 @@ select {
     padding: 20px 30px;
   }
 
-  .info-item input, 
+  .info-item input,
   .info-item .react-select__control {
     font-size: 15px;
   }

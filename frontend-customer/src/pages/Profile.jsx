@@ -433,39 +433,41 @@ const ProfilePage = () => {
                     <h3>Order #{order.orderId}</h3>
                     <p>Placed on {new Date(order.orderDate || order.order_date).toLocaleDateString()}</p>
                   </div>
-                  <span className={`status ${order.status.toLowerCase()}`}>
+                  <span className={`status-badge status-${order.status.toLowerCase().replace(/\s+/g, '')}`}>
                     {order.status}
                   </span>
                 </div>
-                <table className="order-items">
-                  <thead>
-                    <tr>
-                      <th>Product</th>
-                      <th>Quantity</th>
-                      <th>Price</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Array.isArray(order.items) && order.items.length > 0 ? (
-                      order.items.map((item, index) => {
-                        console.log('Order item key:', item.productId || `item-${index}`);
-                        return (
-                          <tr key={item.productId || `item-${index}`}>
-                            <td>{item.productName || 'Unknown Product'}</td>
-                            <td>{item.quantity || 0}</td>
-                            <td>
-                              Rs{(typeof item.price === 'number' ? item.price : 0).toFixed(2)}
-                            </td>
-                          </tr>
-                        );
-                      })
-                    ) : (
-                      <tr>
-                        <td colSpan="3">No items found for this order.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                {/* Show a row of product images (thumbnails) for each order above the order footer */}
+                {Array.isArray(order.items) && order.items.length > 0 && (
+                  <div className="order-items-image-row">
+                    {order.items.map((item, index) => (
+                      <div key={item.productId || `item-${index}`} className="order-item-image-thumb">
+                        {item.productImage ? (
+                          <img
+                            src={
+                              item.productImage.startsWith('http://') || item.productImage.startsWith('https://')
+                                ? item.productImage
+                                : item.productImage.startsWith('/uploads')
+                                  ? `http://localhost:5000${item.productImage}`
+                                  : `http://localhost:5000/uploads/${item.productImage}`
+                            }
+                            alt={item.productName || 'Product'}
+                            className="order-item-thumb-image"
+                            style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #eee', marginRight: 8 }}
+                            onError={e => { e.target.onerror = null; e.target.src = '/vite.svg'; }}
+                          />
+                        ) : (
+                          <img
+                            src="/vite.svg"
+                            alt="No product"
+                            className="order-item-thumb-image"
+                            style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #eee', opacity: 0.5, marginRight: 8 }}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div className="order-footer">
                   <strong className="order-total">
                     Total: Rs
@@ -494,24 +496,83 @@ const ProfilePage = () => {
             <div className="order-details-popup">
               <h3>Order Details</h3>
               <p>Order ID: {selectedOrder.orderId}</p>
-              <p>Status: {selectedOrder.status}</p>
+              <p>
+                Status: <span className={`status-badge status-${selectedOrder.status.toLowerCase()}`}>{selectedOrder.status}</span>
+              </p>
               <p>Placed on: {new Date(selectedOrder.orderDate || selectedOrder.order_date).toLocaleDateString()}</p>
               <h4>Items:</h4>
-              <ul>
-                {Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0 ? (
-                  selectedOrder.items.map((item, index) => {
-                    console.log('Selected order item key:', item.productId || `item-${index}`);
-                    return (
-                      <li key={item.productId || `item-${index}`}>
-                        {item.productName || 'Unknown Product'} - {item.quantity || 0} x Rs
-                        {(typeof item.price === 'number' ? item.price : 0).toFixed(2)}
-                      </li>
-                    );
-                  })
-                ) : (
-                  <li key="no-items">No items found for this order.</li>
-                )}
-              </ul>
+              <div className="order-details-items-table-wrapper">
+                <table className="order-details-items-table">
+                  <thead>
+                    <tr>
+                      <th>Image</th>
+                      <th>Name</th>
+                      <th>Qty</th>
+                      <th>Price</th>
+                      <th>Customization</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0 ? (
+                      selectedOrder.items.map((item, index) => (
+                        <tr key={item.productId || `item-${index}`}> 
+                          <td>
+                            {item.productImage ? (
+                              <img
+                                src={
+                                  item.productImage.startsWith('http://') || item.productImage.startsWith('https://')
+                                    ? item.productImage
+                                    : item.productImage.startsWith('/uploads')
+                                      ? `http://localhost:5000${item.productImage}`
+                                      : `http://localhost:5000/uploads/${item.productImage}`
+                                }
+                                alt={item.productName || 'Product'}
+                                className="order-details-item-image"
+                                style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #eee' }}
+                                onError={e => { e.target.onerror = null; e.target.src = '/vite.svg'; }}
+                              />
+                            ) : (
+                              <img
+                                src="/vite.svg"
+                                alt="No product"
+                                className="order-details-item-image"
+                                style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #eee', opacity: 0.5 }}
+                              />
+                            )}
+                          </td>
+                          <td>{item.productName || 'Unknown Product'}</td>
+                          <td>{item.quantity || 0}</td>
+                          <td>Rs{(typeof item.price === 'number' ? item.price : 0).toFixed(2)}</td>
+                          <td>
+                            {item.customizations && Array.isArray(item.customizations) && item.customizations.length > 0 && item.customizations.some(c => (c.value || c.size || c.image)) ? (
+                              <ul className="customization-list">
+                                {item.customizations.map((c, ci) => (
+                                  (c.value || c.size || c.image) && (
+                                    <li key={ci}>
+                                      {c.type && (c.value || c.size || c.image) && <span><b>Type:</b> {c.type} </span>}
+                                      {c.value && <span><b>Value:</b> {c.value} </span>}
+                                      {c.size && <span><b>Size:</b> {c.size} </span>}
+                                      {c.image && (
+                                        <span>
+                                          <b>Image:</b> <a href={c.image.startsWith('http') ? c.image : `http://localhost:5000/uploads/${c.image}`} target="_blank" rel="noopener noreferrer">View</a>
+                                        </span>
+                                      )}
+                                    </li>
+                                  )
+                                ))}
+                              </ul>
+                            ) : (
+                              <span style={{ color: '#aaa' }}>-</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr><td colSpan={5}>No items found for this order.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
               <p>
                 Total: Rs
                 {(typeof selectedOrder.total_amount === 'number'

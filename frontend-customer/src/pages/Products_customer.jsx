@@ -24,10 +24,12 @@ const ProductsPage = () => {
       fetch(`http://localhost:5000/api/productmaster/by-category?category_id=${categoryId}`)
         .then(response => response.json())
         .then(data => {
-          setProducts(data);
-          setFilteredProducts(data); // Initialize filtered products
+          // Exclude terminated products immediately after fetch
+          const nonTerminated = data.filter(product => product.product_status !== 'terminated' && product.product_status !== 'Terminated');
+          setProducts(nonTerminated);
+          setFilteredProducts(nonTerminated); // Initialize filtered products
           const initialQuantities = {};
-          data.forEach(product => {
+          nonTerminated.forEach(product => {
             initialQuantities[product.product_id] = product.stock_qty > 0 ? 1 : 0;
           });
           setQuantities(initialQuantities);
@@ -46,9 +48,9 @@ const ProductsPage = () => {
       .catch(error => console.error('Error fetching categories:', error));
   }, []);
 
-  // Filter products based on search, category, and price
+  // Filter products based on search, category, price, and status (exclude terminated)
   useEffect(() => {
-    let filtered = products;
+    let filtered = products.filter(product => product.product_status !== 'terminated' && product.product_status !== 'Terminated');
 
     // Filter by search term
     if (searchTerm) {

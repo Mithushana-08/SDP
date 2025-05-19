@@ -399,6 +399,7 @@ const getProductsByCategory = (req, res) => {
             p.product_name, 
             p.base_price, 
             p.image,
+            p.product_status,
             SUM(COALESCE(i.stock_qty, 0)) AS stock_qty
         FROM 
             product_master p
@@ -407,7 +408,7 @@ const getProductsByCategory = (req, res) => {
         WHERE 
             p.category_id = ?
         GROUP BY 
-            p.product_id, p.product_name, p.base_price, p.image
+            p.product_id, p.product_name, p.base_price, p.image, p.product_status
     `;
 
     db.query(query, [category_id], (err, results) => {

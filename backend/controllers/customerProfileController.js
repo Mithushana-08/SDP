@@ -114,9 +114,20 @@ const getOrdersByCustomer = (req, res) => {
 const getOrderDetails = (req, res) => {
     const { orderId } = req.params;
 
-    // Query to fetch order details
+    // Query to fetch order details, now including product image and customizations
     const orderDetailsQuery = `
-        SELECT o.order_id, o.order_date, o.status, oi.product_id, p.product_name, oi.quantity, oi.price
+        SELECT o.order_id, o.order_date, o.status, oi.product_id, p.product_name, p.image, oi.quantity, oi.price,
+            COALESCE(
+                (SELECT JSON_OBJECT(
+                    'type', 'text',
+                    'value', MAX(CASE WHEN cd3.customization_type = 'text' THEN cd3.customization_value ELSE NULL END),
+                    'size', MAX(CASE WHEN cd3.customization_type = 'size' THEN cd3.size_type ELSE NULL END),
+                    'image', MAX(CASE WHEN cd3.customization_type = 'image' THEN cd3.uploaded_image ELSE NULL END)
+                )
+                FROM customization_details cd3
+                WHERE cd3.item_id = oi.item_id AND cd3.customization_type IN ('text', 'size', 'image')),
+                JSON_OBJECT('type', NULL, 'value', NULL, 'size', NULL, 'image', NULL)
+            ) AS customizations
         FROM orders o
         JOIN order_items oi ON o.order_id = oi.order_id
         JOIN product_master p ON oi.product_id = p.product_id
@@ -133,17 +144,33 @@ const getOrderDetails = (req, res) => {
             return res.status(404).json({ error: "Order not found" });
         }
 
-        // Group order details by order
+        // Group order details by order, now including product image and customizations
         const order = {
             orderId: orderDetails[0].order_id,
             orderDate: orderDetails[0].order_date,
             status: orderDetails[0].status,
-            items: orderDetails.map((item) => ({
-                productId: item.product_id,
-                productName: item.product_name,
-                quantity: item.quantity,
-                price: item.price,
-            })),
+            items: orderDetails.map((item) => {
+                // Parse customization JSON and only include if at least one value is not null and type is not null
+                let customObj = null;
+                if (item.customizations) {
+                    try {
+                        const parsed = JSON.parse(item.customizations);
+                        // If all values are null or type is null, treat as no customization
+                        const hasCustomization = Object.values(parsed).some(v => v !== null) && parsed.type !== null;
+                        if (hasCustomization) {
+                            customObj = parsed;
+                        }
+                    } catch (e) { /* ignore parse errors */ }
+                }
+                return {
+                    productId: item.product_id,
+                    productName: item.product_name,
+                    productImage: item.image, // Add image URL
+                    quantity: item.quantity,
+                    price: item.price,
+                    customizations: customObj ? [customObj] : [],
+                };
+            }),
         };
 
         res.status(200).json({ order });
