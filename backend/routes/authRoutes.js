@@ -1,11 +1,21 @@
 const express = require("express");
-const { loginUser, logoutUser } = require("../controllers/authController");
+const { loginUser, logoutUser, forgotPassword, verifyResetCode, resetPassword } = require("../controllers/authController");
 const authenticateUser = require("../middleware/authMiddleware");
+const db = require("../config/db"); // Ensure db is imported
 
 const router = express.Router();
 
 // Login route (public)
 router.post("/login", loginUser);
+
+// Forgot Password route (public)
+router.post("/forgot-password", forgotPassword);
+
+// Verify Reset Code route (public)
+router.post("/verify-reset-code", verifyResetCode);
+
+// Reset Password route (public)
+router.post("/reset-password", resetPassword);
 
 // User profile route (protected)
 router.get("/user-profile", authenticateUser, (req, res) => {

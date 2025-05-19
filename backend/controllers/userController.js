@@ -1,8 +1,8 @@
 const db = require('../config/db');
 
-// Function to get all users
+// Function to get all users (exclude password)
 const getUsers = (req, res) => {
-    const sql = "SELECT id, username, password, role, phone, address FROM users";
+    const sql = "SELECT id, username, email, role, phone, lane1, lane2, city FROM users";
     db.query(sql, (err, results) => {
         if (err) {
             console.error('Error querying the database:', err);
@@ -12,9 +12,9 @@ const getUsers = (req, res) => {
     });
 };
 
-// Controller function to get crafters
+// Function to get crafters (exclude password)
 const getCrafters = (req, res) => {
-    const sql = "SELECT id, username, password, role, phone, address FROM users WHERE role = 'crafter'";
+    const sql = "SELECT id, username, email, role, phone, lane1, lane2, city FROM users WHERE role = 'crafter'";
     db.query(sql, (err, results) => {
         if (err) {
             console.error('Error querying the database:', err);
@@ -26,14 +26,14 @@ const getCrafters = (req, res) => {
 
 // Function to add a new user
 const addUser = (req, res) => {
-    const { id, username, password, role, phone, address } = req.body;
+    const { username, password, email, role, phone, lane1, lane2, city } = req.body;
 
-    if (!id || !username || !password || !role || !phone || !address) {
-        return res.status(400).json({ error: "All fields are required." });
+    if (!username || !password || !email || !role || !phone || !lane1 || !city) {
+        return res.status(400).json({ error: "Username, password, email, role, phone, lane1, and city are required." });
     }
 
-    const sql = "INSERT INTO users (id, username, password, role, phone, address) VALUES (?, ?, ?, ?, ?, ?)";
-    db.query(sql, [id, username, password, role, phone, address], (err, result) => {
+    const sql = "INSERT INTO users (username, password, email, role, phone, lane1, lane2, city) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    db.query(sql, [username, password, email, role, phone, lane1, lane2, city], (err, result) => {
         if (err) {
             console.error("Error inserting user:", err);
             return res.status(500).json({ error: "Database error" });
@@ -42,16 +42,23 @@ const addUser = (req, res) => {
     });
 };
 
-// Function to update a user
+// Function to update a user (exclude password)
 const updateUser = (req, res) => {
     const { id } = req.params;
-    const { username, password, role, phone, address } = req.body;
+    const { username, email, role, phone, lane1, lane2, city } = req.body;
 
-    const sql = "UPDATE users SET username = ?, password = ?, role = ?, phone = ?, address = ? WHERE id = ?";
-    db.query(sql, [username, password, role, phone, address, id], (err, result) => {
+    if (!username || !email || !role || !phone || !lane1 || !city) {
+        return res.status(400).json({ error: "Username, email, role, phone, lane1, and city are required." });
+    }
+
+    const sql = "UPDATE users SET username = ?, email = ?, role = ?, phone = ?, lane1 = ?, lane2 = ?, city = ? WHERE id = ?";
+    db.query(sql, [username, email, role, phone, lane1, lane2, city, id], (err, result) => {
         if (err) {
             console.error("Error updating user:", err);
             return res.status(500).json({ error: "Database error" });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "User not found" });
         }
         res.status(200).json({ message: "User updated successfully!" });
     });
@@ -66,6 +73,9 @@ const deleteUser = (req, res) => {
         if (err) {
             console.error("Error deleting user:", err);
             return res.status(500).json({ error: "Database error" });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "User not found" });
         }
         res.status(200).json({ message: "User deleted successfully" });
     });

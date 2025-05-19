@@ -12,17 +12,25 @@ const getAssignedOrders = async (req, res) => {
                 oi.order_id,
                 pm.product_name,
                 oi.status,
-                cd.customization_type,
-                cd.customization_value,
-                cd.uploaded_image,
-                cd.size_type
+                (SELECT COUNT(*) > 0 FROM customization_details cd2 WHERE cd2.item_id = oi.item_id) AS is_customizable,
+                COALESCE(
+                    (SELECT JSON_OBJECT(
+                        'type', 'text',
+                        'value', MAX(CASE WHEN cd3.customization_type = 'text' THEN cd3.customization_value ELSE NULL END),
+                        'size', MAX(CASE WHEN cd3.customization_type = 'size' THEN cd3.size_type ELSE NULL END),
+                        'image', MAX(CASE WHEN cd3.customization_type = 'image' THEN cd3.uploaded_image ELSE NULL END)
+                    )
+                    FROM customization_details cd3
+                    WHERE cd3.item_id = oi.item_id AND cd3.customization_type IN ('text', 'size', 'image')),
+                    JSON_OBJECT('type', NULL, 'value', NULL, 'size', NULL, 'image', NULL)
+                ) AS customizations
             FROM order_items oi
             INNER JOIN product_master pm ON oi.product_id = pm.product_id
-            LEFT JOIN customization_details cd ON oi.item_id = cd.item_id
             WHERE oi.crafter_id = ?
+            GROUP BY oi.item_id, oi.order_id, pm.product_name, oi.status
         `;
 
-        // Execute the query and log the full result
+        // Execute the query
         const result = await pool.query(query, [crafterId]);
         console.log("Full query result:", result);
 
@@ -35,23 +43,18 @@ const getAssignedOrders = async (req, res) => {
             throw new Error("Query result is not an array");
         }
 
-        // Map rows to formatted assignments
-        const formattedAssignments = rows.map((row) => {
-            const customizationDetails = row.customization_type
-                ? `Type: ${row.customization_type || "N/A"}, Value: ${row.customization_value || "N/A"}, Image: ${row.uploaded_image || "N/A"}, Size: ${row.size_type || "N/A"}`
-                : "No customization";
-
-            return {
-                item_id: row.item_id,
-                order_id: row.order_id,
-                product_name: row.product_name,
-                customization_details: customizationDetails,
-                status: row.status,
-            };
-        });
+        // Process the results to parse customizations
+        const formattedAssignments = rows.map(item => ({
+            item_id: item.item_id,
+            order_id: item.order_id,
+            product_name: item.product_name,
+            status: item.status,
+            is_customizable: item.is_customizable,
+            customizations: item.customizations ? JSON.parse(item.customizations) : { type: null, value: null, size: null, image: null }
+        }));
 
         console.log("Formatted assignments:", formattedAssignments);
-        res.status(200).json(formattedAssignments); // Send all formatted assignments
+        res.status(200).json(formattedAssignments);
     } catch (error) {
         console.error("Error fetching assigned orders:", error);
         res.status(500).json({ message: "Server error" });

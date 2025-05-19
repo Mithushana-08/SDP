@@ -5,17 +5,20 @@ import AdminSidebar from "../../components/Admin/adminsidebar";
 import AdminNavbar from "../../components/Admin/adminnavbar";
 import "./roles.css";
 import "../../components/styles/table.css";
-import "../../components/styles/buttons.css"; // Import button styles
-import "../../components/styles/search-container.css"; // Import search container styles
+import "../../components/styles/buttons.css";
+import "../../components/styles/search-container.css";
 
 const Roles = () => {
     const [users, setUsers] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [showModal, setShowModal] = useState(false);
-    const [newUser, setNewUser] = useState({ id: "", username: "", password: "", role: "", phone: "", address: "" });
+    const [newUser, setNewUser] = useState({ id: "", username: "", password: "", email: "", role: "", phone: "", lane1: "", lane2: "", city: "" });
     const [isEditMode, setIsEditMode] = useState(false);
     const [phoneError, setPhoneError] = useState("");
     const [passwordError, setPasswordError] = useState("");
+    const [emailError, setEmailError] = useState("");
+    const [lane1Error, setLane1Error] = useState("");
+    const [cityError, setCityError] = useState("");
 
     useEffect(() => {
         fetchUsers();
@@ -31,8 +34,14 @@ const Roles = () => {
 
     const handleChange = e => {
         const { name, value } = e.target;
-    
-           
+
+        if (name === "phone") {
+            if (value.length !== 10 || !/^\d+$/.test(value)) {
+                setPhoneError("Phone number must be exactly 10 digits");
+            } else {
+                setPhoneError("");
+            }
+        }
 
         if (name === "password") {
             if (value.length < 6) {
@@ -41,38 +50,102 @@ const Roles = () => {
                 setPasswordError("");
             }
         }
-    
+
+        if (name === "email") {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(value)) {
+                setEmailError("Please enter a valid email address");
+            } else {
+                setEmailError("");
+            }
+        }
+
+        if (name === "lane1") {
+            if (!value.trim()) {
+                setLane1Error("Lane 1 is required");
+            } else {
+                setLane1Error("");
+            }
+        }
+
+        if (name === "city") {
+            if (!value.trim()) {
+                setCityError("City is required");
+            } else {
+                setCityError("");
+            }
+        }
+
         setNewUser({ ...newUser, [name]: value });
     };
-    
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-    
+
         let hasError = false;
-    
-        if (newUser.phone.length !== 10) {
+
+        if (newUser.phone.length !== 10 || !/^\d+$/.test(newUser.phone)) {
             setPhoneError("Phone number must be exactly 10 digits");
             hasError = true;
         } else {
             setPhoneError("");
         }
-    
-        if (newUser.password.length < 6) {
+
+        if (!isEditMode && newUser.password.length < 6) {
             setPasswordError("Password must be at least 6 characters long");
             hasError = true;
         } else {
             setPasswordError("");
         }
-    
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(newUser.email)) {
+            setEmailError("Please enter a valid email address");
+            hasError = true;
+        } else {
+            setEmailError("");
+        }
+
+        if (!newUser.lane1.trim()) {
+            setLane1Error("Lane 1 is required");
+            hasError = true;
+        } else {
+            setLane1Error("");
+        }
+
+        if (!newUser.city.trim()) {
+            setCityError("City is required");
+            hasError = true;
+        } else {
+            setCityError("");
+        }
+
         if (hasError) {
             return;
         }
-    
+
         try {
             if (isEditMode) {
-                await axios.put(`http://localhost:5000/api/user/users/${newUser.id}`, newUser);
+                await axios.put(`http://localhost:5000/api/user/users/${newUser.id}`, {
+                    username: newUser.username,
+                    email: newUser.email,
+                    role: newUser.role,
+                    phone: newUser.phone,
+                    lane1: newUser.lane1,
+                    lane2: newUser.lane2,
+                    city: newUser.city
+                });
             } else {
-                await axios.post("http://localhost:5000/api/user/users", newUser);
+                await axios.post("http://localhost:5000/api/user/users", {
+                    username: newUser.username,
+                    password: newUser.password,
+                    email: newUser.email,
+                    role: newUser.role,
+                    phone: newUser.phone,
+                    lane1: newUser.lane1,
+                    lane2: newUser.lane2,
+                    city: newUser.city
+                });
             }
             closeModal();
             fetchUsers();
@@ -82,7 +155,7 @@ const Roles = () => {
     };
 
     const handleEdit = (user) => {
-        setNewUser(user);
+        setNewUser({ ...user, password: "" }); // Reset password field for edit
         setIsEditMode(true);
         setShowModal(true);
     };
@@ -95,16 +168,33 @@ const Roles = () => {
     };
 
     const openAddModal = () => {
-        setNewUser({ id: "", username: "", password: "", role: "", phone: "", address: "" });
+        setNewUser({ id: "", username: "", password: "", email: "", role: "", phone: "", lane1: "", lane2: "", city: "" });
         setIsEditMode(false);
         setShowModal(true);
     };
 
-    const closeModal = () => setShowModal(false);
+    const closeModal = () => {
+        setShowModal(false);
+        setPhoneError("");
+        setPasswordError("");
+        setEmailError("");
+        setLane1Error("");
+        setCityError("");
+    };
+
+    // Combine address fields for display
+    const formatAddress = (user) => {
+        const parts = [user.lane1];
+        if (user.lane2) parts.push(user.lane2);
+        parts.push(user.city);
+        return parts.join(", ");
+    };
 
     const filteredUsers = users.filter(user => 
         user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.role.toLowerCase().includes(searchTerm.toLowerCase())
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        formatAddress(user).toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -135,7 +225,7 @@ const Roles = () => {
                             <tr>
                                 <th>User ID</th>
                                 <th>Username</th>
-                                <th>Password</th>
+                                <th>Email</th>
                                 <th>Address</th>
                                 <th>Phone</th>
                                 <th>Role</th>
@@ -147,8 +237,8 @@ const Roles = () => {
                                 <tr key={user.id}>
                                     <td>{user.id}</td>
                                     <td>{user.username}</td>
-                                    <td>{user.password}</td>
-                                    <td>{user.address}</td>
+                                    <td>{user.email}</td>
+                                    <td>{formatAddress(user)}</td>
                                     <td>{user.phone}</td>
                                     <td>{user.role}</td>
                                     <td>
@@ -163,14 +253,77 @@ const Roles = () => {
                         <div className="modal-overlay">
                             <div className="modal">
                                 <form onSubmit={handleSubmit}>
-                                    <input name="id" placeholder="User ID" value={newUser.id} onChange={handleChange} required />
-                                    <input name="username" placeholder="Username" value={newUser.username} onChange={handleChange} required />
-                                    <input name="password" type="password" placeholder="Password" value={newUser.password} onChange={handleChange} required />
+                                    {isEditMode && (
+                                        <input
+                                            name="id"
+                                            placeholder="User ID"
+                                            value={newUser.id}
+                                            onChange={handleChange}
+                                            disabled
+                                        />
+                                    )}
+                                    <input
+                                        name="username"
+                                        placeholder="Username"
+                                        value={newUser.username}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                    {!isEditMode && (
+                                        <input
+                                            name="password"
+                                            type="password"
+                                            placeholder="Password"
+                                            value={newUser.password}
+                                            onChange={handleChange}
+                                            required
+                                        />
+                                    )}
                                     {passwordError && <span className="error-message">{passwordError}</span>}
-                                    <input name="address" placeholder="Address" value={newUser.address} onChange={handleChange} required />
-                                    <input name="phone" placeholder="Phone" value={newUser.phone} onChange={handleChange} required />
+                                    <input
+                                        name="email"
+                                        placeholder="Email"
+                                        value={newUser.email}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                    {emailError && <span className="error-message">{emailError}</span>}
+                                    <input
+                                        name="lane1"
+                                        placeholder="Lane 1"
+                                        value={newUser.lane1}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                    {lane1Error && <span className="error-message">{lane1Error}</span>}
+                                    <input
+                                        name="lane2"
+                                        placeholder="Lane 2 (Optional)"
+                                        value={newUser.lane2}
+                                        onChange={handleChange}
+                                    />
+                                    <input
+                                        name="city"
+                                        placeholder="City"
+                                        value={newUser.city}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                    {cityError && <span className="error-message">{cityError}</span>}
+                                    <input
+                                        name="phone"
+                                        placeholder="Phone"
+                                        value={newUser.phone}
+                                        onChange={handleChange}
+                                        required
+                                    />
                                     {phoneError && <span className="error-message">{phoneError}</span>}
-                                    <select name="role" value={newUser.role} onChange={handleChange} required>
+                                    <select
+                                        name="role"
+                                        value={newUser.role}
+                                        onChange={handleChange}
+                                        required
+                                    >
                                         <option value="">Select Role</option>
                                         <option value="admin">Admin</option>
                                         <option value="crafter">Crafter</option>
@@ -188,6 +341,6 @@ const Roles = () => {
             </div>
         </div>
     );
+};
 
-}
 export default Roles;

@@ -43,7 +43,7 @@ const CrafterDashboard = () => {
             try {
                 setLoading(true);
                 setError(null);
-                const token = localStorage.getItem('token'); // Adjust key if different
+                const token = sessionStorage.getItem('token'); // Changed from localStorage
                 if (!token) {
                     throw new Error('No authentication token found. Please log in.');
                 }

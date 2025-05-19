@@ -3,6 +3,7 @@ import AdminSidebar from "../../components/Admin/adminsidebar";
 import AdminNavbar from "../../components/Admin/adminnavbar";
 import "./reports.css";
 import { FiDownload } from 'react-icons/fi';
+import { IoClose } from 'react-icons/io5';
 import { Bar, Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
 import jsPDF from 'jspdf';
@@ -12,7 +13,26 @@ import { saveAs } from 'file-saver';
 // Register Chart.js components
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
-// Helper function to format date like "Saturday, May 17, 2025"
+// Modal Component for PDF Preview
+const PDFPreviewModal = ({ isOpen, pdfUrl, onCancel }) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="modal-overlay1">
+            <div className="modal-content1">
+                <button className="modal-close-button" onClick={onCancel}>
+                    <IoClose size={24} />
+                </button>
+                <h2>PDF Preview</h2>
+                <div className="pdf-preview1">
+                    <iframe src={pdfUrl} title="PDF Preview" width="100%" height="100%" />
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Helper functions
 const formatDate = (date) => {
     return date.toLocaleDateString('en-US', {
         weekday: 'long',
@@ -22,7 +42,6 @@ const formatDate = (date) => {
     });
 };
 
-// Helper function to get filename suffix
 const getFilenameSuffix = (startDate, endDate) => {
     if (startDate && endDate) {
         return `${startDate}_to_${endDate}`;
@@ -41,6 +60,10 @@ const Reports = () => {
     const [crafters, setCrafters] = useState([]);
     const [selectedCrafter, setSelectedCrafter] = useState('all');
     const [activeReport, setActiveReport] = useState('inventory');
+    const [showPreviewModal, setShowPreviewModal] = useState(false);
+    const [pdfPreviewUrl, setPdfPreviewUrl] = useState('');
+    const [pdfBlob, setPdfBlob] = useState(null);
+    const [pdfFileName, setPdfFileName] = useState('');
 
     useEffect(() => {
         const fetchCrafters = async () => {
@@ -133,12 +156,10 @@ const Reports = () => {
             alert('No inventory data to download');
             return;
         }
-
         const headers = ['Product ID,Product Name,Category,Base Price (Rs.),Stock Quantity,Last Updated'];
         const csvRows = inventoryData.map(item =>
             `${item.product_id},${item.product_name},${item.category_name || 'Uncategorized'},${item.base_price.toFixed(2)},${item.stock_qty || 0},${new Date(item.last_updated).toLocaleDateString()}`
         );
-
         const csvContent = [...headers, ...csvRows].join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv' });
         saveAs(blob, `inventory_report_${getFilenameSuffix(startDate, endDate)}.csv`);
@@ -149,12 +170,10 @@ const Reports = () => {
             alert('No orders data to download');
             return;
         }
-
         const headers = ['Order ID,Order Date,Total Amount (Rs.),Status,Shipping Address'];
         const csvRows = ordersData.orders.map(item =>
             `${item.order_id},${new Date(item.order_date).toLocaleDateString()},${item.total_amount.toFixed(2)},${item.status},${item.shipping_address}`
         );
-
         const csvContent = [...headers, ...csvRows].join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv' });
         saveAs(blob, `orders_report_${getFilenameSuffix(startDate, endDate)}.csv`);
@@ -165,38 +184,32 @@ const Reports = () => {
             alert('No crafter performance data to download');
             return;
         }
-
         const headers = ['Crafter ID,Crafter Name,Product Name,Category,Total Uploads,Approved,Rejected,Approval Rate (%),Order Assignments'];
         const csvRows = crafterPerformanceData.crafters.map(item =>
-            `${item.crafter_id},${item.crafter_name},${item.product_name || 'All'},${item.category_name || 'All'},${item.total_uploads},${item.approved_uploads},${item.rejected_uploads},${item.approval_rate.toFixed(2)},${item.order_assignments}`
+            `${item.crafter_id},${item.crafter_name},${item.product_name || 'All'},${item.category_name || 'All'},${item.total_uploads},${item.approved_uploads},${item.rejected_Uploads},${item.approval_rate.toFixed(2)},${item.order_assignments}`
         );
-
         const csvContent = [...headers, ...csvRows].join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv' });
         saveAs(blob, `crafter_performance_report_${getFilenameSuffix(startDate, endDate)}.csv`);
     };
 
-    const handleDownloadInventoryPDF = async () => {
-    if (inventoryData.length === 0) {
-        alert('No inventory data to download');
+    const generatePDFAndPreview = async (reportContainerSelector, reportTitle, fileName) => {
+    const reportContainer = document.querySelector(reportContainerSelector);
+    if (!reportContainer) {
+        alert('Report container not found');
         return;
     }
 
-    const reportContainer = document.querySelector('.inventory-report-container');
-    if (!reportContainer) return;
-
     try {
-        // Add a slight delay to ensure charts are fully rendered
         await new Promise(resolve => setTimeout(resolve, 500));
-
-        const canvas = await html2canvas(reportContainer, { 
-            scale: 3, 
-            useCORS: true, 
+        const canvas = await html2canvas(reportContainer, {
+            scale: 3,
+            useCORS: true,
             backgroundColor: '#ffffff',
             windowWidth: reportContainer.scrollWidth,
-            windowHeight: reportContainer.scrollHeight 
+            windowHeight: reportContainer.scrollHeight
         });
-        console.log('Captured canvas dimensions:', canvas.width, canvas.height); // Debug
+        console.log('Captured canvas dimensions:', canvas.width, canvas.height);
         const imgData = canvas.toDataURL('image/png', 1.0);
 
         const pdf = new jsPDF('p', 'mm', 'a4');
@@ -206,23 +219,91 @@ const Reports = () => {
         const contentWidth = pdfWidth - 2 * margin;
         const imgWidth = contentWidth;
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        const pageHeight = pdfHeight - 2 * margin - 30;
-        const totalPages = Math.ceil(imgHeight / pageHeight);
+        const pageHeight = pdfHeight - 2 * margin - 40; // Usable height per page (accounting for header and footer)
 
+        // Calculate chart-wrapper positions and heights
+        const chartWrappers = reportContainer.querySelectorAll('.chart-wrapper');
+        const chartPositions = [];
+        for (const chart of chartWrappers) {
+            const rect = chart.getBoundingClientRect();
+            const canvasRect = reportContainer.getBoundingClientRect();
+            const relativeTop = rect.top - canvasRect.top; // Position relative to report container
+            const chartHeight = rect.height; // Height of chart-wrapper
+            const scaledTop = (relativeTop * imgHeight) / canvas.height; // Scale to PDF coordinates
+            const scaledHeight = (chartHeight * imgHeight) / canvas.height; // Scale to PDF coordinates
+            chartPositions.push({ top: scaledTop, height: scaledHeight });
+        }
+
+        // Header for the first page
         pdf.setDrawColor(33, 150, 243);
         pdf.setLineWidth(0.5);
         pdf.rect(5, 5, 200, 287);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(75, 192, 192);
         pdf.setFontSize(18);
-        pdf.text('Crafttary Inventory Report', 105, 15, { align: 'center' });
+        pdf.text('Crafttary', 105, 15, { align: 'center' });
         pdf.setFontSize(12);
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(0, 0, 0);
-        pdf.text(`Generated on: ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })}`, 105, 22, { align: 'center' });
+        pdf.text('Elagady, Kopay North, Kopay, Jaffna', 105, 22, { align: 'center' });
 
-        for (let page = 0; page < totalPages; page++) {
-            if (page > 0) {
+        let pageNumber = 1;
+        let currentCanvasY = 0; // Current Y position in the canvas
+        let totalPages = Math.ceil(imgHeight / pageHeight); // Initial estimate
+
+        // Process each page
+        while (currentCanvasY < imgHeight) {
+            let srcY = currentCanvasY * (canvas.height / imgHeight);
+            let srcHeight = Math.min(pageHeight, imgHeight - currentCanvasY) * (canvas.height / imgHeight);
+            let pdfPageHeight = Math.min(pageHeight, imgHeight - currentCanvasY);
+
+            // Check if a chart-wrapper would be split
+            let adjustedSrcHeight = srcHeight;
+            for (const chart of chartPositions) {
+                const chartStartY = chart.top;
+                const chartEndY = chart.top + chart.height;
+                const pageStartY = currentCanvasY;
+                const pageEndY = currentCanvasY + pdfPageHeight;
+
+                // If a chart starts within this page but doesn't fully fit
+                if (chartStartY >= pageStartY && chartStartY < pageEndY && chartEndY > pageEndY) {
+                    adjustedSrcHeight = (chartStartY - pageStartY) * (canvas.height / imgHeight);
+                    pdfPageHeight = chartStartY - pageStartY;
+                    break;
+                }
+            }
+
+            // Skip rendering if adjusted height is zero or negative (prevents empty pages)
+            if (adjustedSrcHeight <= 0) {
+                currentCanvasY += pdfPageHeight;
+                continue;
+            }
+
+            // Create a temporary canvas for the current page
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = adjustedSrcHeight;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(canvas, 0, srcY, canvas.width, adjustedSrcHeight, 0, 0, canvas.width, adjustedSrcHeight);
+
+            const pageImgData = tempCanvas.toDataURL('image/png', 1.0);
+            pdf.addImage(pageImgData, 'PNG', margin, 30, imgWidth, pdfPageHeight, undefined, 'FAST');
+
+            // Footer for the current page
+            pdf.setFontSize(10);
+            pdf.setTextColor(0, 0, 0);
+            pdf.text(
+                `Generated on: ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })} | Crafttary`,
+                105,
+                pdfHeight - 15,
+                { align: 'center' }
+            );
+            pdf.text(`Page ${pageNumber} of ${totalPages}`, 105, pdfHeight - 10, { align: 'center' });
+
+            currentCanvasY += pdfPageHeight;
+
+            // Add a new page if more content remains
+            if (currentCanvasY < imgHeight) {
                 pdf.addPage();
                 pdf.setDrawColor(33, 150, 243);
                 pdf.setLineWidth(0.5);
@@ -230,192 +311,71 @@ const Reports = () => {
                 pdf.setFont('helvetica', 'bold');
                 pdf.setTextColor(75, 192, 192);
                 pdf.setFontSize(18);
-                pdf.text('Crafttary Inventory Report (Continued)', 105, 15, { align: 'center' });
+                pdf.text('Crafttary', 105, 15, { align: 'center' });
                 pdf.setFontSize(12);
                 pdf.setFont('helvetica', 'normal');
                 pdf.setTextColor(0, 0, 0);
-                pdf.text(`Page ${page + 1} of ${totalPages}`, 105, 22, { align: 'center' });
+                pdf.text('Elagady, Kopay North, Kopay, Jaffna', 105, 22, { align: 'center' });
+                pageNumber++;
             }
-
-            const srcY = page * pageHeight * (canvas.height / imgHeight);
-            const srcHeight = Math.min(pageHeight * (canvas.height / imgHeight), canvas.height - srcY);
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = canvas.width;
-            tempCanvas.height = srcHeight;
-            const tempCtx = tempCanvas.getContext('2d');
-            tempCtx.drawImage(canvas, 0, srcY, canvas.width, srcHeight, 0, 0, canvas.width, srcHeight);
-
-            const pageImgData = tempCanvas.toDataURL('image/png', 1.0);
-            pdf.addImage(pageImgData, 'PNG', margin, 30, imgWidth, (srcHeight * imgWidth) / canvas.width, undefined, 'FAST');
-
-            pdf.setFontSize(10);
-            pdf.text(`Page ${page + 1} of ${totalPages}`, 105, pdfHeight - 10, { align: 'center' });
         }
 
-        pdf.save(`inventory_report_${getFilenameSuffix(startDate, endDate)}.pdf`);
+        // Update total pages (recalculate to ensure accuracy)
+        totalPages = pageNumber;
+
+        const pdfBlob = pdf.output('blob');
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+        setPdfPreviewUrl(pdfUrl);
+        setPdfBlob(pdfBlob);
+        setPdfFileName(fileName);
+        setShowPreviewModal(true);
     } catch (error) {
-        console.error('Error generating inventory PDF:', error);
-        alert('Error generating inventory PDF');
+        console.error('Error generating PDF:', error);
+        alert('Error generating PDF');
     }
 };
-    const handleDownloadOrdersPDF = async () => {
+    const handleDownloadInventoryPDF = () => {
+        if (inventoryData.length === 0) {
+            alert('No inventory data to download');
+            return;
+        }
+        generatePDFAndPreview(
+            '.inventory-report-container',
+            'Crafttary Inventory Report',
+            `inventory_report_${getFilenameSuffix(startDate, endDate)}.pdf`
+        );
+    };
+
+    const handleDownloadOrdersPDF = () => {
         if (ordersData.orders.length === 0) {
             alert('No orders data to download');
             return;
         }
-
-        const reportContainer = document.querySelector('.orders-report-container');
-        if (!reportContainer) return;
-
-        try {
-            const canvas = await html2canvas(reportContainer, { 
-                scale: 3, 
-                useCORS: true, 
-                backgroundColor: '#ffffff',
-                windowWidth: reportContainer.scrollWidth,
-                windowHeight: reportContainer.scrollHeight 
-            });
-            const imgData = canvas.toDataURL('image/png', 1.0);
-
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = 210;
-            const pdfHeight = 297;
-            const margin = 10;
-            const contentWidth = pdfWidth - 2 * margin;
-            const imgWidth = contentWidth;
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            const pageHeight = pdfHeight - 2 * margin - 30;
-            const totalPages = Math.ceil(imgHeight / pageHeight);
-
-            pdf.setDrawColor(33, 150, 243);
-            pdf.setLineWidth(0.5);
-            pdf.rect(5, 5, 200, 287);
-
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(75, 192, 192);
-            pdf.setFontSize(18);
-            pdf.text('Crafttary Orders Report', 105, 15, { align: 'center' });
-            pdf.setFontSize(12);
-            pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(0, 0, 0);
-            pdf.text(`Generated on: ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })}`, 105, 22, { align: 'center' });
-
-            for (let page = 0; page < totalPages; page++) {
-                if (page > 0) {
-                    pdf.addPage();
-                    pdf.setDrawColor(33, 150, 243);
-                    pdf.setLineWidth(0.5);
-                    pdf.rect(5, 5, 200, 287);
-                    pdf.setFont('helvetica', 'bold');
-                    pdf.setTextColor(75, 192, 192);
-                    pdf.setFontSize(18);
-                    pdf.text('Crafttary Orders Report (Continued)', 105, 15, { align: 'center' });
-                    pdf.setFontSize(12);
-                    pdf.setFont('helvetica', 'normal');
-                    pdf.setTextColor(0, 0, 0);
-                    pdf.text(`Page ${page + 1} of ${totalPages}`, 105, 22, { align: 'center' });
-                }
-
-                const srcY = page * pageHeight * (canvas.height / imgHeight);
-                const srcHeight = Math.min(pageHeight * (canvas.height / imgHeight), canvas.height - srcY);
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = canvas.width;
-                tempCanvas.height = srcHeight;
-                const tempCtx = tempCanvas.getContext('2d');
-                tempCtx.drawImage(canvas, 0, srcY, canvas.width, srcHeight, 0, 0, canvas.width, srcHeight);
-
-                const pageImgData = tempCanvas.toDataURL('image/png', 1.0);
-                pdf.addImage(pageImgData, 'PNG', margin, 30, imgWidth, (srcHeight * imgWidth) / canvas.width, undefined, 'FAST');
-
-                pdf.setFontSize(10);
-                pdf.text(`Page ${page + 1} of ${totalPages}`, 105, pdfHeight - 10, { align: 'center' });
-            }
-
-            pdf.save(`orders_report_${getFilenameSuffix(startDate, endDate)}.pdf`);
-        } catch (error) {
-            console.error('Error generating orders PDF:', error);
-            alert('Error generating orders PDF');
-        }
+        generatePDFAndPreview(
+            '.orders-report-container',
+            'Crafttary Orders Report',
+            `orders_report_${getFilenameSuffix(startDate, endDate)}.pdf`
+        );
     };
 
-    const handleDownloadCrafterPerformancePDF = async () => {
+    const handleDownloadCrafterPerformancePDF = () => {
         if (crafterPerformanceData.crafters.length === 0) {
             alert('No crafter performance data to download');
             return;
         }
+        generatePDFAndPreview(
+            '.crafter-performance-container',
+            'Crafttary Crafter Performance Report',
+            `crafter_performance_report_${getFilenameSuffix(startDate, endDate)}.pdf`
+        );
+    };
 
-        const reportContainer = document.querySelector('.crafter-performance-container');
-        if (!reportContainer) return;
-
-        try {
-            const canvas = await html2canvas(reportContainer, { 
-                scale: 3, 
-                useCORS: true, 
-                backgroundColor: '#ffffff',
-                windowWidth: reportContainer.scrollWidth,
-                windowHeight: reportContainer.scrollHeight 
-            });
-            const imgData = canvas.toDataURL('image/png', 1.0);
-
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = 210;
-            const pdfHeight = 297;
-            const margin = 10;
-            const contentWidth = pdfWidth - 2 * margin;
-            const imgWidth = contentWidth;
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            const pageHeight = pdfHeight - 2 * margin - 30;
-            const totalPages = Math.ceil(imgHeight / pageHeight);
-
-            pdf.setDrawColor(33, 150, 243);
-            pdf.setLineWidth(0.5);
-            pdf.rect(5, 5, 200, 287);
-
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(75, 192, 192);
-            pdf.setFontSize(18);
-            pdf.text('Crafttary Crafter Performance Report', 105, 15, { align: 'center' });
-            pdf.setFontSize(12);
-            pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(0, 0, 0);
-            pdf.text(`Generated on: ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })}`, 105, 22, { align: 'center' });
-
-            for (let page = 0; page < totalPages; page++) {
-                if (page > 0) {
-                    pdf.addPage();
-                    pdf.setDrawColor(33, 150, 243);
-                    pdf.setLineWidth(0.5);
-                    pdf.rect(5, 5, 200, 287);
-                    pdf.setFont('helvetica', 'bold');
-                    pdf.setTextColor(75, 192, 192);
-                    pdf.setFontSize(18);
-                    pdf.text('Crafttary Crafter Performance Report (Continued)', 105, 15, { align: 'center' });
-                    pdf.setFontSize(12);
-                    pdf.setFont('helvetica', 'normal');
-                    pdf.setTextColor(0, 0, 0);
-                    pdf.text(`Page ${page + 1} of ${totalPages}`, 105, 22, { align: 'center' });
-                }
-
-                const srcY = page * pageHeight * (canvas.height / imgHeight);
-                const srcHeight = Math.min(pageHeight * (canvas.height / imgHeight), canvas.height - srcY);
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = canvas.width;
-                tempCanvas.height = srcHeight;
-                const tempCtx = tempCanvas.getContext('2d');
-                tempCtx.drawImage(canvas, 0, srcY, canvas.width, srcHeight, 0, 0, canvas.width, srcHeight);
-
-                const pageImgData = tempCanvas.toDataURL('image/png', 1.0);
-                pdf.addImage(pageImgData, 'PNG', margin, 30, imgWidth, (srcHeight * imgWidth) / canvas.width, undefined, 'FAST');
-
-                pdf.setFontSize(10);
-                pdf.text(`Page ${page + 1} of ${totalPages}`, 105, pdfHeight - 10, { align: 'center' });
-            }
-
-            pdf.save(`crafter_performance_report_${getFilenameSuffix(startDate, endDate)}.pdf`);
-        } catch (error) {
-            console.error('Error generating crafter performance PDF:', error);
-            alert('Error generating crafter performance PDF');
-        }
+    const handleCancelDownload = () => {
+        setShowPreviewModal(false);
+        URL.revokeObjectURL(pdfPreviewUrl);
+        setPdfPreviewUrl('');
+        setPdfBlob(null);
+        setPdfFileName('');
     };
 
     const totalStockValue = inventoryData.reduce((sum, item) => sum + (item.base_price * (item.stock_qty || 0)), 0);
@@ -765,14 +725,20 @@ const Reports = () => {
                         </div>
                     </div>
 
+                    <PDFPreviewModal
+                        isOpen={showPreviewModal}
+                        pdfUrl={pdfPreviewUrl}
+                        onCancel={handleCancelDownload}
+                    />
+
                     {inventoryData.length === 0 && ordersData.orders.length === 0 && crafterPerformanceData.crafters.length === 0 && !isLoading && (
-                        <div className="card no-data">
-                            <p>No records available for the selected date range or crafter.</p>
+                        <div >
+                            <p></p>
                         </div>
                     )}
 
                     {inventoryData.length > 0 && activeReport === 'inventory' && (
-                        <div className="inventory-report-container card">
+                        <div className="inventory-report-container ">
                             <div className="report-header">
                                 <h2>Inventory Report</h2>
                                 <p>
@@ -880,14 +846,12 @@ const Reports = () => {
                                     </div>
                                 </div>
                             </div>
-                            <p className="report-footer">
-                                Generated on: {new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })} | Crafttary Inventory Report
-                            </p>
+                           
                         </div>
                     )}
 
                     {ordersData.orders.length > 0 && activeReport === 'orders' && (
-                        <div className="orders-report-container card">
+                        <div className="orders-report-container ">
                             <div className="report-header">
                                 <h2>Orders Report</h2>
                                 <p>
@@ -1053,14 +1017,12 @@ const Reports = () => {
                                     </div>
                                 </div>
                             </div>
-                            <p className="report-footer">
-                                Generated on: {new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })} | Crafttary Orders Report
-                            </p>
+                           
                         </div>
                     )}
 
                     {crafterPerformanceData.crafters.length > 0 && activeReport === 'crafter' && (
-                        <div className="crafter-performance-container card">
+                        <div className="crafter-performance-container ">
                             <div className="report-header">
                                 <h2>Crafter Performance Report</h2>
                                 <p>
@@ -1183,14 +1145,12 @@ const Reports = () => {
                                     </div>
                                 </div>
                             </div>
-                            <p className="report-footer">
-                                Generated on: {new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })} | Crafttary Crafter Performance Report
-                            </p>
+                           
                         </div>
                     )}
 
                     {inventoryData.length === 0 && ordersData.orders.length === 0 && crafterPerformanceData.crafters.length === 0 && (
-                        <div className="card no-data">
+                        <div className=" no-data">
                             <p>No data available. Please generate a report.</p>
                         </div>
                     )}

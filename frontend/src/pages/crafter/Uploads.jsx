@@ -23,11 +23,11 @@ const Uploads = () => {
         crafter_id: ""
     });
 
-    const [editMode, setEditMode] = useState(false); // State to track if we're in edit mode
-    const [selectedUploadId, setSelectedUploadId] = useState(null); // Track which upload is being edited
+    const [editMode, setEditMode] = useState(false);
+    const [selectedUploadId, setSelectedUploadId] = useState(null);
 
     useEffect(() => {
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token"); // Changed from localStorage
 
         if (!token) {
             console.error("No token found, please login again.");
@@ -43,14 +43,12 @@ const Uploads = () => {
                 });
                 if (!response.ok) throw new Error("Failed to fetch crafter ID");
         
-                const crafters = await response.json(); // Now expecting an array
+                const crafters = await response.json();
                 console.log("Crafter response:", crafters);
         
-                // Get the logged in user ID from the token
                 const decodedToken = JSON.parse(atob(token.split('.')[1]));
                 const loggedInUserId = decodedToken.id;
                 
-                // Find the crafter that matches the logged in user ID
                 const currentCrafter = crafters.find(crafter => crafter.id === loggedInUserId);
         
                 if (currentCrafter) {
@@ -72,7 +70,7 @@ const Uploads = () => {
     }, []);
 
     const fetchUploads = async (crafterId) => {
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token"); // Changed from localStorage
 
         if (!token) {
             console.error("No token found for fetching uploads.");
@@ -94,7 +92,7 @@ const Uploads = () => {
     };
 
     const fetchProducts = async () => {
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token"); // Changed from localStorage
 
         if (!token) {
             console.error("No token found for fetching products.");
@@ -140,7 +138,7 @@ const Uploads = () => {
         e.preventDefault();
         console.log("Form Data to be sent:", formData);
 
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token"); // Changed from localStorage
 
         if (!token) {
             console.error("No token found for submitting upload.");
@@ -150,7 +148,6 @@ const Uploads = () => {
         try {
             let response;
             if (editMode) {
-                // Edit existing upload
                 response = await fetch(`http://localhost:5000/api/upload/${selectedUploadId}`, {
                     method: "PUT",
                     headers: {
@@ -160,7 +157,6 @@ const Uploads = () => {
                     body: JSON.stringify(formData),
                 });
             } else {
-                // Create new upload
                 response = await fetch("http://localhost:5000/api/upload", {
                     method: "POST",
                     headers: {
@@ -193,13 +189,13 @@ const Uploads = () => {
                 quantity: uploadToEdit.quantity,
             });
             setSelectedUploadId(uploadId);
-            setEditMode(true); // Enable edit mode
+            setEditMode(true);
             setShowModal(true);
         }
     };
 
     const handleDelete = async (workId) => {
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token"); // Changed from localStorage
     
         if (!token) {
             console.error("No token found for deleting upload.");
@@ -229,7 +225,7 @@ const Uploads = () => {
     );
 
     return (
-        <div className="uploads-page">
+        <div className="Uploads-page">
             <CrafterSidebar />
             <div className="main-content">
                 <AdminNavbar />

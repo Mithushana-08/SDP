@@ -15,7 +15,7 @@
   display: flex;
   max-width: 100rem;
   width: 60%;
-  height: 30rem; /* Corrected from heightBs */
+  height: 30rem;
   background-color: #be9b7b42;
   border-radius: 50px;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
@@ -60,15 +60,15 @@
 
 .login-title {
   font-size: 1.875rem;
-  font-weight: 700 cock;
+  font-weight: 700;
   color: #400a0a;
-  font-family: poppins;
+  font-family: Poppins, sans-serif;
 }
 
 .login-subtitle {
   color: #081122a5;
   margin-top: 0.5rem;
-  font-family: popins;
+  font-family: Poppins, sans-serif;
 }
 
 .login-form {
@@ -163,6 +163,32 @@
   background-color: #894e3f;
 }
 
+.forgot-password-link {
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.forgot-password-link a {
+  color: #c49a70;
+  text-decoration: none;
+  font-family: Poppins, sans-serif;
+  font-size: 0.875rem;
+  transition: color 0.3s;
+}
+
+.forgot-password-link a:hover {
+  color: #894e3f;
+  text-decoration: underline;
+}
+
+.error-message {
+  color: #ff4d4d;
+  text-align: center;
+  font-family: Poppins, sans-serif;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
 /* Responsive adjustments */
 
 /* Large screens (≥1200px) */
@@ -214,6 +240,14 @@
     font-size: 1.125rem;
   }
 
+  .forgot-password-link a {
+    font-size: 1rem;
+  }
+
+  .error-message {
+    font-size: 1rem;
+  }
+
   .login-image img {
     margin-top: 3rem;
   }
@@ -261,6 +295,14 @@
   .login-button {
     width: 70%;
     max-width: 180px;
+  }
+
+  .forgot-password-link a {
+    font-size: 0.75rem;
+  }
+
+  .error-message {
+    font-size: 0.75rem;
   }
 }
 
@@ -315,5 +357,13 @@
 
   .login-subtitle {
     font-size: 0.75rem;
+  }
+
+  .forgot-password-link a {
+    font-size: 0.7rem;
+  }
+
+  .error-message {
+    font-size: 0.7rem;
   }
 }

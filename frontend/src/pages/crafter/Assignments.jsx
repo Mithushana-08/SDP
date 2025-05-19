@@ -17,7 +17,7 @@ const Assignments = () => {
         axios
             .get("http://localhost:5000/api/crafter/assigned-orders", {
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    Authorization: `Bearer ${sessionStorage.getItem("token")}`,
                 },
             })
             .then((response) => {
@@ -36,11 +36,24 @@ const Assignments = () => {
         setSearchTerm(event.target.value);
     };
 
+    // Format customizations for display
+    const formatCustomizations = (customizations, isCustomizable) => {
+        if (!isCustomizable || !customizations || (!customizations.value && !customizations.size && !customizations.image)) {
+            return "No customization";
+        }
+        const parts = [];
+        if (customizations.value) parts.push(`Text: ${customizations.value}`);
+        if (customizations.size) parts.push(`Size: ${customizations.size}`);
+        if (customizations.image) parts.push(`Image: ${customizations.image}`);
+        return parts.join(", ") || "No customization";
+    };
+
     // Filter assignments based on search term
     const filteredAssignments = assignments.filter((assignment) => {
+        const customizationsString = formatCustomizations(assignment.customizations, assignment.is_customizable);
         return (
             (assignment.product_name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (assignment.customization_details || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+            customizationsString.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (assignment.status || "").toLowerCase().includes(searchTerm.toLowerCase())
         );
     });
@@ -65,10 +78,18 @@ const Assignments = () => {
     // Update status in the database
     const updateStatusInDatabase = (itemId, status) => {
         axios
-            .put("http://localhost:5000/api/crafter/update-status", {
-                item_id: itemId,
-                status: status,
-            })
+            .put(
+                "http://localhost:5000/api/crafter/update-status",
+                {
+                    item_id: itemId,
+                    status: status,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+                    },
+                }
+            )
             .then((response) => {
                 console.log("Status updated successfully:", response.data);
                 alert("Status updated successfully!");
@@ -119,8 +140,8 @@ const Assignments = () => {
                                         <td>{assignment.item_id}</td>
                                         <td>{assignment.order_id}</td>
                                         <td>{assignment.product_name}</td>
-                                        <td>{assignment.customization_details}</td>
-                                        <td>{assignment.status}</td> {/* Display the current status */}
+                                        <td>{formatCustomizations(assignment.customizations, assignment.is_customizable)}</td>
+                                        <td>{assignment.status}</td>
                                         <td>
                                             <select
                                                 value={assignment.status}

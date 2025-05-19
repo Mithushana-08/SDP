@@ -12,7 +12,7 @@ const AdminNavbar = () => {
 
     // Fetch user profile to get username
     useEffect(() => {
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token"); // Changed from localStorage
         if (!token) {
             console.warn("No token found, skipping profile fetch");
             return;
@@ -54,9 +54,9 @@ const AdminNavbar = () => {
     // Handle Logout
     const handleLogout = async () => {
         try {
-            const token = localStorage.getItem("token");
+            const token = sessionStorage.getItem("token"); // Changed from localStorage
             if (!token) {
-                localStorage.removeItem("token");
+                sessionStorage.removeItem("token"); // Changed from localStorage
                 navigate("/");
                 return;
             }
@@ -73,11 +73,11 @@ const AdminNavbar = () => {
                 throw new Error("Logout request failed");
             }
 
-            localStorage.removeItem("token");
+            sessionStorage.removeItem("token"); // Changed from localStorage
             navigate("/");
         } catch (error) {
             console.error("Error during logout:", error);
-            localStorage.removeItem("token");
+            sessionStorage.removeItem("token"); // Changed from localStorage
             navigate("/");
         }
     };
