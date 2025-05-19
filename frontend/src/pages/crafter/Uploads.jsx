@@ -4,6 +4,8 @@ import AdminNavbar from "../../components/Admin/adminnavbar";
 import { FiEdit, FiTrash2, FiSearch } from "react-icons/fi";
 import "./Uploads.css";
 import "../../components/styles/table.css";
+import "../../components/styles/buttons.css";
+
 
 const Uploads = () => {
     const [uploads, setUploads] = useState([]);
@@ -175,8 +177,8 @@ const Uploads = () => {
         }
     };
 
-    const handleEdit = (uploadId) => {
-        const uploadToEdit = uploads.find(upload => upload.work_id === uploadId);
+    const handleEdit = (upload) => {
+        const uploadToEdit = uploads.find(u => u.work_id === upload.work_id);
         if (uploadToEdit) {
             setFormData({
                 ...formData,
@@ -188,7 +190,7 @@ const Uploads = () => {
                 base_price: uploadToEdit.base_price,
                 quantity: uploadToEdit.quantity,
             });
-            setSelectedUploadId(uploadId);
+            setSelectedUploadId(upload.work_id);
             setEditMode(true);
             setShowModal(true);
         }
@@ -262,8 +264,8 @@ const Uploads = () => {
                                         <td>{upload.quantity}</td>
                                         <td>{upload.status}</td>
                                         <td>
-                                            <FiEdit className="icon" onClick={() => handleEdit(upload.work_id)} />
-                                            <FiTrash2 className="icon" onClick={() => handleDelete(upload.work_id)}/>
+                                            <button className="edit-button" onClick={() => handleEdit(upload)}><FiEdit /></button>
+                                            <button className="delete-button" onClick={() => handleDelete(upload.work_id)}><FiTrash2 /></button>
                                         </td>
                                     </tr>
                                 ))

@@ -316,11 +316,53 @@ const updateStatus = (req, res) => {
     });
 };
 
+const updateOrderStatus = (req, res) => {
+    const { orderId } = req.params;
+    const { status } = req.body;
+
+    if (!orderId || !status) {
+        return res.status(400).json({ error: "orderId and status are required" });
+    }
+
+    // Only allow valid status transitions
+    const validStatuses = ['pending', 'confirmed', 'ready to deliver', 'sent', 'cancelled', 'delivered'];
+    if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: "Invalid status value" });
+    }
+
+    // Fetch current order status
+    db.query('SELECT status FROM orders WHERE order_id = ?', [orderId], (err, results) => {
+        if (err) {
+            console.error("Error fetching order status:", err);
+            return res.status(500).json({ error: "Failed to fetch order status" });
+        }
+        if (results.length === 0) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+        const currentStatus = results[0].status;
+        // Only allow 'sent' if current is 'ready to deliver', and 'cancelled' anytime except delivered/sent
+        if (status === 'sent' && currentStatus !== 'ready to deliver') {
+            return res.status(400).json({ error: "Can only mark as sent after ready to deliver" });
+        }
+        if (status === 'cancelled' && (currentStatus === 'delivered' || currentStatus === 'sent')) {
+            return res.status(400).json({ error: "Cannot cancel after sent or delivered" });
+        }
+        db.query('UPDATE orders SET status = ? WHERE order_id = ?', [status, orderId], (err2, result) => {
+            if (err2) {
+                console.error("Error updating order status:", err2);
+                return res.status(500).json({ error: "Failed to update order status" });
+            }
+            res.status(200).json({ message: "Order status updated", newStatus: status });
+        });
+    });
+};
+
 module.exports = {
     getOrdersWithDetails,
     getOrderDetails,
     getCrafters,
     assignCrafter,
     updateStatus,
+    updateOrderStatus,
 };
 

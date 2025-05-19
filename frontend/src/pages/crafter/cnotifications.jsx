@@ -107,7 +107,7 @@ const CrafterNotificationPage = () => {
                                         <span>
                                             <span style={{ fontWeight: 700 }}>Order Assignment</span> —
                                             <span style={{ marginLeft: 8 }}>
-                                                Order #{item.order_id}, Product: {item.product_name}, Quantity: {item.quantity}, Assigned on {item.assigned_date ? new Date(item.assigned_date).toLocaleDateString() : 'Unknown'}
+                                                Order #{item.order_id}, Product: {item.product_name}, Quantity: {item.quantity}, Order Received on {item.order_date ? new Date(item.order_date).toLocaleDateString() : 'Unknown'}
                                             </span>
                                         </span>
                                         <span style={{ marginLeft: 16, cursor: 'pointer', fontSize: 20 }} onClick={() => handleClose(item.item_id)} title="Remove notification">&times;</span>

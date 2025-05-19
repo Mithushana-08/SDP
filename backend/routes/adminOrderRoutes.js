@@ -6,6 +6,7 @@ const {
     getCrafters,
     assignCrafter,
     updateStatus,
+    updateOrderStatus
 } = require('../controllers/adminOrderController');
 
 // Get all orders with details
@@ -22,5 +23,8 @@ router.post('/orders/:orderId/assign-crafter', assignCrafter);
 
 // Update the status of an order item
 router.post('/orders/:orderId/update-status', updateStatus);
+
+// Update the status of an order (not item)
+router.post('/orders/:orderId/update-order-status', updateOrderStatus);
 
 module.exports = router;

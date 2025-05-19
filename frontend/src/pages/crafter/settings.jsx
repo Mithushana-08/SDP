@@ -240,9 +240,9 @@ const CrafterSettings = () => {
                     <div className="profile-card border border-gray-300 rounded-lg">
                         <div className="card-header">
                             <h3 className="card-title text-xl">Personal Information</h3>
-                            <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <button
-                                    className="edit-button2 text-lg"
+                                    className="edit-button text-lg"
                                     onClick={() => {
                                         if (isEditingPersonal) {
                                             handleUpdatePersonal();
@@ -251,11 +251,12 @@ const CrafterSettings = () => {
                                         }
                                     }}
                                 >
-                                    <FiEdit className="edit-icon" /> {isEditingPersonal ? "Save" : "Edit"}
+                                    <FiEdit />
                                 </button>
                                 {isEditingPersonal && (
-                                    <button className="cancel-button text-lg ml-2" onClick={() => cancelEdit("personal")}>
-                                        Cancel
+                                    <button className="cancel-button text-lg" onClick={() => cancelEdit("personal")}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                     </button>
                                 )}
                             </div>
@@ -323,9 +324,9 @@ const CrafterSettings = () => {
                     <div className="profile-card border border-gray-300 rounded-lg">
                         <div className="card-header">
                             <h3 className="card-title text-xl">Address</h3>
-                            <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <button
-                                    className="edit-button2 text-lg"
+                                    className="edit-button text-lg"
                                     onClick={() => {
                                         if (isEditingAddress) {
                                             handleUpdateAddress();
@@ -334,11 +335,12 @@ const CrafterSettings = () => {
                                         }
                                     }}
                                 >
-                                    <FiEdit className="edit-icon" /> {isEditingAddress ? "Save" : "Edit"}
+                                    <FiEdit />
                                 </button>
                                 {isEditingAddress && (
-                                    <button className="cancel-button text-lg ml-2" onClick={() => cancelEdit("address")}>
-                                        Cancel
+                                    <button className="cancel-button text-lg" onClick={() => cancelEdit("address")}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                     </button>
                                 )}
                             </div>
@@ -398,9 +400,9 @@ const CrafterSettings = () => {
                     <div className="profile-card border border-gray-300 rounded-lg">
                         <div className="card-header">
                             <h3 className="card-title text-xl">Change Password</h3>
-                            <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <button
-                                    className="edit-button2 text-lg"
+                                    className="edit-button text-lg"
                                     onClick={() => {
                                         if (isEditingPassword) {
                                             handlePasswordUpdate();
@@ -409,11 +411,12 @@ const CrafterSettings = () => {
                                         }
                                     }}
                                 >
-                                    <FiLock className="edit-icon" /> {isEditingPassword ? "Save" : "Edit"}
+                                    <FiLock />
                                 </button>
                                 {isEditingPassword && (
-                                    <button className="cancel-button text-lg ml-2" onClick={() => cancelEdit("password")}>
-                                        Cancel
+                                    <button className="cancel-button text-lg" onClick={() => cancelEdit("password")}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                     </button>
                                 )}
                             </div>
