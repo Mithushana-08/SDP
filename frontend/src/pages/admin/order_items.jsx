@@ -5,7 +5,7 @@ import AdminNavbar from "../../components/Admin/adminnavbar";
 import "./order_items.css";
 import "../../components/styles/table.css";
 import "../../components/styles/search-container.css";
-import { FiSearch } from "react-icons/fi";
+import { FiSearch, FiArrowLeft } from "react-icons/fi";
 import axios from "axios";
 
 const Items = () => {
@@ -130,8 +130,16 @@ const Items = () => {
         <AdminNavbar />
         <div className="content">
           <div className="top-bar">
-            <div className="top-bar-content">
-              <div className="search-container">
+            <div className="top-bar-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <button
+                className="back-button styled-back-btn"
+                style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#333', padding: 0 }}
+                onClick={() => navigate('/admin/orders')}
+                title="Back to Orders"
+              >
+                <FiArrowLeft style={{ fontSize: 22 }} /> 
+              </button>
+              <div className="search-container" style={{ marginLeft: 'auto' }}>
                 <FiSearch className="search-icon" />
                 <input
                   type="text"

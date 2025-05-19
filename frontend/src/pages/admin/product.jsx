@@ -19,10 +19,11 @@ const Product = () => {
     const [customizationDetails, setCustomizationDetails] = useState([]);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [productToEdit, setProductToEdit] = useState(null);
+    const [statusFilter, setStatusFilter] = useState('all');
 
-    // Fetch products (active by default)
+    // Fetch products (include all statuses for admin)
     useEffect(() => {
-        fetch('http://localhost:5000/api/productmaster')
+        fetch('http://localhost:5000/api/productmaster?all=true')
             .then(response => response.json())
             .then(data => {
                 setProducts(data);
@@ -208,9 +209,15 @@ const Product = () => {
         setIsImageModalOpen(true);
     };
 
-    const filteredProducts = products.filter(product =>
-        product.product_name && product.product_name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredProducts = products.filter(product => {
+        const matchesName = product.product_name && product.product_name.toLowerCase().includes(searchTerm.toLowerCase());
+        // Show all by default, or filter by status if needed
+        return matchesName && (
+            statusFilter === 'all' ? true :
+            statusFilter === 'active' ? (product.product_status === 'active' || product.product_status === 'Active') :
+            (product.product_status === 'terminated' || product.product_status === 'Terminated')
+        );
+    });
 
     return (
         <div className="reports-page">
@@ -230,6 +237,16 @@ const Product = () => {
                                 onChange={handleSearch}
                             />
                         </div>
+                        <select
+                            className="status-filter"
+                            value={statusFilter}
+                            onChange={e => setStatusFilter(e.target.value)}
+                            style={{ marginLeft: '1rem', padding: '0.5rem', borderRadius: '5px' }}
+                        >
+                            <option value="all">All</option>
+                            <option value="active">Active</option>
+                            <option value="terminated">Terminated</option>
+                        </select>
                     </div>
                     <table className="table">
                         <thead>
@@ -259,7 +276,7 @@ const Product = () => {
                                       <span className={
                                         product.product_status === 'terminated' ? 'status-terminated' : 'status-active'
                                       }>
-                                        {product.product_status === 'terminated' ? 'Terminated' : 'Active'}
+                                        {product.product_status ? (product.product_status.charAt(0).toUpperCase() + product.product_status.slice(1)) : 'Active'}
                                       </span>
                                       <br />
                                       <span className={
