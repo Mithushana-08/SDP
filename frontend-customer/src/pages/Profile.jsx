@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Select from 'react-select';
+import Swal from 'sweetalert2';
 import './Profile.css';
+import LoginModal from '../components/LoginModal';
 
-const ProfilePage = () => {
+const ProfilePage = ({ onShowLoginPrompt }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('profile');
@@ -14,6 +16,18 @@ const ProfilePage = () => {
   const [formData, setFormData] = useState({});
   const [error, setError] = useState(null);
   const [orderDetailsError, setOrderDetailsError] = useState(null);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false); // Add a state to track login status
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  // State for password change form
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
 
   const sriLankanDistricts = [
     'Ampara', 'Anuradhapura', 'Badulla', 'Batticaloa', 'Colombo',
@@ -32,6 +46,10 @@ const ProfilePage = () => {
   const fetchProfile = async () => {
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        setShowLoginPrompt(true);
+        return;
+      }
       console.log('Fetching profile with token:', token);
       const response = await fetch('http://localhost:5000/api/customer/profile', {
         method: 'GET',
@@ -42,7 +60,8 @@ const ProfilePage = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch profile details');
+        setShowLoginPrompt(true);
+        return;
       }
 
       const data = await response.json();
@@ -65,15 +84,14 @@ const ProfilePage = () => {
         postal_code: userData.address?.postal_code || '',
       });
     } catch (error) {
-      console.error('Error fetching profile:', error);
-      navigate('/login');
+      setShowLoginPrompt(true);
     }
   };
 
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/customer/orders', {
+      const response = await fetch('http://localhost:5000/api/customer/profile/orders', {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -108,7 +126,8 @@ const ProfilePage = () => {
     }
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/customer/orders/${orderId}`, {
+      // Use the correct endpoint for order details
+      const response = await fetch(`http://localhost:5000/api/customer/profile/orders/${orderId}`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -150,9 +169,63 @@ const ProfilePage = () => {
     }
   }, [activeTab]);
 
-  const handleSignOut = () => {
+  useEffect(() => {
+    if (typeof onShowLoginPrompt === 'function') {
+      onShowLoginPrompt(showLoginPrompt);
+    }
+  }, [showLoginPrompt, onShowLoginPrompt]);
+
+  // Soft delete (deactivate) account
+  const handleDeleteAccount = async () => {
+    const result = await Swal.fire({
+      title: 'Are you sure you want to delete your account?',
+      text: 'This will deactivate your account. You can contact support to reactivate. This action cannot be undone.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete my account',
+      cancelButtonText: 'Cancel',
+    });
+    if (!result.isConfirmed) return;
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/customer/delete-account`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) throw new Error('Failed to delete account');
+      await Swal.fire({
+        icon: 'success',
+        title: 'Account deleted',
+        text: 'Your account has been deactivated.',
+        showConfirmButton: false,
+        timer: 1800,
+      });
+      localStorage.removeItem('token');
+      navigate('/login');
+    } catch (err) {
+      await Swal.fire({
+        icon: 'error',
+        title: 'Failed to delete account',
+        text: err.message || 'Please try again.',
+      });
+    }
+  };
+
+  // Confirm sign out
+  const handleSignOut = async () => {
+    const result = await Swal.fire({
+      title: 'Sign out?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sign Out',
+      cancelButtonText: 'Cancel',
+    });
+    if (!result.isConfirmed) return;
     localStorage.removeItem('token');
-    navigate('/login');
+    navigate('/');
   };
 
   const handleTabChange = (tab) => {
@@ -209,8 +282,81 @@ const ProfilePage = () => {
     setError(null);
   };
 
+  const handlePasswordInputChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPasswordError('');
+    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+      setPasswordError('All fields are required.');
+      return;
+    }
+    if (passwordForm.newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters.');
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError('New password and confirm password do not match.');
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/customer/profile/change-password', {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+        }),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to change password');
+      }
+      await Swal.fire({
+        icon: 'success',
+        title: 'Password changed successfully!',
+        showConfirmButton: false,
+        timer: 1500,
+      });
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (err) {
+      setPasswordError(err.message || 'Failed to change password.');
+      await Swal.fire({
+        icon: 'error',
+        title: 'Failed to change password',
+        text: err.message || 'Please try again.',
+      });
+    }
+  };
+
   console.log('Rendering district dropdown, formData.district:', formData.district);
   console.log('sriLankanDistricts:', sriLankanDistricts);
+
+  if (showLoginPrompt) {
+    return (
+      <div className="profile-page" style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <h2 style={{ marginBottom: 16 }}>Login Required</h2>
+        <p style={{ marginBottom: 24 }}>You must be logged in to view your profile and orders.</p>
+        <button className="update-profile-btn" style={{ width: 180 }} onClick={() => setShowLoginModal(true)}>Go to Login</button>
+        {showLoginModal && <LoginModal onClose={() => {
+          setShowLoginModal(false);
+          // If token is now present, refetch profile and orders
+          if (localStorage.getItem('token')) {
+            setShowLoginPrompt(false);
+            fetchProfile();
+            fetchOrders();
+          }
+        }} />}
+      </div>
+    );
+  }
 
   return (
     <div className="profile-page">
@@ -414,11 +560,108 @@ const ProfilePage = () => {
               >
                 Update Profile
               </button>
-              <button className="sign-out-btn" onClick={handleSignOut}>
-                <span className="icon">←</span> Sign Out
-              </button>
+              
             </>
           )}
+
+          <h2>Change Password</h2>
+          <form onSubmit={handleChangePassword} className="profile-form" style={{ marginBottom: 24 }}>
+            <div className="info-grid" style={{ display: 'flex', gap: 24 }}>
+              <div className="info-item" style={{ flex: 1, position: 'relative' }}>
+                <input
+                  type={showCurrentPassword ? 'text' : 'password'}
+                  id="currentPassword"
+                  name="currentPassword"
+                  value={passwordForm.currentPassword}
+                  onChange={handlePasswordInputChange}
+                  required
+                  autoComplete="current-password"
+                  placeholder="Current Password"
+                  style={{ paddingRight: 36 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword((prev) => !prev)}
+                  style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  title={showCurrentPassword ? 'Hide' : 'Show'}
+                  tabIndex={0}
+                  aria-label={showCurrentPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showCurrentPassword ? (
+                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M1 1l22 22M17.94 17.94A10.94 10.94 0 0 1 12 19C7 19 2.73 15.11 1 12c.74-1.32 2.1-3.36 4.06-5.06M9.53 9.53A3.5 3.5 0 0 1 12 8.5c1.93 0 3.5 1.57 3.5 3.5 0 .47-.09.92-.26 1.33"/><path d="M14.12 14.12A3.5 3.5 0 0 1 9.88 9.88"/></svg>
+                  ) : (
+                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="7"/><circle cx="12" cy="12" r="3"/></svg>
+                  )}
+                </button>
+              </div>
+              <div className="info-item" style={{ flex: 1, position: 'relative' }}>
+                <input
+                  type={showNewPassword ? 'text' : 'password'}
+                  id="newPassword"
+                  name="newPassword"
+                  value={passwordForm.newPassword}
+                  onChange={handlePasswordInputChange}
+                  required
+                  autoComplete="new-password"
+                  placeholder="New Password"
+                  style={{ paddingRight: 36 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword((prev) => !prev)}
+                  style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  title={showNewPassword ? 'Hide' : 'Show'}
+                  tabIndex={0}
+                  aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showNewPassword ? (
+                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M1 1l22 22M17.94 17.94A10.94 10.94 0 0 1 12 19C7 19 2.73 15.11 1 12c.74-1.32 2.1-3.36 4.06-5.06M9.53 9.53A3.5 3.5 0 0 1 12 8.5c1.93 0 3.5 1.57 3.5 3.5 0 .47-.09.92-.26 1.33"/><path d="M14.12 14.12A3.5 3.5 0 0 1 9.88 9.88"/></svg>
+                  ) : (
+                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="7"/><circle cx="12" cy="12" r="3"/></svg>
+                  )}
+                </button>
+              </div>
+              <div className="info-item" style={{ flex: 1, position: 'relative' }}>
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={passwordForm.confirmPassword}
+                  onChange={handlePasswordInputChange}
+                  required
+                  autoComplete="new-password"
+                  placeholder="Confirm New Password"
+                  style={{ paddingRight: 36 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  title={showConfirmPassword ? 'Hide' : 'Show'}
+                  tabIndex={0}
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showConfirmPassword ? (
+                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M1 1l22 22M17.94 17.94A10.94 10.94 0 0 1 12 19C7 19 2.73 15.11 1 12c.74-1.32 2.1-3.36 4.06-5.06M9.53 9.53A3.5 3.5 0 0 1 12 8.5c1.93 0 3.5 1.57 3.5 3.5 0 .47-.09.92-.26 1.33"/><path d="M14.12 14.12A3.5 3.5 0 0 1 9.88 9.88"/></svg>
+                  ) : (
+                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="7"/><circle cx="12" cy="12" r="3"/></svg>
+                  )}
+                </button>
+              </div>
+            </div>
+            {passwordError && <p className="error-message">{passwordError}</p>}
+            <div className="form-actions">
+              <button type="submit" className="update-profile-btn">Save Password</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'row', gap: 12, marginTop: 16, justifyContent: 'space-between' }}>
+              <button className="sign-out-btn" style={{ background: '#d32f2f', color: '#fff' }} onClick={handleSignOut}>
+                <span className="icon">←</span> Sign Out
+              </button>
+              <button className="delete-account-btn" style={{ background: '#d32f2f', color: '#fff' }} onClick={handleDeleteAccount}>
+                Delete Account
+              </button>
+            </div>
+          </form>
         </div>
       )}
 

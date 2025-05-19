@@ -193,29 +193,30 @@ const updateAddress = (req, res) => {
 const deleteCustomer = (req, res) => {
     const customer_id = req.params.customer_id; // Extract Customer_id from the request parameters
 
-    console.log("Deleting customer with ID:", customer_id); // Debugging log
+    console.log("Soft deleting customer with ID:", customer_id); // Debugging log
 
     if (!customer_id) {
         return res.status(400).json({ error: "Customer ID is required" });
     }
 
-    // Query to delete the customer
-    const deleteCustomerQuery = `
-        DELETE FROM Customer
+    // Soft delete: set status to 'nonactive'
+    const softDeleteQuery = `
+        UPDATE Customer
+        SET status = 'nonactive'
         WHERE Customer_id = ?
     `;
 
-    db.query(deleteCustomerQuery, [customer_id], (err, results) => {
+    db.query(softDeleteQuery, [customer_id], (err, results) => {
         if (err) {
-            console.error("Error deleting customer:", err);
-            return res.status(500).json({ error: "Failed to delete customer" });
+            console.error("Error soft deleting customer:", err);
+            return res.status(500).json({ error: "Failed to soft delete customer" });
         }
 
         if (results.affectedRows === 0) {
             return res.status(404).json({ error: "Customer not found" });
         }
 
-        res.status(200).json({ message: "Customer deleted successfully" });
+        res.status(200).json({ message: "Customer account set to non-active (soft deleted)" });
     });
 };
 module.exports = {

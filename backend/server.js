@@ -42,11 +42,12 @@ app.use("/api/products", productRoutes);
 app.use("/api/productmaster", productmaster);
 app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // Serve images
 app.use("/api/customers", customerRoutes);
+app.use("/api/customer", customerRoutes); // Handles /api/customer/delete-account, etc.
+app.use("/api/customer/profile", customerProfileRoutes); // Mount profile routes at a subpath to avoid shadowing
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminOrderRoutes);
 app.use("/api/profile", profileRoutes); // Add profile routes
-app.use('/api/customer', customerProfileRoutes);
 app.use("/api/crafter", crafterRoutes);
 app.use('/api/reports', ReportRoutes); 
 app.use('/api/dashboard', dashboardRoutes); // Add dashboard routes

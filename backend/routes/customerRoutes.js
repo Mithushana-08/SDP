@@ -13,5 +13,11 @@ router.put('/address', authenticateCustomer, updateAddress);
 
 router.delete('/customer/:customer_id', deleteCustomer);
 
+// Soft delete (deactivate) own account
+router.put('/delete-account', authenticateCustomer, (req, res) => {
+  // Use authenticated user's customer_id
+  req.params.customer_id = req.user.customer_id;
+  deleteCustomer(req, res);
+});
 
 module.exports = router;

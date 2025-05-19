@@ -1,4 +1,5 @@
 const db = require('../config/db'); // Import your database connection
+const bcrypt = require('bcrypt');
 
 // Fetch customer profile details
 const getCustomerProfile = (req, res) => {
@@ -194,5 +195,28 @@ const markOrderAsDelivered = (req, res) => {
     });
 };
 
-module.exports = { getCustomerProfile, updateCustomerProfile, getOrdersByCustomer, getOrderDetails, markOrderAsDelivered };
+// Change customer password (no bcrypt, plain text)
+const changeCustomerPassword = (req, res) => {
+    const customerId = req.user.customer_id;
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: 'Current and new password are required.' });
+    }
+    // Fetch current password from DB (plain text)
+    db.query('SELECT password FROM Customer WHERE Customer_id = ?', [customerId], (err, results) => {
+        if (err) return res.status(500).json({ error: 'Database error.' });
+        if (!results.length) return res.status(404).json({ error: 'Customer not found.' });
+        const storedPassword = results[0].password;
+        if (storedPassword !== currentPassword) {
+            return res.status(400).json({ error: 'Current password is incorrect.' });
+        }
+        // Update password (plain text)
+        db.query('UPDATE Customer SET password = ? WHERE Customer_id = ?', [newPassword, customerId], (err2) => {
+            if (err2) return res.status(500).json({ error: 'Failed to update password.' });
+            res.status(200).json({ message: 'Password updated successfully.' });
+        });
+    });
+};
+
+module.exports = { getCustomerProfile, updateCustomerProfile, getOrdersByCustomer, getOrderDetails, markOrderAsDelivered, changeCustomerPassword };
 

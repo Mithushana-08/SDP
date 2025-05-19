@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProductsPage from './pages/Products_customer';
@@ -214,23 +214,26 @@ const Home = () => {
   );
 };
 
-const App = () => {
+function App() {
+  return (
+    <div className="app">
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/products/:categoryId" element={<ProductsPage />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/profile/:tab" element={<ProfilePage />} />
+      </Routes>
+      <Footer />
+    </div>
+  );
+}
+
+export default function AppWithRouter() {
   return (
     <Router>
-      <div className="app">
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/products/:categoryId" element={<ProductsPage />} />
-          <Route path="/cart" element={<CartPage />} /> {/* Cart route */}
-          {/* Add ProfilePage routes */}
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/profile/:tab" element={<ProfilePage />} />
-        </Routes>
-        <Footer />
-      </div>
+      <App />
     </Router>
   );
-};
-
-export default App;
+}
