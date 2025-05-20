@@ -285,8 +285,8 @@ const [paymentDetails, setPaymentDetails] = useState({
     return;
   }
 
-  if (checkoutStep !== 3) {
-    alert("Please complete the payment process before placing the order.");
+  if (checkoutStep !== 4) {
+    alert("Please complete the payment and review process before placing the order.");
     return;
   }
 
@@ -420,18 +420,18 @@ const validatePaymentDetails = () => {
         return;
       }
       setCheckoutStep(2);
+    } else if (checkoutStep === 2) {
+      if (validatePaymentDetails()) {
+        setCheckoutStep(3);
+      }
     }
   };
 
   const handleBackStep = () => {
     if (checkoutStep === 2) {
       setCheckoutStep(1);
-    }
-  };
-
-  const handleConfirmPayment = () => {
-    if (validatePaymentDetails()) {
-      setCheckoutStep(3);
+    } else if (checkoutStep === 3) {
+      setCheckoutStep(2);
     }
   };
 
@@ -604,7 +604,8 @@ const handleAddToCart = async (item) => {
               <div className="step-indicator">
                 <div className={`step ${checkoutStep === 1 ? 'active' : ''}`}>1. Address</div>
                 <div className={`step ${checkoutStep === 2 ? 'active' : ''}`}>2. Payment</div>
-                <div className={`step ${checkoutStep === 3 ? 'active' : ''}`}>3. Success</div>
+                <div className={`step ${checkoutStep === 3 ? 'active' : ''}`}>3. Review</div>
+                <div className={`step ${checkoutStep === 4 ? 'active' : ''}`}>4. Success</div>
               </div>
 
               {checkoutStep === 1 && (
@@ -754,7 +755,7 @@ const handleAddToCart = async (item) => {
                       <button
                         type="button"
                         className="action-btn confirm-payment-btn"
-                        onClick={handleConfirmPayment}
+                        onClick={handleNextStep}
                       >
                         Confirm Payment
                       </button>
@@ -764,6 +765,99 @@ const handleAddToCart = async (item) => {
               )}
 
               {checkoutStep === 3 && (
+                <div className="review-section">
+                  <h3>Review Your Order</h3>
+                  <div className="review-address">
+                    <h4>Shipping Address</h4>
+                    <div className="address-block">
+                      <p>{address.addressLine1}{address.addressLine2 ? `, ${address.addressLine2}` : ''}</p>
+                      <p>{address.city}, {address.district}, {address.province}</p>
+                      <p>{address.postalCode}</p>
+                    </div>
+                  </div>
+                  <div className="review-items">
+                    <h4>Order Items</h4>
+                    <table className="review-table">
+                      <thead>
+                        <tr>
+                          <th>Image</th>
+                          <th>Product</th>
+                          <th>Customizations</th>
+                          <th>Qty</th>
+                          <th>Price</th>
+                          <th>Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedCartItems.map(item => {
+                          let customizations = [];
+                          if (Array.isArray(item.customizations)) {
+                            customizations = item.customizations;
+                          } else if (typeof item.customizations === 'string' && item.customizations.startsWith('[')) {
+                            try {
+                              customizations = JSON.parse(item.customizations);
+                            } catch (e) {
+                              customizations = [];
+                            }
+                          }
+                          return (
+                            <tr key={item.cart_item_id}>
+                              <td>
+                                <img
+                                  src={item.image?.startsWith("/uploads") ? `http://localhost:5000${item.image}` : item.image}
+                                  alt={item.name}
+                                  className="review-image"
+                                  style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4 }}
+                                />
+                              </td>
+                              <td>{item.name}</td>
+                              <td>
+                                {customizations.length > 0 ? (
+                                  <ul className="customization-list" style={{margin:0,paddingLeft:16}}>
+                                    {customizations.map((c, idx) => (
+                                      <li key={idx}>
+                                        {c.name ? `${c.name}: ${c.value}` : c.value}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <span className="no-customization">-</span>
+                                )}
+                              </td>
+                              <td>{item.quantity}</td>
+                              <td>Rs{item.price.toFixed(2)}</td>
+                              <td>Rs{(item.price * item.quantity).toFixed(2)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                    <div className="review-summary">
+                      <div className="review-row"><span>Subtotal:</span> <span>Rs{subtotal.toFixed(2)}</span></div>
+                      <div className="review-row"><span>Shipping:</span> <span>Rs{shipping.toFixed(2)}</span></div>
+                      <div className="review-row total"><span>Total:</span> <span>Rs{total.toFixed(2)}</span></div>
+                    </div>
+                  </div>
+                  <div className="button-group">
+                    <button
+                      type="button"
+                      className="action-btn back-btn"
+                      onClick={() => setCheckoutStep(2)}
+                    >
+                      <FiArrowLeft />
+                    </button>
+                    <button
+                      type="button"
+                      className="action-btn confirm-payment-btn"
+                      onClick={() => setCheckoutStep(4)}
+                    >
+                      Confirm & Pay
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {checkoutStep === 4 && (
                 <div className="success-section">
                   <h3>Payment Successful!</h3>
                   <p>Your payment has been processed successfully.</p>
