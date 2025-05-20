@@ -814,11 +814,15 @@ const handleAddToCart = async (item) => {
                               <td>
                                 {customizations.length > 0 ? (
                                   <ul className="customization-list" style={{margin:0,paddingLeft:16}}>
-                                    {customizations.map((c, idx) => (
-                                      <li key={idx}>
-                                        {c.name ? `${c.name}: ${c.value}` : c.value}
-                                      </li>
-                                    ))}
+                                    {customizations.map((c, idx) => {
+  if (!c || typeof c !== 'object') return null;
+  const label = c.name || c.type || '';
+  return (
+    <li key={idx}>
+      {label ? `${label}: ${c.value}` : c.value}
+    </li>
+  );
+})}
                                   </ul>
                                 ) : (
                                   <span className="no-customization">-</span>
