@@ -573,11 +573,13 @@ const AddProductModal = ({ setProducts, onClose, productToEdit = null }) => {
                         {isLoading ? (
                             <option disabled>Loading categories...</option>
                         ) : categories.length > 0 ? (
-                            categories.map((category) => (
-                                <option key={category.category_id} value={category.category_id}>
-                                    {category.category_name}
-                                </option>
-                            ))
+                            categories
+                                .filter(category => category.status !== 'terminated' && category.status !== 'Terminated')
+                                .map((category) => (
+                                    <option key={category.category_id} value={category.category_id}>
+                                        {category.category_name}
+                                    </option>
+                                ))
                         ) : (
                             <option disabled>No categories available</option>
                         )}

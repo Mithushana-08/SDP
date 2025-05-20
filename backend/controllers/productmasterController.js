@@ -375,7 +375,8 @@ const softDeleteProduct = (req, res) => {
 };
 
 const getCategories = (req, res) => {
-    const query = `SELECT CategoryID AS category_id, CategoryName AS category_name FROM Categories`;
+    // Only return categories where status is not 'terminated' (case-insensitive)
+    const query = `SELECT CategoryID AS category_id, CategoryName AS category_name FROM Categories WHERE LOWER(status) != 'terminated'`;
 
     db.query(query, (error, results) => {
         if (error) {
