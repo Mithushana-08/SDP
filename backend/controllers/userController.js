@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const transporter = require('../utils/nodemailer'); // Add this line
 
 // Function to get all users (exclude password)
 const getUsers = (req, res) => {
@@ -38,7 +39,26 @@ const addUser = (req, res) => {
             console.error("Error inserting user:", err);
             return res.status(500).json({ error: "Database error" });
         }
-        res.status(201).json({ message: "User added successfully!" });
+        // Send email to the new user with their credentials
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'Your Crafttary Account Credentials',
+            html: `<p>Hello <b>${username}</b>,</p>
+                   <p>Your account has been created for Crafttary Admin Panel.</p>
+                   <p><b>Username:</b> ${username}<br/>
+                   <b>Password:</b> ${password}</p>
+                   <p>Please login and change your password after first login.</p>
+                   <p>Thank you!</p>`
+        };
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.error('Error sending email:', error);
+                // Still return success for user creation, but notify about email failure
+                return res.status(201).json({ message: "User added successfully, but email could not be sent." });
+            }
+            res.status(201).json({ message: "User added successfully! Email sent." });
+        });
     });
 };
 
