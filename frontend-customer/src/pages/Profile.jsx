@@ -654,10 +654,10 @@ const ProfilePage = ({ onShowLoginPrompt }) => {
               <button type="submit" className="update-profile-btn">Save Password</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'row', gap: 12, marginTop: 16, justifyContent: 'space-between' }}>
-              <button className="sign-out-btn" style={{ background: '#d32f2f', color: '#fff' }} onClick={handleSignOut}>
+              <button className="sign-out-btn" style={{ background: '#d32f2f', color: '#fff', borderRadius: '8px', width: '160px', height: '40px' }} onClick={handleSignOut}>
                 <span className="icon">←</span> Sign Out
               </button>
-              <button className="delete-account-btn" style={{ background: '#d32f2f', color: '#fff' }} onClick={handleDeleteAccount}>
+              <button className="delete-account-btn" style={{ background: '#d32f2f', color: '#fff', borderRadius: '8px', width: '160px', height: '40px' }} onClick={handleDeleteAccount}>
                 Delete Account
               </button>
             </div>
