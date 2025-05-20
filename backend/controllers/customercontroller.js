@@ -7,6 +7,7 @@ const getCustomers = (req, res) => {
             c.username,
             c.email,
             c.phone,
+            c.status, -- Add status field
             a.address_line1,
             a.address_line2,
             a.city,

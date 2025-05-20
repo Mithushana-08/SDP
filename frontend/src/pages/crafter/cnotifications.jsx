@@ -32,14 +32,14 @@ const CrafterNotificationPage = () => {
         fetchNotifications();
     }, []);
 
-    // Mark all as read on first view
-    useEffect(() => {
-        if (notifications.length > 0 && readIds.length === 0) {
-            const ids = notifications.map(n => n.item_id);
-            setReadIds(ids);
-            localStorage.setItem("crafterReadNotifications", JSON.stringify(ids));
+    // Mark notification as read when clicked
+    const handleNotificationClick = (item_id) => {
+        if (!readIds.includes(item_id)) {
+            const updatedRead = [...readIds, item_id];
+            setReadIds(updatedRead);
+            localStorage.setItem("crafterReadNotifications", JSON.stringify(updatedRead));
         }
-    }, [notifications]);
+    };
 
     // Handle close/delete notification
     const handleClose = (item_id) => {
@@ -90,27 +90,46 @@ const CrafterNotificationPage = () => {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                             {[...filteredNotifications].sort((a, b) => new Date(b.assigned_date || b.order_date) - new Date(a.assigned_date || a.order_date)).map((item) => {
                                 const isNew = !readIds.includes(item.item_id);
+                                // Determine color based on status and read state
+                                let background, border, color;
+                                if (item.status && item.status.toLowerCase() === 'completed') {
+                                    background = '#e6ffed'; // green background for completed
+                                    border = '1px solid #52c41a';
+                                    color = '#237804';
+                                } else if (isNew) {
+                                    background = '#fff7e6'; // orange background for new
+                                    border = '1px solid #fa8c16';
+                                    color = '#ad6800';
+                                } else {
+                                    background = '#e6f7ff'; // blue background for read
+                                    border = '1px solid #1890ff';
+                                    color = '#0050b3';
+                                }
                                 return (
-                                    <div key={item.item_id} style={{
-                                        background: isNew ? '#e6ffed' : '#e6f7ff',
-                                        border: isNew ? '1px solid #52c41a' : '1px solid #1890ff',
-                                        color: isNew ? '#237804' : '#0050b3',
-                                        borderRadius: 8,
-                                        padding: '16px 20px',
-                                        fontWeight: 500,
-                                        fontSize: 16,
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between'
-                                    }}>
+                                    <div key={item.item_id} 
+                                         style={{
+                                            background,
+                                            border,
+                                            color,
+                                            borderRadius: 8,
+                                            padding: '16px 20px',
+                                            fontWeight: 500,
+                                            fontSize: 16,
+                                            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between'
+                                        }}
+                                        onClick={() => handleNotificationClick(item.item_id)}
+                                    >
                                         <span>
                                             <span style={{ fontWeight: 700 }}>Order Assignment</span> —
                                             <span style={{ marginLeft: 8 }}>
                                                 Order #{item.order_id}, Product: {item.product_name}, Quantity: {item.quantity}, Order Received on {item.order_date ? new Date(item.order_date).toLocaleDateString() : 'Unknown'}
+                                                {item.status && item.status.toLowerCase() === 'completed' && <span style={{ color: '#52c41a', marginLeft: 10 }}>(Completed)</span>}
                                             </span>
                                         </span>
-                                        <span style={{ marginLeft: 16, cursor: 'pointer', fontSize: 20 }} onClick={() => handleClose(item.item_id)} title="Remove notification">&times;</span>
+                                        <span style={{ marginLeft: 16, cursor: 'pointer', fontSize: 20 }} onClick={(e) => { e.stopPropagation(); handleClose(item.item_id); }} title="Remove notification">&times;</span>
                                     </div>
                                 );
                             })}
