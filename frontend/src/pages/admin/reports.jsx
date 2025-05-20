@@ -14,7 +14,7 @@ import { saveAs } from 'file-saver';
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 // Modal Component for PDF Preview
-const PDFPreviewModal = ({ isOpen, pdfUrl, onCancel }) => {
+const PDFPreviewModal = ({ isOpen, pdfUrl, onCancel, onDownload, pdfBlob, pdfFileName }) => {
     if (!isOpen) return null;
 
     return (
@@ -25,8 +25,16 @@ const PDFPreviewModal = ({ isOpen, pdfUrl, onCancel }) => {
                 </button>
                 <h2>PDF Preview</h2>
                 <div className="pdf-preview1">
-                    <iframe src={pdfUrl} title="PDF Preview" width="100%" height="100%" />
+                    <iframe src={pdfUrl} title="PDF Preview" width="100%" height="600px" style={{ border: 'none' }} />
                 </div>
+                <button
+                    className="download-button"
+                    style={{ alignSelf: 'center', marginTop: 16, minWidth: 180 }}
+                    onClick={onDownload}
+                    disabled={!pdfBlob}
+                >
+                    <FiDownload style={{ marginRight: 8 }} /> Download PDF
+                </button>
             </div>
         </div>
     );
@@ -746,9 +754,9 @@ const Reports = () => {
                                         </button>
                                         {inventoryData.length > 0 && (
                                             <>
-                                                <button className="download-button" onClick={handleDownloadInventoryCSV}>
+                                                {/* <button className="download-button" onClick={handleDownloadInventoryCSV}>
                                                     <FiDownload /> Download CSV
-                                                </button>
+                                                </button> */}
                                                 <button className="download-button" onClick={handleDownloadInventoryPDF}>
                                                     <FiDownload /> Download PDF
                                                 </button>
@@ -767,9 +775,9 @@ const Reports = () => {
                                         </button>
                                         {ordersData.orders.length > 0 && (
                                             <>
-                                                <button className="download-button" onClick={handleDownloadOrdersCSV}>
+                                                {/* <button className="download-button" onClick={handleDownloadOrdersCSV}>
                                                     <FiDownload /> Download CSV
-                                                </button>
+                                                </button> */}
                                                 <button className="download-button" onClick={handleDownloadOrdersPDF}>
                                                     <FiDownload /> Download PDF
                                                 </button>
@@ -788,9 +796,9 @@ const Reports = () => {
                                         </button>
                                         {crafterPerformanceData.crafters.length > 0 && (
                                             <>
-                                                <button className="download-button" onClick={handleDownloadCrafterPerformanceCSV}>
+                                                {/* <button className="download-button" onClick={handleDownloadCrafterPerformanceCSV}>
                                                     <FiDownload /> Download CSV
-                                                </button>
+                                                </button> */}
                                                 <button className="download-button" onClick={handleDownloadCrafterPerformancePDF}>
                                                     <FiDownload /> Download PDF
                                                 </button>
@@ -804,6 +812,13 @@ const Reports = () => {
                             isOpen={showPreviewModal}
                             pdfUrl={pdfPreviewUrl}
                             onCancel={() => setShowPreviewModal(false)}
+                            onDownload={() => {
+                                if (pdfBlob) {
+                                    saveAs(pdfBlob, pdfFileName);
+                                }
+                            }}
+                            pdfBlob={pdfBlob}
+                            pdfFileName={pdfFileName}
                         />
 
                         {inventoryData.length === 0 && ordersData.orders.length === 0 && crafterPerformanceData.crafters.length === 0 && !isLoading && (

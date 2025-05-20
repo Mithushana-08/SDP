@@ -91,7 +91,7 @@
 }
 
 .report-tab.active {
-    background-color: rgb(75, 192, 192);
+    background-color: #492a02;
     color: white;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -170,11 +170,11 @@
 }
 
 .generate-report-button {
-    background: linear-gradient(135deg, rgb(75, 192, 192), rgb(33, 150, 243));
+    background: #decfbf;;
 }
 
 .generate-report-button:hover {
-    background: linear-gradient(135deg, rgb(65, 182, 182), rgb(23, 140, 233));
+    background: #492a02;;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     transform: translateY(-1px);
 }
@@ -191,11 +191,11 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    background: linear-gradient(135deg, rgb(255, 99, 132), rgb(255, 206, 86));
+    background: #e8d9c5;;
 }
 
 .download-button:hover {
-    background: linear-gradient(135deg, rgb(245, 89, 122), rgb(245, 196, 76));
+    background: #492a02;;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     transform: translateY(-1px);
 }
@@ -348,8 +348,8 @@
     background: #ffffff;
     border-radius: 8px;
     padding: 20px;
-    width: 90vw; /* Responsive width */
-    max-width: 800px; /* Max width for larger screens */
+    width: 95vw; /* Wider for better preview */
+    max-width: 1200px; /* Increased max width for A4/Letter preview */
     max-height: 90vh; /* Responsive height */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     display: flex;
@@ -785,5 +785,13 @@
     .modal-close-button {
         width: 28px;
         height: 28px;
+    }
+}
+
+@media (max-width: 900px) {
+    .modal-content1 {
+        width: 99vw;
+        max-width: 99vw;
+        padding: 10px;
     }
 }
