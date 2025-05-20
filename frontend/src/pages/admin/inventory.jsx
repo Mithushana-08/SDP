@@ -205,9 +205,9 @@ const Inventory = () => {
     return (
         <div className="products-page">
             <AdminSidebar />
-            <div className="main-content">
+            <div className="main-user-content">
                 <AdminNavbar />
-                <div className="content">
+                <div className="user-content">
                     <div className="top-bar">
                         <button className="add-button" onClick={handleShowForm}>
                             <span className="plus-icon">+</span> Add

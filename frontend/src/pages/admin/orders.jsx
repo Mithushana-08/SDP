@@ -87,9 +87,9 @@ const Orders = () => {
     return (
         <div className="orders-page">
             <AdminSidebar />
-            <div className="main-content">
+            <div className="main-user-content">
                 <AdminNavbar />
-                <div className="content">
+                <div className="user-content">
                     <div className="top-bar">
                         <div className="top-bar-content">
                             <button className="add-button">

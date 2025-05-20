@@ -101,9 +101,9 @@ const CrafterDashboard = () => {
     return (
         <div className="dashboard-container">
             <CrafterSidebar />
-            <div className="main-content">
+            <div className="main-user-content">
                 <AdminNavbar />
-                <div className="dashboard-content">
+                <div className="user--content">
                     {loading ? (
                         <p>Loading dashboard data...</p>
                     ) : error ? (

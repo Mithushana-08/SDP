@@ -88,9 +88,9 @@ const AdminDashboard = () => {
   return (
     <div className="dashboard-container">
       <Sidebar />
-      <div className="main-content">
+      <div className="main-user-content">
         <Navbar />
-        <div className="dashboard-content">
+        <div className="user-content">
           {loading ? (
             <p>Loading dashboard data...</p>
           ) : error ? (

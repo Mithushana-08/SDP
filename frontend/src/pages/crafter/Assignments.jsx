@@ -103,9 +103,9 @@ const Assignments = () => {
     return (
         <div className="assignments-page">
             <CrafterSidebar />
-            <div className="main-content">
+            <div className="main-user-content">
                 <AdminNavbar />
-                <div className="content">
+                <div className="user-content">
                     <div className="top-bar">
                         <div className="top-bar-content">
                             <div className="search-container">

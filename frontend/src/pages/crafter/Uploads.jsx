@@ -278,9 +278,9 @@ const Uploads = () => {
     return (
         <div className="Uploads-page">
             <CrafterSidebar />
-            <div className="main-content">
+            <div className="main-user-content">
                 <AdminNavbar />
-                <div className="content">
+                <div className="user-content">
                     <div className="header">
                         <button className="add-button" onClick={() => { setEditMode(false); setShowModal(true); }}>+ Add Upload</button>
                         <div className="search-container">

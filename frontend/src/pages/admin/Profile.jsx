@@ -221,9 +221,9 @@ const Profile = () => {
     return (
         <div className="profile-page">
             <AdminSidebar />
-            <div className="main-content">
+            <div className="main-user-content">
                 <AdminNavbar />
-                <div className="content">
+                <div className="user-content">
                     <h1 className="page-title text-2xl">My Profile</h1>
                     <div className="profile-card border border-gray-300 rounded-lg">
                         <div className="profile-header">

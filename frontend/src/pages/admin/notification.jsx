@@ -33,9 +33,9 @@ const NotificationPage = () => {
     return (
         <div className="products-page">
             <AdminSidebar />
-            <div className="main-content">
+            <div className="main-user-content">
                 <AdminNavbar />
-                <div className="content">
+                <div className="user-content">
                     <h2 className="page-title text-2xl">Stock Notifications</h2>
                     {loading ? (
                         <div>Loading notifications...</div>

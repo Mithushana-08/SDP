@@ -1,12 +1,11 @@
-
 const db = require('../config/db');
 
 // Get Inventory Report
 const getInventoryReport = async (req, res) => {
     try {
-        const { startDate, endDate } = req.query;
+        const { startDate, endDate, category, customizable } = req.query;
 
-        // Initialize query and parameters
+        // Main inventory query (active products)
         let query = `
             SELECT 
                 pm.product_id,
@@ -14,17 +13,31 @@ const getInventoryReport = async (req, res) => {
                 c.CategoryName AS category_name,
                 pm.base_price,
                 SUM(COALESCE(i.stock_qty, 0)) AS stock_qty,
-                pm.created_at AS last_updated
+                pm.created_at AS last_updated,
+                pm.product_status,
+                CASE
+                    WHEN SUM(COALESCE(i.stock_qty, 0)) > 10 THEN 'In Stock'
+                    WHEN SUM(COALESCE(i.stock_qty, 0)) > 0 THEN 'Low Stock'
+                    ELSE 'Out of Stock'
+                END AS status,
+                pm.customizable
             FROM 
                 product_master pm
             JOIN 
                 Categories c ON pm.category_id = c.CategoryID
             LEFT JOIN 
                 inventory i ON pm.product_id = i.product_id
+            WHERE pm.product_status = 'active'
         `;
         const params = [];
-
-        // Add date filter only if both dates are provided
+        if (category) {
+            query += ' AND c.CategoryID = ?';
+            params.push(category);
+        }
+        if (customizable) {
+            query += ' AND pm.customizable = ?';
+            params.push(customizable);
+        }
         if (startDate && endDate) {
             const start = new Date(startDate);
             const end = new Date(endDate);
@@ -36,35 +49,97 @@ const getInventoryReport = async (req, res) => {
             }
             const endDateWithTime = new Date(end);
             endDateWithTime.setDate(endDateWithTime.getDate() + 1);
-            query += ` WHERE pm.created_at BETWEEN ? AND ?`;
+            query += ` AND pm.created_at BETWEEN ? AND ?`;
             params.push(startDate, endDateWithTime.toISOString().split('T')[0]);
         }
-
         query += `
             GROUP BY 
-                pm.product_id, pm.product_name, c.CategoryName, pm.base_price, pm.created_at
+                pm.product_id, pm.product_name, c.CategoryName, pm.base_price, pm.created_at, pm.product_status, pm.customizable
             ORDER BY 
                 pm.created_at DESC
         `;
 
-        // Execute query
-        db.query(query, params, (err, results) => {
-            if (err) {
-                console.error('Error fetching inventory report:', err);
-                return res.status(500).json({ error: 'Database query error' });
-            }
+        // Terminated products
+        let terminatedProductsQuery = `
+            SELECT 
+                pm.product_id,
+                pm.product_name,
+                c.CategoryName AS category_name,
+                pm.base_price,
+                SUM(COALESCE(i.stock_qty, 0)) AS stock_qty,
+                pm.created_at AS last_updated,
+                pm.product_status,
+                pm.customizable
+            FROM 
+                product_master pm
+            JOIN 
+                Categories c ON pm.category_id = c.CategoryID
+            LEFT JOIN 
+                inventory i ON pm.product_id = i.product_id
+            WHERE pm.product_status = 'terminated'
+        `;
+        const terminatedParams = [];
+        if (category) {
+            terminatedProductsQuery += ' AND c.CategoryID = ?';
+            terminatedParams.push(category);
+        }
+        if (customizable) {
+            terminatedProductsQuery += ' AND pm.customizable = ?';
+            terminatedParams.push(customizable);
+        }
+        terminatedProductsQuery += `
+            GROUP BY 
+                pm.product_id, pm.product_name, c.CategoryName, pm.base_price, pm.created_at, pm.product_status, pm.customizable
+            ORDER BY 
+                pm.created_at DESC
+        `;
 
-            // Format response
-            const inventoryData = results.map(row => ({
+        // Active categories
+        const activeCategoriesQuery = `SELECT CategoryID, CategoryName FROM Categories WHERE status = 'active'`;
+        // Terminated categories
+        const terminatedCategoriesQuery = `SELECT CategoryID, CategoryName FROM Categories WHERE status = 'terminated'`;
+
+        // Run all queries in parallel
+        const [activeProducts, terminatedProducts, activeCategories, terminatedCategories] = await Promise.all([
+            new Promise((resolve, reject) => db.query(query, params, (err, results) => err ? reject(err) : resolve(results))),
+            new Promise((resolve, reject) => db.query(terminatedProductsQuery, terminatedParams, (err, results) => err ? reject(err) : resolve(results))),
+            new Promise((resolve, reject) => db.query(activeCategoriesQuery, [], (err, results) => err ? reject(err) : resolve(results))),
+            new Promise((resolve, reject) => db.query(terminatedCategoriesQuery, [], (err, results) => err ? reject(err) : resolve(results))),
+        ]);
+
+        // Customizable breakdown
+        const customizableCount = activeProducts.filter(p => p.customizable === 'yes').length;
+        const nonCustomizableCount = activeProducts.filter(p => p.customizable !== 'yes').length;
+
+        // Format response
+        res.status(200).json({
+            inventory: activeProducts.map(row => ({
                 product_id: row.product_id,
                 product_name: row.product_name,
                 category_name: row.category_name || 'Uncategorized',
                 base_price: parseFloat(row.base_price) || 0,
                 stock_qty: parseInt(row.stock_qty) || 0,
-                last_updated: row.last_updated ? row.last_updated.toISOString() : new Date().toISOString(),
-            }));
-
-            res.status(200).json(inventoryData);
+                last_updated: row.last_updated ? row.last_updated.toISOString ? row.last_updated.toISOString() : row.last_updated : new Date().toISOString(),
+                product_status: row.product_status,
+                status: row.status,
+                customizable: row.customizable
+            })),
+            terminatedProducts: terminatedProducts.map(row => ({
+                product_id: row.product_id,
+                product_name: row.product_name,
+                category_name: row.category_name || 'Uncategorized',
+                base_price: parseFloat(row.base_price) || 0,
+                stock_qty: parseInt(row.stock_qty) || 0,
+                last_updated: row.last_updated ? row.last_updated.toISOString ? row.last_updated.toISOString() : row.last_updated : new Date().toISOString(),
+                product_status: row.product_status,
+                customizable: row.customizable
+            })),
+            activeCategories,
+            terminatedCategories,
+            customizableBreakdown: {
+                customizable: customizableCount,
+                nonCustomizable: nonCustomizableCount
+            }
         });
     } catch (error) {
         console.error('Error in getInventoryReport:', error);

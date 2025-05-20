@@ -1,36 +1,52 @@
+/* Admin Navbar */
 .admin-navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 20px;
+    padding: clamp(8px, 2vw, 10px) clamp(10px, 3vw, 20px); /* Responsive padding */
     background: #ffffff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    box-sizing: border-box;
+    z-index: 100; /* Ensure navbar stays above other elements */
 }
 
 .navbar-left {
     display: flex;
     align-items: center;
+    gap: clamp(8px, 2vw, 12px); /* Responsive gap */
 }
 
 .welcome-message {
-    font-size: 16px;
+    font-size: clamp(14px, 3vw, 16px); /* Responsive font size */
     font-weight: 700;
     color: #522206;
+    white-space: nowrap; /* Prevent text wrapping */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Handle long text */
+    max-width: 50vw; /* Limit width on small screens */
 }
 
 .navbar-right {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: clamp(8px, 2vw, 15px); /* Responsive gap */
+    flex-wrap: wrap; /* Allow wrapping on very small screens */
 }
 
 .icon-btn {
     position: relative;
     background: none;
     border: none;
-    font-size: 20px;
+    font-size: clamp(16px, 4vw, 20px); /* Responsive icon size */
     cursor: pointer;
     color: #555;
+    padding: 8px; /* Ensure touch-friendly target */
+    min-width: 44px; /* Minimum touch target size */
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .icon-btn:hover {
@@ -41,12 +57,16 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 16px;
+    padding: clamp(6px, 2vw, 8px) clamp(12px, 3vw, 16px); /* Responsive padding */
     background: #dc3545;
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    font-size: clamp(12px, 3vw, 14px); /* Responsive font size */
+    min-width: 100px; /* Ensure button is touch-friendly */
+    text-align: center;
+    white-space: nowrap;
 }
 
 .auth-btn.logout-btn:hover {
@@ -68,4 +88,94 @@
 
 .dark-mode .icon-btn:hover {
     color: #fff;
+}
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+    .admin-navbar {
+        padding: clamp(6px, 2vw, 8px) clamp(8px, 2.5vw, 15px);
+    }
+
+    .welcome-message {
+        max-width: 40vw; /* Slightly smaller on tablets */
+    }
+
+    .navbar-right {
+        gap: clamp(6px, 1.5vw, 10px);
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-navbar {
+        flex-wrap: wrap; /* Allow wrapping for very small screens */
+        justify-content: space-between;
+        padding: clamp(5px, 2vw, 8px) clamp(5px, 2vw, 10px);
+    }
+
+    .navbar-left {
+        flex: 1;
+        max-width: 100%; /* Full width on small screens */
+    }
+
+    .welcome-message {
+        font-size: clamp(12px, 3vw, 14px);
+        max-width: 60vw; /* Adjust for smaller screens */
+    }
+
+    .navbar-right {
+        flex: 1;
+        justify-content: flex-end; /* Align buttons/icons to the right */
+        gap: clamp(5px, 1.5vw, 8px);
+    }
+
+    .icon-btn {
+        font-size: clamp(14px, 3.5vw, 18px);
+        padding: 6px;
+        min-width: 40px;
+        min-height: 40px;
+    }
+
+    .auth-btn.logout-btn {
+        padding: clamp(5px, 1.5vw, 6px) clamp(8px, 2vw, 12px);
+        font-size: clamp(11px, 2.5vw, 13px);
+        min-width: 80px;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-navbar {
+        flex-direction: column; /* Stack vertically on very small screens */
+        align-items: flex-start;
+        padding: clamp(4px, 2vw, 6px) clamp(4px, 2vw, 8px);
+        gap: 8px;
+    }
+
+    .navbar-left {
+        width: 100%;
+        justify-content: space-between; /* Space out elements */
+    }
+
+    .welcome-message {
+        font-size: clamp(11px, 3vw, 13px);
+        max-width: 100%; /* Full width */
+    }
+
+    .navbar-right {
+        width: 100%;
+        justify-content: space-between; /* Spread buttons/icons */
+        gap: clamp(4px, 1vw, 6px);
+    }
+
+    .icon-btn {
+        font-size: clamp(12px, 3vw, 16px);
+        padding: 4px;
+        min-width: 36px;
+        min-height: 36px;
+    }
+
+    .auth-btn.logout-btn {
+        padding: clamp(4px, 1vw, 5px) clamp(6px, 1.5vw, 10px);
+        font-size: clamp(10px, 2.5vw, 12px);
+        min-width: 70px;
+    }
 }

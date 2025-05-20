@@ -1,17 +1,23 @@
 /* General Layout */
 .reports-page {
     display: flex;
+    flex-direction: row;
+    width: 100%;
+    min-height: 100vh;
 }
 
-.main-content {
+.main-user-content {
     margin-left: 250px;
     width: calc(100% - 250px);
     display: flex;
     flex-direction: column;
+    flex: 1;
 }
 
-.content {
+.user-content {
     padding: 20px;
+    box-sizing: border-box;
+    width: 100%;
 }
 
 /* Card Styling */
@@ -23,6 +29,7 @@
     margin-bottom: 20px;
     transition: transform 0.2s;
     border: 2px solid #6db7d7;
+    box-sizing: border-box;
 }
 
 .card:hover {
@@ -36,21 +43,21 @@
 }
 
 .report-header h1 {
-    font-size: 28px;
+    font-size: clamp(24px, 5vw, 28px); /* Responsive font size */
     color: #2c3e50;
     margin: 0;
     font-weight: 600;
 }
 
 .report-header h2 {
-    font-size: 24px;
+    font-size: clamp(20px, 4vw, 24px);
     color: #2c3e50;
     margin: 0;
     font-weight: 600;
 }
 
 .report-header p {
-    font-size: 14px;
+    font-size: clamp(12px, 3vw, 14px);
     color: #7f8c8d;
     margin: 8px 0;
 }
@@ -58,13 +65,15 @@
 /* Report Tabs */
 .report-tabs {
     display: flex;
+    flex-wrap: wrap; /* Allow tabs to wrap on small screens */
     gap: 10px;
     margin-bottom: 20px;
+    justify-content: center; /* Center tabs on small screens */
 }
 
 .report-tab {
     padding: 10px 20px;
-    font-size: 16px;
+    font-size: clamp(14px, 3vw, 16px);
     font-weight: 500;
     color: #333;
     background-color: #f0f0f0;
@@ -72,6 +81,9 @@
     border-radius: 20px;
     cursor: pointer;
     transition: all 0.3s ease;
+    flex: 1; /* Tabs take equal space */
+    min-width: 120px; /* Prevent tabs from becoming too small */
+    text-align: center;
 }
 
 .report-tab:hover {
@@ -87,41 +99,44 @@
 /* Report Controls */
 .report-controls {
     display: flex;
+    flex-direction: column; /* Stack vertically on small screens */
     gap: 15px;
-    align-items: flex-end;
-    flex-wrap: wrap;
     padding: 20px;
+    box-sizing: border-box;
 }
 
 .controls-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 20px;
+    gap: 15px;
     align-items: center;
-    margin-bottom: 20px;
+    width: 100%;
 }
 
 .date-picker-container {
     display: flex;
     flex-direction: column;
     gap: 5px;
+    flex: 1;
+    min-width: 150px; /* Ensure inputs don’t get too small */
 }
 
 .date-picker-container label {
-    font-size: 14px;
+    font-size: clamp(12px, 3vw, 14px);
     font-weight: 500;
     color: #333;
 }
 
 .date-picker {
     padding: 10px;
-    font-size: 14px;
+    font-size: clamp(12px, 3vw, 14px);
     border: 1px solid #ccc;
     border-radius: 8px;
     background-color: #fff;
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
     transition: border-color 0.3s ease;
-    width: 200px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .date-picker:focus {
@@ -133,20 +148,29 @@
 .button-group {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 10px;
+    width: 100%;
+    justify-content: center; /* Center buttons on small screens */
 }
 
-.generate-report-button {
+.generate-report-button,
+.download-button {
     padding: 12px 24px;
-    font-size: 16px;
+    font-size: clamp(14px, 3vw, 16px);
     font-weight: 600;
     color: white;
-    background: linear-gradient(135deg, rgb(75, 192, 192), rgb(33, 150, 243));
     border: none;
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    flex: 1;
+    min-width: 120px; /* Ensure buttons are touch-friendly */
+    text-align: center;
+}
+
+.generate-report-button {
+    background: linear-gradient(135deg, rgb(75, 192, 192), rgb(33, 150, 243));
 }
 
 .generate-report-button:hover {
@@ -165,17 +189,9 @@
 .download-button {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    padding: 10px 20px;
-    font-size: 14px;
-    font-weight: 500;
-    color: white;
     background: linear-gradient(135deg, rgb(255, 99, 132), rgb(255, 206, 86));
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 
 .download-button:hover {
@@ -192,21 +208,24 @@
 }
 
 /* Tables */
-.data-table, .summary-table {
+.data-table,
+.summary-table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
     background: #fff;
     border-radius: 8px;
     overflow: hidden;
+    table-layout: auto; /* Allow columns to adjust based on content */
 }
 
 .data-table th,
 .data-table td,
 .summary-table td {
-    padding: 14px;
+    padding: clamp(10px, 2vw, 14px);
     text-align: left;
     border-bottom: 1px solid #f7f9f9;
+    font-size: clamp(12px, 2.5vw, 14px);
 }
 
 .data-table th {
@@ -214,7 +233,7 @@
     color: #fff;
     font-weight: 600;
     text-transform: uppercase;
-    font-size: 13px;
+    font-size: clamp(11px, 2.5vw, 13px);
 }
 
 .data-table tr:last-child td {
@@ -225,14 +244,27 @@
     background-color: #f8f8f8;
 }
 
-.data-table td, .summary-table td {
+.data-table td,
+.summary-table td {
     border: 1px solid #dfe6e9;
-    font-size: 14px;
 }
 
 .summary-table td:first-child {
     font-weight: 500;
     background-color: #f8f8f8;
+}
+
+.data-table td canvas,
+.data-table th canvas,
+.data-table td svg,
+.data-table th svg,
+.data-table td img,
+.data-table th img,
+.summary-table td canvas,
+.summary-table th canvas,
+.summary-table td svg,
+.summary-table th svg {
+    width: 100% !important;
 }
 
 /* Charts */
@@ -244,13 +276,6 @@
     width: 100%;
 }
 
-.chart-row {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
 .chart-wrapper {
     width: 100%;
     padding: 20px;
@@ -259,7 +284,7 @@
 
 .chart-wrapper h3 {
     margin: 0 0 15px;
-    font-size: 18px;
+    font-size: clamp(16px, 3.5vw, 18px);
     color: #2c3e50;
     font-weight: 600;
     text-align: center;
@@ -267,24 +292,26 @@
 
 .chart {
     width: 100%;
-    height: 300px;
+    height: clamp(200px, 50vw, 300px); /* Responsive height */
     display: flex;
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
-    margin: 0 auto; /* Center horizontally */
+    margin: 0 auto;
 }
 
 .chart canvas,
 .chart svg,
 .chart img {
-    width: 100% !important; /* Scale to fit container */
-   
+    width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain;
 }
+
 /* Report Footer */
 .report-footer {
     margin-top: 20px;
-    font-size: 12px;
+    font-size: clamp(10px, 2.5vw, 12px);
     color: #7f8c8d;
     text-align: right;
 }
@@ -296,13 +323,85 @@
 }
 
 .no-data p {
-    font-size: 16px;
+    font-size: clamp(14px, 3.5vw, 16px);
     color: #7f8c8d;
+}
+
+/* Modal Styles */
+.modal-overlay1 {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    overflow: auto;
+    margin: 0;
+}
+
+.modal-content1 {
+    position: relative;
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 20px;
+    width: 90vw; /* Responsive width */
+    max-width: 800px; /* Max width for larger screens */
+    max-height: 90vh; /* Responsive height */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+.modal-content1 h2 {
+    font-size: clamp(18px, 4vw, 20px);
+    color: #2c3e50;
+    margin: 0;
+    text-align: center;
+}
+
+.pdf-preview1 {
+    flex: 1;
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.modal-close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #ff4d4f;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    padding: 0;
+}
+
+.modal-close-button:hover {
+    background: #d9363e;
+}
+
+.modal-close-button svg {
+    stroke: white;
 }
 
 /* Enhanced Print Styles for A4 */
 @media print {
-    /* Reset layout for print */
     .reports-page {
         display: block;
         width: 210mm;
@@ -333,7 +432,8 @@
     .report-tabs,
     .button-group,
     .download-button,
-    .generate-report-button {
+    .generate-report-button,
+    .card-close-btn {
         display: none !important;
     }
 
@@ -446,70 +546,59 @@
 
     /* Charts */
     .charts-container {
-    width: 50%;
-    max-width: 100mm; /* A4 page width (210mm) minus 10mm margins on each side */
-    margin: 5mm auto;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
+        width: 100%;
+        max-width: 190mm;
+        margin: 5mm auto;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
 
-.chart-row {
-    width: 100%;
-    max-width: 100mm; /* Ensure row doesn't exceed page width */
-    margin-bottom: 10mm;
-    page-break-inside: avoid;
-    
-    box-sizing: border-box;
-    display: flex;
-    justify-content: center;
-}
+    .chart-wrapper {
+        width: 100% !important;
+        max-width: 140mm;
+        padding: 0;
+        margin: 0 auto;
+        page-break-inside: avoid;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
 
-.chart-wrapper {
-    width: 80mm !important; /* Fixed width for chart */
-    max-width: 140mm; /* Reinforce maximum width */
-    padding: 0;
-    margin: 0 auto;
-    page-break-inside: avoid;
-    box-sizing: border-box;
-    overflow: hidden; /* Prevent content from spilling out */
-}
+    .chart-wrapper h3 {
+        font-size: 12pt;
+        margin: 0 0 3mm;
+        text-align: center;
+        width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 
-.chart-wrapper h3 {
-    font-size: 12pt;
-    margin: 0 0 3mm;
-    text-align: center;
-    width: 100%;
-    white-space: nowrap; /* Prevent title from wrapping */
-    overflow: hidden;
-    text-overflow: ellipsis; /* Handle long titles */
-}
+    .chart {
+        width: 100% !important;
+        max-width: 140mm;
+        height: 80mm !important;
+        max-height: 80mm;
+        margin: 0 auto;
+        padding: 0;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
 
-.chart {
-    width: 80mm !important;
-    max-width: 140mm; /* Ensure chart doesn't exceed wrapper */
-    height: 80mm !important;
-    max-height: 80mm;
-    margin: 0 auto;
-    padding: 0;
-    box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden; /* Clip any overflow */
-}
-
-.chart canvas,
-.chart svg,
-.chart img {
-    width: 100% !important; /* Scale to fit container */
-    max-width: 00mm !important;
-    height: 80mm !important;
-    max-height: 80mm !important;
-    object-fit: contain; /* Maintain aspect ratio without stretching */
-    margin: 0 auto;
-}
+    .chart canvas,
+    .chart svg,
+    .chart img {
+        width: 100% !important;
+        max-width: 140mm !important;
+        height: 80mm !important;
+        max-height: 80mm !important;
+        object-fit: contain;
+        margin: 0 auto;
+    }
 
     /* Report footer */
     .report-footer {
@@ -548,11 +637,20 @@
     }
 
     .chart {
-        height: 250px;
+        height: clamp(200px, 40vw, 250px);
     }
 
     .chart-wrapper h3 {
-        font-size: 16px;
+        font-size: clamp(14px, 3vw, 16px);
+    }
+
+    .report-tabs {
+        gap: 8px;
+    }
+
+    .report-tab {
+        min-width: 100px;
+        padding: 8px 16px;
     }
 }
 
@@ -562,23 +660,33 @@
     }
 
     .report-controls {
-        flex-direction: column;
-        align-items: stretch;
+        padding: 15px;
     }
 
     .controls-row {
         flex-direction: column;
         align-items: stretch;
+        gap: 10px;
+    }
+
+    .date-picker-container {
+        min-width: 100%;
     }
 
     .date-picker {
         width: 100%;
     }
 
+    .button-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
     .generate-report-button,
     .download-button {
         width: 100%;
-        margin-top: 10px;
+        padding: 10px;
+        min-width: unset;
     }
 
     .chart-wrapper {
@@ -586,106 +694,96 @@
     }
 
     .chart {
-        height: 200px;
+        height: clamp(180px, 50vw, 200px);
     }
 
     .chart-wrapper h3 {
-        font-size: 14px;
+        font-size: clamp(12px, 3vw, 14px);
     }
 
     .summary-table {
         width: 100%;
     }
+
+    /* Make tables scrollable on small screens */
+    .card {
+        overflow-x: auto;
+    }
+
+    .data-table,
+    .summary-table {
+        min-width: 600px;
+        width: 100%;
+        display: block;
+    }
 }
 
 @media (max-width: 480px) {
+    .content {
+        padding: 10px;
+    }
+
+    .report-header h1 {
+        font-size: clamp(20px, 5vw, 22px);
+    }
+
+    .report-header h2 {
+        font-size: clamp(16px, 4vw, 18px);
+    }
+
+    .report-header p {
+        font-size: clamp(10px, 3vw, 12px);
+    }
+
+    .report-tabs {
+        gap: 6px;
+    }
+
+    .report-tab {
+        min-width: 80px;
+        padding: 6px 12px;
+        font-size: clamp(12px, 3vw, 14px);
+    }
+
     .chart {
-        height: 150px;
+        height: clamp(150px, 45vw, 180px);
     }
 
     .chart-wrapper h3 {
-        font-size: 12px;
+        font-size: clamp(10px, 3vw, 12px);
     }
 
     .data-table th,
     .data-table td,
     .summary-table td {
-        font-size: 12px;
+        font-size: clamp(10px, 2.5vw, 12px);
+        padding: 8px;
+    }
+
+    /* Further improve table fit for very small screens */
+    .card {
+        overflow-x: auto;
+    }
+
+    .data-table,
+    .summary-table {
+        min-width: 400px;
+        width: 100%;
+        display: block;
+    }
+
+    .modal-content1 {
+        width: 95vw;
+        max-height: 95vh;
         padding: 10px;
     }
+
+    .modal-content1 h2 {
+        font-size: clamp(16px, 4vw, 18px);
+    }
+
+    .modal-close-button {
+        width: 28px;
+        height: 28px;
+    }
 }
-
-
-/* Modal Styles */
-.modal-overlay1 {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    overflow: auto;
-    margin: 0;
-}
-
-/* Default for PC screens (>768px): Full-screen */
-.modal-content1 {
-    position: relative;
-    background: #ffffff;
-    border-radius: 0;
-    padding: 10px;
-    width: 100vw; /* Full-screen for PC */
-    height: 100vh; /* Full-screen for PC */
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  
-    margin: 0;
-}
-
-.modal-content1 h2 {
-    font-size: 20px;
-    color: #2c3e50;
-    margin: 0;
-    text-align: center;
-}
-
-.pdf-preview1 {
-    flex: 1;
-    width: 100vw;
-    border: 1px solid #ccc;
-    border-radius: 0;
-    overflow: hidden;
-}
-
-.modal-close-button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: #ff4d4f;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background 0.3s ease;
-    padding: 0;
-}
-
-.modal-close-button:hover {
-    background: #d9363e;
-}
-
-.modal-close-button svg {
-    stroke: white;
-}
-

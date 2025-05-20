@@ -6,8 +6,7 @@
 }
 
 .table th, .table td {
-    border: 1px solid 
-    #f5f2f2;
+    border: 1px solid #f5f2f2;
     padding: 8px;
     text-align: center;
 }
@@ -23,8 +22,7 @@
 }
 
 .table tr:nth-child(even) {
-    background-color: 
-    #e6dfe0; /* Color for even rows */
+    background-color: #e6dfe0; /* Color for even rows */
 }
 
 .table tr:hover {
@@ -37,4 +35,66 @@
 
 .table .actions {
     text-align: center;
+}
+
+/* Responsive table styles */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+/* Media query for screens smaller than 768px */
+@media screen and (max-width: 768px) {
+    .table {
+        min-width: 600px; /* Ensure table doesn't shrink too much */
+    }
+
+    .table th, .table td {
+        padding: 6px; /* Slightly reduce padding for smaller screens */
+        font-size: 14px; /* Adjust font size for readability */
+    }
+}
+
+/* Media query for very small screens (e.g., mobile < 480px) */
+@media screen and (max-width: 480px) {
+    .table {
+        display: block;
+        min-width: unset; /* Remove min-width for stacking */
+    }
+
+    .table thead {
+        display: none; /* Hide headers on very small screens */
+    }
+
+    .table tbody, .table tr, .table td {
+        display: block;
+        width: 100%;
+    }
+
+    .table tr {
+        margin-bottom: 10px;
+        border-bottom: 2px solid #f5f2f2;
+    }
+
+    .table td {
+        text-align: right;
+        position: relative;
+        padding-left: 50%;
+        border: none;
+        border-bottom: 1px solid #f5f2f2;
+    }
+
+    .table td:before {
+        content: attr(data-label); /* Use data-label for column names */
+        position: absolute;
+        left: 10px;
+        width: 45%;
+        font-weight: bold;
+        text-align: left;
+        color: #5a2c31;
+    }
+
+    .table .actions {
+        text-align: right;
+    }
 }

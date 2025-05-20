@@ -126,9 +126,9 @@ const Items = () => {
   return (
     <div className="order-details-page">
       <AdminSidebar />
-      <div className="main-content">
+      <div className="main-user-content">
         <AdminNavbar />
-        <div className="content">
+        <div className="user-content">
           <div className="top-bar">
             <div className="top-bar-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <button

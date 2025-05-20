@@ -222,9 +222,9 @@ const Product = () => {
     return (
         <div className="reports-page">
             <AdminSidebar />
-            <div className="main-content">
+            <div className="main-user-content">
                 <AdminNavbar />
-                <div className="content">
+                <div className="user-content">
                     <div className="top-bar">
                         <button className="add-button" onClick={() => setIsModalOpen(true)}>Add Product</button>
                         <div className="search-container">
