@@ -92,9 +92,7 @@ const Orders = () => {
                 <div className="user-content">
                     <div className="top-bar">
                         <div className="top-bar-content">
-                            <button className="add-button">
-                                <span className="plus-icon">+</span> Add Order
-                            </button>
+                          
                             <div className="search-container">
                                 <FiSearch className="search-icon" />
                                 <input
