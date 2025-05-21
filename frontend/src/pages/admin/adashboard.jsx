@@ -20,7 +20,7 @@ const AdminDashboard = () => {
     salesData: {
       labels: [],
       datasets: [{
-        label: 'Sales ($)',
+        label: 'Sales', // Removed ($)
         data: [],
         borderColor: '#4a90e2', // Blue to match image
         backgroundColor: 'rgba(74, 144, 226, 0.2)', // Shaded fill to match image
@@ -65,7 +65,7 @@ const AdminDashboard = () => {
           salesData: {
             labels: data.salesData?.labels || [],
             datasets: [{
-              label: 'Sales ($)',
+              label: 'Sales', // Removed ($)
               data: data.salesData?.datasets?.[0]?.data || [],
               borderColor: '#4a90e2', // Blue to match image
               backgroundColor: 'rgba(74, 144, 226, 0.2)', // Shaded fill to match image
@@ -157,7 +157,7 @@ const AdminDashboard = () => {
                         legend: { position: 'top' },
                         title: {
                           display: true,
-                          text: 'Sales Trend'
+                          text: 'Sales Trend' // (no $)
                         }
                       },
                       scales: {
@@ -165,7 +165,7 @@ const AdminDashboard = () => {
                           beginAtZero: true,
                           title: {
                             display: true,
-                            text: 'Sales Amount ($)'
+                            text: 'Sales Amount' // (no $)
                           }
                         },
                         x: {

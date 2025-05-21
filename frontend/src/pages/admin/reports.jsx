@@ -91,6 +91,19 @@ const Reports = () => {
         chart4: true,
     });
 
+    const [visibleOrdersCards, setVisibleOrdersCards] = useState({
+        summary: true,
+        details: true,
+        chart1: true,
+    });
+
+    const [visibleCrafterCards, setVisibleCrafterCards] = useState({
+        summary: true,
+        details: true,
+        chart1: true,
+        chart2: true,
+    });
+
     // Helper to reset all cards to visible
     const resetInventoryCards = () => {
         setVisibleInventoryCards({
@@ -105,9 +118,21 @@ const Reports = () => {
         });
     };
 
-    // Track which inventory cards are visible
-    const closeInventoryCard = (key) => {
-        setVisibleInventoryCards((prev) => ({ ...prev, [key]: false }));
+    const resetCards = (reportType) => {
+        if (reportType === 'inventory') resetInventoryCards();
+        else if (reportType === 'orders') setVisibleOrdersCards({ summary: true, details: true, chart1: true });
+        else if (reportType === 'crafter') setVisibleCrafterCards({ summary: true, details: true, chart1: true, chart2: true });
+    };
+
+    // Generic card close handler for all reports
+    const closeCard = (reportType, key) => {
+        if (reportType === 'inventory') {
+            setVisibleInventoryCards((prev) => ({ ...prev, [key]: false }));
+        } else if (reportType === 'orders') {
+            setVisibleOrdersCards((prev) => ({ ...prev, [key]: false }));
+        } else if (reportType === 'crafter') {
+            setVisibleCrafterCards((prev) => ({ ...prev, [key]: false }));
+        }
     };
 
     useEffect(() => {
@@ -378,40 +403,6 @@ const Reports = () => {
                 borderWidth: 1
             },
         ],
-    };
-
-    // Orders Pie Chart Data with custom colors
-    const ordersPieChartData = () => {
-        const colorArray = [
-            'rgba(255, 99, 132, 0.6)',
-            'rgba(54, 162, 235, 0.6)',
-            'rgba(255, 206, 86, 0.6)',
-            'rgba(75, 192, 192, 0.6)',
-            'rgba(153, 102, 255, 0.6)',
-            'rgba(255, 159, 64, 0.6)',
-            'rgba(20, 184, 166, 0.6)'
-        ];
-        const borderColorArray = [
-            'rgba(255, 99, 132, 1)',
-            'rgba(54, 162, 235, 1)',
-            'rgba(255, 206, 86, 1)',
-            'rgba(75, 192, 192, 1)',
-            'rgba(153, 102, 255, 1)',
-            'rgba(255, 159, 64, 1)',
-            'rgba(20, 184, 166, 1)'
-        ];
-        return {
-            labels: ordersData.customizations.map(item => `${item.customization_type}: ${item.customization_value}`),
-            datasets: [
-                {
-                    label: 'Customizations',
-                    data: ordersData.customizations.map(item => item.customization_count || 0),
-                    backgroundColor: colorArray,
-                    borderColor: borderColorArray,
-                    borderWidth: 1
-                },
-            ],
-        };
     };
 
     // Crafter Bar Chart Data with custom colors
@@ -842,7 +833,7 @@ const Reports = () => {
                                         <button
                                             className="card-close-btn"
                                             style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', zIndex: 2 }}
-                                            onClick={() => closeInventoryCard('summary')}
+                                            onClick={() => closeCard('inventory', 'summary')}
                                             title="Remove this card"
                                         >
                                             <IoClose size={22} />
@@ -875,7 +866,7 @@ const Reports = () => {
                                         <button
                                             className="card-close-btn"
                                             style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', zIndex: 2 }}
-                                            onClick={() => closeInventoryCard('details')}
+                                            onClick={() => closeCard('inventory', 'details')}
                                             title="Remove this card"
                                         >
                                             <IoClose size={22} />
@@ -918,7 +909,7 @@ const Reports = () => {
                                         <button
                                             className="card-close-btn"
                                             style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', zIndex: 2 }}
-                                            onClick={() => closeInventoryCard('terminatedProducts')}
+                                            onClick={() => closeCard('inventory', 'terminatedProducts')}
                                             title="Remove this card"
                                         >
                                             <IoClose size={22} />
@@ -959,7 +950,7 @@ const Reports = () => {
                                         <button
                                             className="card-close-btn"
                                             style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', zIndex: 2 }}
-                                            onClick={() => closeInventoryCard('terminatedCategories')}
+                                            onClick={() => closeCard('inventory', 'terminatedCategories')}
                                             title="Remove this card"
                                         >
                                             <IoClose size={22} />
@@ -989,7 +980,7 @@ const Reports = () => {
                                             <button
                                                 className="card-close-btn"
                                                 style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', zIndex: 2 }}
-                                                onClick={() => closeInventoryCard('chart1')}
+                                                onClick={() => closeCard('inventory', 'chart1')}
                                                 title="Remove this card"
                                             >
                                                 <IoClose size={22} />
@@ -1068,7 +1059,7 @@ const Reports = () => {
                                             <button
                                                 className="card-close-btn"
                                                 style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', zIndex: 2 }}
-                                                onClick={() => closeInventoryCard('chart2')}
+                                                onClick={() => closeCard('inventory', 'chart2')}
                                                 title="Remove this card"
                                             >
                                                 <IoClose size={22} />
@@ -1124,7 +1115,7 @@ const Reports = () => {
                                             <button
                                                 className="card-close-btn"
                                                 style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', zIndex: 2 }}
-                                                onClick={() => closeInventoryCard('chart3')}
+                                                onClick={() => closeCard('inventory', 'chart3')}
                                                 title="Remove this card"
                                             >
                                                 <IoClose size={22} />
@@ -1170,7 +1161,7 @@ const Reports = () => {
                                             <button
                                                 className="card-close-btn"
                                                 style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', zIndex: 2 }}
-                                                onClick={() => closeInventoryCard('chart4')}
+                                                onClick={() => closeCard('inventory', 'chart4')}
                                                 title="Remove this card"
                                             >
                                                 <IoClose size={22} />
@@ -1277,112 +1268,84 @@ const Reports = () => {
                                             : 'All Time'}
                                     </p>
                                 </div>
-                                <div className="summary-section card">
-                                    <h3>Orders Summary</h3>
-                                    <table className="summary-table">
-                                        <tbody>
-                                            <tr>
-                                                <td>Total Orders</td>
-                                                <td>{ordersData.summary.totalOrders || 0}</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Confirmed Orders</td>
-                                                <td>{ordersData.summary.confirmedOrders || 0}</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Ready to Deliver Orders</td>
-                                                <td>{ordersData.summary.readyToDeliverOrders || 0}</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Total Earnings</td>
-                                                <td>Rs.{(ordersData.summary.totalEarnings || 0).toFixed(2)}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div className="report-table-container card">
-                                    <h3>Order Details</h3>
-                                    <table className="data-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Order ID</th>
-                                                <th>Order Date</th>
-                                                <th>Total Amount</th>
-                                                <th>Status</th>
-                                                <th>Shipping Address</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {ordersData.orders.map((item) => (
-                                                <tr key={item.order_id}>
-                                                    <td>{item.order_id}</td>
-                                                    <td>{new Date(item.order_date).toLocaleDateString()}</td>
-                                                    <td>Rs.{item.total_amount.toFixed(2)}</td>
-                                                    <td>{item.status}</td>
-                                                    <td>{item.shipping_address}</td>
+                                {visibleOrdersCards.summary && (
+                                    <div className="summary-section card" style={{ position: 'relative' }}>
+                                        <button
+                                            className="card-close-btn"
+                                            style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', zIndex: 2 }}
+                                            onClick={() => closeCard('orders', 'summary')}
+                                            title="Remove this card"
+                                        >
+                                            <IoClose size={22} />
+                                        </button>
+                                        <h3>Orders Summary</h3>
+                                        <table className="summary-table">
+                                            <tbody>
+                                                <tr>
+                                                    <td>Total Orders</td>
+                                                    <td>{ordersData.summary.totalOrders || 0}</td>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div className="report-table-container card">
-                                    <h3>Fast Moving Items</h3>
-                                    {ordersData.summary.noFastMovingMessage ? (
-                                        <p>{ordersData.summary.noFastMovingMessage}</p>
-                                    ) : ordersData.summary.fastMovingItems?.length > 0 ? (
+                                                <tr>
+                                                    <td>Confirmed Orders</td>
+                                                    <td>{ordersData.summary.confirmedOrders || 0}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Ready to Deliver Orders</td>
+                                                    <td>{ordersData.summary.readyToDeliverOrders || 0}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Total Earnings</td>
+                                                    <td>Rs.{(ordersData.summary.totalEarnings || 0).toFixed(2)}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                                {visibleOrdersCards.details && (
+                                    <div className="report-table-container card" style={{ position: 'relative' }}>
+                                        <button
+                                            className="card-close-btn"
+                                            style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', zIndex: 2 }}
+                                            onClick={() => closeCard('orders', 'details')}
+                                            title="Remove this card"
+                                        >
+                                            <IoClose size={22} />
+                                        </button>
+                                        <h3>Order Details</h3>
                                         <table className="data-table">
                                             <thead>
                                                 <tr>
-                                                    <th>Product ID</th>
-                                                    <th>Product Name</th>
-                                                    <th>Category</th>
-                                                    <th>Total Quantity</th>
+                                                    <th>Order ID</th>
+                                                    <th>Order Date</th>
+                                                    <th>Total Amount</th>
+                                                    <th>Status</th>
+                                                    <th>Shipping Address</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {ordersData.summary.fastMovingItems.map((item) => (
-                                                    <tr key={item.product_id}>
-                                                        <td>{item.product_id}</td>
-                                                        <td>{item.product_name}</td>
-                                                        <td>{item.category_name}</td>
-                                                        <td>{item.total_quantity}</td>
+                                                {ordersData.orders.map((item) => (
+                                                    <tr key={item.order_id}>
+                                                        <td>{item.order_id}</td>
+                                                        <td>{new Date(item.order_date).toLocaleDateString()}</td>
+                                                        <td>Rs.{item.total_amount.toFixed(2)}</td>
+                                                        <td>{item.status}</td>
+                                                        <td>{item.shipping_address}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
                                         </table>
-                                    ) : (
-                                        <p>No fast-moving items available.</p>
-                                    )}
-                                </div>
-                                <div className="report-table-container card">
-                                    <h3>Slow Moving Items</h3>
-                                    {ordersData.summary.slowMovingItems?.length > 0 ? (
-                                        <table className="data-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Product ID</th>
-                                                    <th>Product Name</th>
-                                                    <th>Category</th>
-                                                    <th>Total Quantity</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {ordersData.summary.slowMovingItems.map((item) => (
-                                                    <tr key={item.product_id}>
-                                                        <td>{item.product_id}</td>
-                                                        <td>{item.product_name}</td>
-                                                        <td>{item.category_name}</td>
-                                                        <td>{item.total_quantity}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    ) : (
-                                        <p>No slow-moving items available.</p>
-                                    )}
-                                </div>
-                                <div className="charts-container">
-                                    <div className="chart-wrapper card">
+                                    </div>
+                                )}
+                                {visibleOrdersCards.chart1 && (
+                                    <div className="chart-wrapper card" style={{ position: 'relative' }}>
+                                        <button
+                                            className="card-close-btn"
+                                            style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', zIndex: 2 }}
+                                            onClick={() => closeCard('orders', 'chart1')}
+                                            title="Remove this card"
+                                        >
+                                            <IoClose size={22} />
+                                        </button>
                                         <h3>Total Sales by Product</h3>
                                         <div className="chart">
                                             <Bar
@@ -1413,28 +1376,7 @@ const Reports = () => {
                                             />
                                         </div>
                                     </div>
-                                    <div className="chart-wrapper card">
-                                        <h3>Customizations Distribution</h3>
-                                        <div className="chart">
-                                            <Pie
-                                                data={ordersPieChartData()}
-                                                options={{
-                                                    ...chartOptions,
-                                                    plugins: {
-                                                        ...chartOptions.plugins,
-                                                        legend: {
-                                                            ...chartOptions.plugins.legend,
-                                                            labels: {
-                                                                font: { size: 12 },
-                                                            },
-                                                        },
-                                                    },
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                               
+                                )}
                             </div>
                         )}
 
@@ -1451,64 +1393,92 @@ const Reports = () => {
                                             : ' | All Crafters'}
                                     </p>
                                 </div>
-                                <div className="summary-section card">
-                                    <h3>Crafter Performance Summary</h3>
-                                    <table className="summary-table">
-                                        <tbody>
-                                            <tr>
-                                                <td>Total Crafters</td>
-                                                <td>{crafterPerformanceData.summary.totalCrafters || 0}</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Total Uploads</td>
-                                                <td>{crafterPerformanceData.summary.totalUploads || 0}</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Approval Rate</td>
-                                                <td>{(crafterPerformanceData.summary.approvalRate || 0).toFixed(2)}%</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Total Order Assignments</td>
-                                                <td>{crafterPerformanceData.summary.totalAssignments || 0}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div className="report-table-container card">
-                                    <h3>Crafter Performance Details</h3>
-                                    <table className="data-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Crafter ID</th>
-                                                <th>Crafter Name</th>
-                                                <th>Product Name</th>
-                                                <th>Category</th>
-                                                <th>Total Uploads</th>
-                                                <th>Approved</th>
-                                                <th>Rejected</th>
-                                                <th>Approval Rate</th>
-                                                <th>Order Assignments</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {crafterPerformanceData.crafters.map((item) => (
-                                                <tr key={`${item.crafter_id}-${item.product_id || 'all'}`}>
-                                                    <td>{item.crafter_id}</td>
-                                                    <td>{item.crafter_name}</td>
-                                                    <td>{item.product_name || 'All'}</td>
-                                                    <td>{item.category_name || 'All'}</td>
-                                                    <td>{item.total_uploads}</td>
-                                                    <td>{item.approved_uploads}</td>
-                                                    <td>{item.rejected_uploads}</td>
-                                                    <td>{item.approval_rate.toFixed(2)}%</td>
-                                                    <td>{item.order_assignments}</td>
+                                {visibleCrafterCards.summary && (
+                                    <div className="summary-section card" style={{ position: 'relative' }}>
+                                        <button
+                                            className="card-close-btn"
+                                            style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', zIndex: 2 }}
+                                            onClick={() => closeCard('crafter', 'summary')}
+                                            title="Remove this card"
+                                        >
+                                            <IoClose size={22} />
+                                        </button>
+                                        <h3>Crafter Performance Summary</h3>
+                                        <table className="summary-table">
+                                            <tbody>
+                                                <tr>
+                                                    <td>Total Crafters</td>
+                                                    <td>{crafterPerformanceData.summary.totalCrafters || 0}</td>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div className="charts-container">
-                                    <div className="chart-wrapper card">
+                                                <tr>
+                                                    <td>Total Uploads</td>
+                                                    <td>{crafterPerformanceData.summary.totalUploads || 0}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Approval Rate</td>
+                                                    <td>{(crafterPerformanceData.summary.approvalRate || 0).toFixed(2)}%</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Total Order Assignments</td>
+                                                    <td>{crafterPerformanceData.summary.totalAssignments || 0}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                                {visibleCrafterCards.details && (
+                                    <div className="report-table-container card" style={{ position: 'relative' }}>
+                                        <button
+                                            className="card-close-btn"
+                                            style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', zIndex: 2 }}
+                                            onClick={() => closeCard('crafter', 'details')}
+                                            title="Remove this card"
+                                        >
+                                            <IoClose size={22} />
+                                        </button>
+                                        <h3>Crafter Performance Details</h3>
+                                        <table className="data-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Crafter ID</th>
+                                                    <th>Crafter Name</th>
+                                                    <th>Product Name</th>
+                                                    <th>Category</th>
+                                                    <th>Total Uploads</th>
+                                                    <th>Approved</th>
+                                                    <th>Rejected</th>
+                                                    <th>Approval Rate</th>
+                                                    <th>Order Assignments</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {crafterPerformanceData.crafters.map((item) => (
+                                                    <tr key={`${item.crafter_id}-${item.product_id || 'all'}`}>
+                                                        <td>{item.crafter_id}</td>
+                                                        <td>{item.crafter_name}</td>
+                                                        <td>{item.product_name || 'All'}</td>
+                                                        <td>{item.category_name || 'All'}</td>
+                                                        <td>{item.total_uploads}</td>
+                                                        <td>{item.approved_uploads}</td>
+                                                        <td>{item.rejected_uploads}</td>
+                                                        <td>{item.approval_rate.toFixed(2)}%</td>
+                                                        <td>{item.order_assignments}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                                {visibleCrafterCards.chart1 && (
+                                    <div className="chart-wrapper card" style={{ position: 'relative' }}>
+                                        <button
+                                            className="card-close-btn"
+                                            style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', zIndex: 2 }}
+                                            onClick={() => closeCard('crafter', 'chart1')}
+                                            title="Remove this card"
+                                        >
+                                            <IoClose size={22} />
+                                        </button>
                                         <h3>Uploads by Crafter</h3>
                                         <div className="chart">
                                             <Bar
@@ -1541,7 +1511,17 @@ const Reports = () => {
                                             />
                                         </div>
                                     </div>
-                                    <div className="chart-wrapper card">
+                                )}
+                                {visibleCrafterCards.chart2 && (
+                                    <div className="chart-wrapper card" style={{ position: 'relative' }}>
+                                        <button
+                                            className="card-close-btn"
+                                            style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', zIndex: 2 }}
+                                            onClick={() => closeCard('crafter', 'chart2')}
+                                            title="Remove this card"
+                                        >
+                                            <IoClose size={22} />
+                                        </button>
                                         <h3>Approval Status Distribution</h3>
                                         <div className="chart">
                                             <Pie
@@ -1561,8 +1541,7 @@ const Reports = () => {
                                             />
                                         </div>
                                     </div>
-                                </div>
-                               
+                                )}
                             </div>
                         )}
 
