@@ -668,6 +668,9 @@ const ProfilePage = ({ onShowLoginPrompt }) => {
       {activeTab === 'orders' && (
         <div className="orders-section">
           <h2>Order History</h2>
+          <p style={{color: '#b22222', fontWeight: 500, marginBottom: 16}}>
+            If any order is cancelled,please contact us via <a href="tel:0771960855" style={{color:'#b22222', textDecoration:'underline'}}>0771960855</a>.
+          </p>
           {orders.length > 0 ? (
             orders.map((order) => (
               <div key={order.orderId} className="order-card">

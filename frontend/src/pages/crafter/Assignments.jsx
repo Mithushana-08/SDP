@@ -11,6 +11,8 @@ const Assignments = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [assignments, setAssignments] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [cancelledItems, setCancelledItems] = useState([]);
+    const [orderStatuses, setOrderStatuses] = useState({});
 
     // Fetch assigned orders on component mount
     useEffect(() => {
@@ -20,10 +22,32 @@ const Assignments = () => {
                     Authorization: `Bearer ${sessionStorage.getItem("token")}`,
                 },
             })
-            .then((response) => {
+            .then(async (response) => {
                 console.log("Frontend received assignments:", response.data);
                 setAssignments(response.data);
                 setLoading(false);
+                // Find cancelled items
+                const cancelled = response.data.filter(item => item.status && item.status.toLowerCase() === "cancelled");
+                setCancelledItems(cancelled);
+                // Fetch order status for each unique order_id
+                const uniqueOrderIds = [...new Set(response.data.map(item => item.order_id))];
+                const statusMap = {};
+                await Promise.all(uniqueOrderIds.map(async (orderId) => {
+                    try {
+                        const res = await axios.get(`http://localhost:5000/api/admin/orders/${orderId}`);
+                        if (Array.isArray(res.data)) {
+                            // fallback: fetch from /orders
+                            const allOrders = await axios.get(`http://localhost:5000/api/admin/orders`);
+                            const order = allOrders.data.find(o => o.order_id == orderId);
+                            statusMap[orderId] = order ? order.status : "";
+                        } else {
+                            statusMap[orderId] = res.data.status || "";
+                        }
+                    } catch (e) {
+                        statusMap[orderId] = "";
+                    }
+                }));
+                setOrderStatuses(statusMap);
             })
             .catch((error) => {
                 console.error("Error fetching assigned orders:", error);
@@ -60,6 +84,16 @@ const Assignments = () => {
 
     // Handle status change in dropdown
     const handleStatusChange = (e, itemId) => {
+        const assignment = assignments.find(a => a.item_id === itemId);
+        const orderStatus = orderStatuses[assignment.order_id];
+        if (orderStatus && orderStatus.toLowerCase() === "cancelled") {
+            alert("This order is cancelled and cannot be updated.");
+            return;
+        }
+        if (assignment && assignment.status && assignment.status.toLowerCase() === "cancelled") {
+            alert("This order item is cancelled and cannot be updated.");
+            return;
+        }
         const newStatus = e.target.value;
 
         // Update the status in the local state
@@ -120,6 +154,18 @@ const Assignments = () => {
                             </div>
                         </div>
                     </div>
+                    {Object.values(orderStatuses).includes("cancelled") && (
+                        <div className="cancelled-notification" style={{background:'#ffe0e0',color:'#b30000',padding:'10px',marginBottom:'15px',borderRadius:'5px',fontWeight:'bold'}}>
+                            Some assigned orders are <b>cancelled</b>. You cannot update their items' status.<br/>
+                            Cancelled Order IDs: {Object.entries(orderStatuses).filter(([_, status]) => status === "cancelled").map(([orderId]) => orderId).join(", ")}
+                        </div>
+                    )}
+                    {cancelledItems.length > 0 && (
+                        <div className="cancelled-notification" style={{background:'#ffe0e0',color:'#b30000',padding:'10px',marginBottom:'15px',borderRadius:'5px',fontWeight:'bold'}}>
+                            Some assigned order items are <b>cancelled</b>. You cannot update their status.<br/>
+                            Cancelled Item IDs: {cancelledItems.map(item => item.item_id).join(", ")}
+                        </div>
+                    )}
                     {loading ? (
                         <p>Loading assignments...</p>
                     ) : (
@@ -147,6 +193,7 @@ const Assignments = () => {
                                                 value={assignment.status}
                                                 onChange={(e) => handleStatusChange(e, assignment.item_id)}
                                                 className="styled-status-dropdown"
+                                                disabled={assignment.status && assignment.status.toLowerCase() === "cancelled" || (orderStatuses[assignment.order_id] && orderStatuses[assignment.order_id].toLowerCase() === "cancelled")}
                                             >
                                                 <option value="Pending">Pending</option>
                                                 <option value="Confirmed">Confirmed</option>

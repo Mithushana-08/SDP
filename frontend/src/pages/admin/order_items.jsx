@@ -16,6 +16,7 @@ const Items = () => {
   const [crafters, setCrafters] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [orderStatus, setOrderStatus] = useState("");
 
   useEffect(() => {
     if (!orderId) {
@@ -24,15 +25,25 @@ const Items = () => {
       axios
         .get(`http://localhost:5000/api/admin/orders/${orderId}`)
         .then((response) => {
-          const rawItems = response.data;
-          console.log("Order items:", rawItems);
-
-          // No need for grouping since backend returns one record per item
-          const processedItems = rawItems.map((item) => ({
+          // If response is an array, fetch order status separately
+          let items = response.data;
+          let status = "";
+          if (Array.isArray(items)) {
+            axios.get(`http://localhost:5000/api/admin/orders`).then((ordersRes) => {
+              const order = ordersRes.data.find((o) => o.order_id == orderId);
+              status = order ? order.status : "";
+              setOrderStatus(status);
+            });
+          } else {
+            // If backend returns {items, status}
+            items = response.data.items;
+            status = response.data.status;
+            setOrderStatus(status);
+          }
+          const processedItems = (items || []).map((item) => ({
             ...item,
             total_price: (item.price * item.quantity).toFixed(2),
           }));
-
           setOrderItems(processedItems);
           setLoading(false);
         })
@@ -203,6 +214,7 @@ const Items = () => {
                           onChange={(e) =>
                             handleCrafterChange(item.item_id, e.target.value)
                           }
+                          disabled={orderStatus === "cancelled" || item.status === "Confirmed" || item.status === "Completed"}
                         >
                           <option value="">Select Crafter</option>
                           {crafters.map((crafter) => (
