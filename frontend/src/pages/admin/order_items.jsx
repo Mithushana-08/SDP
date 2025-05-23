@@ -7,6 +7,7 @@ import "../../components/styles/table.css";
 import "../../components/styles/search-container.css";
 import { FiSearch, FiArrowLeft } from "react-icons/fi";
 import axios from "axios";
+import Swal from "sweetalert2";
 
 const Items = () => {
   const navigate = useNavigate();
@@ -105,7 +106,19 @@ const Items = () => {
       });
   };
 
-  const handleConfirm = (itemId) => {
+  const handleConfirm = async (itemId) => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to confirm this item? This action cannot be reverted.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, confirm it!'
+    });
+    if (!result.isConfirmed) {
+      return;
+    }
     setOrderItems((prevItems) =>
       prevItems.map((item) =>
         item.item_id === itemId ? { ...item, status: "Confirmed" } : item

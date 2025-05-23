@@ -192,7 +192,11 @@ const Reports = () => {
             );
             if (response.ok) {
                 const data = await response.json();
-                setOrdersData(data);
+                setOrdersData({
+                    ...data,
+                    fastMovingItems: (data.summary && data.summary.fastMovingItems) || [],
+                    slowMovingItems: (data.summary && data.summary.slowMovingItems) || []
+                });
             } else {
                 alert('Error generating orders report');
             }
@@ -1374,6 +1378,35 @@ const Reports = () => {
                                                     },
                                                 }}
                                             />
+                                        </div>
+                                        {/* Fast/Slow Moving Items */}
+                                        <div style={{ display: 'flex', gap: 32, marginTop: 24 }}>
+                                            <div style={{ flex: 1 }}>
+                                                <h4 style={{ marginBottom: 8 }}>Top 5 Fast Moving Items</h4>
+                                                <ol style={{ paddingLeft: 18 }}>
+                                                    {(ordersData.fastMovingItems || []).slice(0, 5).map(item => (
+                                                        <li key={item.product_id}>
+                                                            {item.product_name} <span style={{ color: '#888', fontSize: 13 }}>(Sold: {item.total_quantity})</span>
+                                                        </li>
+                                                    ))}
+                                                    {(ordersData.fastMovingItems || []).length === 0 && (
+                                                        <li style={{ color: '#888', fontStyle: 'italic' }}>No data</li>
+                                                    )}
+                                                </ol>
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <h4 style={{ marginBottom: 8 }}>Last 5 Slow Moving Items</h4>
+                                                <ol style={{ paddingLeft: 18 }}>
+                                                    {(ordersData.slowMovingItems || []).slice(-5).map(item => (
+                                                        <li key={item.product_id}>
+                                                            {item.product_name} <span style={{ color: '#888', fontSize: 13 }}>(Sold: {item.total_quantity})</span>
+                                                        </li>
+                                                    ))}
+                                                    {(ordersData.slowMovingItems || []).length === 0 && (
+                                                        <li style={{ color: '#888', fontStyle: 'italic' }}>No data</li>
+                                                    )}
+                                                </ol>
+                                            </div>
                                         </div>
                                     </div>
                                 )}
